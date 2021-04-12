@@ -6,8 +6,13 @@ pub fn run_status_command() -> Vec<String> {
     run(vec!["status".to_string(), "-s".to_string()])
 }
 
-pub fn run_diff_command(args: Option<Vec<String>>) -> Vec<String> {
-    run(vec!["--no-pager".to_string(), "diff".to_string()])
+// pub fn run_diff_command(args: Option<Vec<String>>) -> Vec<String> {
+pub fn run_diff_command(path: &str) -> Vec<String> {
+    run(vec![
+        "--no-pager".to_string(),
+        "diff".to_string(),
+        path.to_string(),
+    ])
 }
 
 fn run(args: Vec<String>) -> Vec<String> {
