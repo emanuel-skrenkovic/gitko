@@ -1,134 +1,235 @@
 use crate::git;
-use crate::git::GitRunner;
-use crate::render::Render;
 use crate::render::ascii_table::*;
+use crate::render::Point;
+use crate::render::Render;
 
 use ncurses;
 
 pub struct Window {
-    position_y: i32,
-    position_x: i32,
-
     height: i32,
-    width:  i32,
+    width: i32,
+
+    cursor: Point,
 
     curses_window: ncurses::WINDOW,
 
-    pub buffer:   Vec<String>,
+    pub buffer: Vec<String>,
     pub children: Vec<Window>,
+
+    pub delete: bool,
 }
 
 impl Window {
-    pub fn new(position_y: i32, position_x: i32, height: i32, width: i32) -> Window {
-        let curses_window = ncurses::newwin(height, width, position_y, position_x);
+    pub fn new(position: Point, height: i32, width: i32) -> Window {
+        let curses_window = ncurses::newwin(height, width, position.y, position.x);
+
         ncurses::box_(curses_window, 0, 0);
         ncurses::wrefresh(curses_window);
 
         Window {
-            position_y: position_y,
-            position_x: position_x,
-
             height: height,
-            width:  width,
+            width: width,
+
+            cursor: Point { x: 0, y: 0 },
 
             curses_window: curses_window,
 
-            buffer:   vec![],
+            buffer: vec![],
             children: vec![],
+
+            delete: false,
         }
     }
 
-    pub fn spawn_child(&mut self, position_y: i32, position_x: i32, height: i32, width: i32) -> &mut Window {
-        let child_window = Window::new(position_y, position_x, height, width);
+    pub fn get_cursor_line(&self) -> &String {
+        let line_number = self.cursor.y as usize;
+        &self.buffer[line_number]
+    }
+
+    pub fn spawn_child(&mut self, position: Point, buffer: Vec<String>) -> &mut Window {
+        let height = buffer.len() as i32;
+        let width = buffer.iter().map(|x| x.len()).max().unwrap_or_default() as i32;
+
+        let mut child_window = Window::new(position, height, width);
+        child_window.buffer = buffer;
+
         self.children.push(child_window);
 
         self.children.last_mut().unwrap()
+    }
+
+    pub fn write_buffer(&self) {
+        ncurses::wclear(self.curses_window);
+
+        for (_, line) in self.buffer.iter().enumerate() {
+            ncurses::waddstr(self.curses_window, line);
+            ncurses::waddch(self.curses_window, KEY_LF as u32);
+        }
+
+        ncurses::wmove(self.curses_window, self.cursor.y, self.cursor.x);
+    }
+
+    pub fn update(&mut self) {
+        self.write_buffer();
+
+        if !self.children.is_empty() {
+            // remove all the empty lines that were placed where the sub window is
+            self.buffer.retain(|l| !l.is_empty());
+
+            // remove all the children marked for deletion
+            for (_, child) in self
+                .children
+                .iter()
+                .filter(|&child| child.delete)
+                .enumerate()
+            {
+                child.close(); // frees the resources used by ncurses
+            }
+
+            // remove the deleted windows from children vec
+            self.children.retain(|c| !c.delete);
+        }
+
+        ncurses::wnoutrefresh(self.curses_window);
+    }
+
+    pub fn write_at(&mut self, buffer: &Vec<String>, position: usize) {
+        let mut new_buffer: Vec<String> = Vec::with_capacity(self.height as usize);
+
+        let mut before: Vec<String> = if position == 0 {
+            vec![self.buffer[0].clone()]
+        } else {
+            self.buffer[0..position + 1].to_vec()
+        };
+        let after = &self.buffer[position + 1..];
+
+        new_buffer.append(&mut before);
+
+        for _ in 0..buffer.len() {
+            new_buffer.push("".to_string());
+        }
+
+        for (_, line) in after.iter().enumerate() {
+            new_buffer.push(line.to_string());
+        }
+
+        self.buffer = new_buffer;
+    }
+
+    pub fn close(&self) {
+        ncurses::delwin(self.curses_window);
     }
 }
 
 impl Render for Window {
     fn render(&mut self) {
-        let mut start_x = 0;
-        let mut start_y = 0;
+        ncurses::wmove(self.curses_window, 0, 0);
+        ncurses::refresh();
 
-        ncurses::wrefresh(self.curses_window);
-
-        let mut c = ncurses::getch();
+        let mut c: i32 = 0;
         while c != KEY_Q_LOWER {
-            ncurses::wclear(self.curses_window);
-
-            for (_, line) in self.buffer.iter().enumerate() {
-                ncurses::waddstr(self.curses_window, line);
-                ncurses::waddch(self.curses_window, 10);
-            }
+            self.update();
+            ncurses::doupdate();
 
             match c {
                 // cursor movement
+                /*
                 KEY_H_LOWER => {
-                    start_x = if start_x == 0 { start_x } else { start_x - 1 };
-                    ncurses::wmove(self.curses_window, start_y, start_x);
-                }
-                KEY_J_LOWER => {
-                    start_y = if start_y == self.height {
-                        start_y
+                    self.cursor.x = if self.cursor.x == 0 {
+                        self.cursor.x
                     } else {
-                        start_y + 1
+                        self.cursor.x - 1
                     };
-                    ncurses::wmove(self.curses_window, start_y, start_x);
+                    ncurses::wmove(self.curses_window, self.cursor.y, self.cursor.x);
+                }
+                */
+                KEY_J_LOWER => {
+                    self.cursor.y = if self.cursor.y == self.height {
+                        self.cursor.y
+                    } else {
+                        self.cursor.y + 1
+                    };
+                    ncurses::wmove(self.curses_window, self.cursor.y, self.cursor.x);
                 }
                 KEY_K_LOWER => {
-                    start_y = if start_y == 0 { 0 } else { start_y - 1 };
-                    ncurses::wmove(self.curses_window, start_y, start_x);
-                }
-                KEY_L_LOWER => {
-                    start_x = if start_x == self.width {
-                        start_x
+                    self.cursor.y = if self.cursor.y == 0 {
+                        0
                     } else {
-                        start_x + 1
+                        self.cursor.y - 1
                     };
-                    ncurses::wmove(self.curses_window, start_y, start_x);
+                    ncurses::wmove(self.curses_window, self.cursor.y, self.cursor.x);
                 }
+                /*
+                KEY_L_LOWER => {
+                    self.cursor.x = if self.cursor.x == self.width {
+                        self.cursor.x
+                    } else {
+                        self.cursor.x + 1
+                    };
+                    ncurses::wmove(self.curses_window, self.cursor.y, self.cursor.x);
+                }
+                */
 
                 KEY_ZERO => {
-                    start_x = 0;
-                    ncurses::wmove(self.curses_window, start_y, start_x);
+                    self.cursor.x = 0;
+                    ncurses::wmove(self.curses_window, self.cursor.y, self.cursor.x);
                 }
 
                 KEY_DOLLAR => {
-                    let line_number: usize = start_y as usize;
-                    let path_line = &self.buffer[line_number];
+                    let path_line = self.get_cursor_line();
+                    self.cursor.x = path_line.chars().count() as i32;
 
-                    start_x = path_line.chars().count() as i32;
-                    ncurses::wmove(self.curses_window, start_y, start_x);
+                    ncurses::wmove(self.curses_window, self.cursor.y, self.cursor.x);
+                }
+
+                KEY_T_LOWER => {
+                    let path = &self.get_cursor_line()[3..];
+                    git::run_add_command(&path);
+                }
+
+                KEY_U_LOWER => {
+                    let path = &self.get_cursor_line()[3..];
+                    git::unstage_file(&path);
+                }
+
+                KEY_C_LOWER => {
+                    self.buffer.retain(|l| !l.is_empty());
+                }
+
+                KEY_Q_LOWER => {
+                    self.delete = true;
                 }
 
                 KEY_W_LOWER => {
-                    let line_number = start_y as usize;
-                    let path_line = &self.buffer[line_number];
-                    let path = &path_line[3..];
+                    let line_number = self.cursor.y as usize;
 
-                    let mut diff_lines = git::run_diff_command(&path);
+                    let path = &self.get_cursor_line()[3..];
+                    let diff_lines = git::run_diff_command(&path);
 
-                    let mut child: &mut Window = self.spawn_child(
-                        start_y + 1,
-                        0,
-                        (diff_lines.len() + 1) as i32,
-                        self.width);
+                    self.write_at(&diff_lines, line_number);
+                    self.update();
 
-                    child.buffer = diff_lines;
+                    let child_position = Point {
+                        y: self.cursor.y + 1,
+                        x: 5,
+                    };
+                    let child: &mut Window = self.spawn_child(child_position, diff_lines);
+
                     child.render();
                 }
                 _ => {}
             }
 
-            ncurses::wrefresh(self.curses_window);
-            c = ncurses::getch();
+            self.update();
+
+            if !self.children.is_empty() {
+                display_children(&mut self.children);
+            }
+
+            ncurses::doupdate();
+
+            c = ncurses::wgetch(self.curses_window);
         }
-
-
-        // if !self.children.is_empty() {
-            // display_children(&self.children);
-        //}
     }
 }
 
@@ -140,12 +241,12 @@ impl git::GitRunner for Window {
     }
 }
 
-fn display_children(windows: &Vec<Window>) {
-    for (_, window) in windows.iter().enumerate() {
+fn display_children(windows: &mut Vec<Window>) {
+    for (_, window) in windows.iter_mut().enumerate() {
         if !window.children.is_empty() {
-            display_children(&window.children);
+            display_children(&mut window.children);
         }
 
-        // window.render()
+        window.render()
     }
 }

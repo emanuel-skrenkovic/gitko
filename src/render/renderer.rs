@@ -1,13 +1,12 @@
 use crate::git;
 use crate::render::window;
+use crate::render::Point;
 use crate::render::Render;
-use crate::render::ascii_table::*;
 
 use ncurses;
 
 pub struct Renderer {
     main_window: window::Window,
-    buffer: Vec<String>,
 }
 
 impl Drop for Renderer {
@@ -18,8 +17,33 @@ impl Drop for Renderer {
 
 impl Render for Renderer {
     fn render(&mut self) {
-        let mut git_status: Vec<String> = git::run_status_command();
-        self.main_window.buffer.append(&mut git_status);
+        let git_status: Vec<String> = git::run_status_command();
+
+        let unstaged_changes: Vec<String> = git_status
+            .iter()
+            .cloned()
+            .filter(|c| c.starts_with(" M"))
+            .collect();
+
+        let unstaged_length: i32 = unstaged_changes.len() as i32;
+
+        let staged_changes: Vec<String> = git_status
+            .iter()
+            .cloned()
+            .filter(|c| c.starts_with(" A"))
+            .collect();
+
+        let _unstaged_window = self
+            .main_window
+            .spawn_child(Point { x: 0, y: 0 }, unstaged_changes);
+
+        let _staged_window = self.main_window.spawn_child(
+            Point {
+                x: 0,
+                y: unstaged_length + 1,
+            },
+            staged_changes,
+        );
 
         self.main_window.render();
     }
@@ -33,27 +57,8 @@ impl Renderer {
         ncurses::keypad(ncurses::stdscr(), true);
         ncurses::noecho();
 
-        // curs_set(CURSOR_VISIBILITY::CURSOR_INVISIBLE);
-
         Renderer {
-            main_window: window::Window::new(0, 0, height, width),
-            buffer: Vec::with_capacity(height as usize),
+            main_window: window::Window::new(Point { y: 0, x: 0 }, height, width),
         }
     }
-}
-
-fn create_win(start_y: i32, start_x: i32, height: i32, width: i32) -> ncurses::WINDOW {
-    let win = ncurses::newwin(height, width, start_y, start_x);
-    ncurses::box_(win, 0, 0);
-
-    ncurses::wrefresh(win);
-    win
-}
-
-fn destroy_win(win: ncurses::WINDOW) {
-    let ch = ' ' as ncurses::chtype;
-    ncurses::wborder(win, ch, ch, ch, ch, ch, ch, ch, ch);
-    ncurses::wrefresh(win);
-
-    ncurses::delwin(win);
 }
