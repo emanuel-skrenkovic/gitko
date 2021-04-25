@@ -1,28 +1,32 @@
 pub fn status() -> Vec<String> {
-    run(vec!["status".to_string(), "-s".to_string()])
+    run(vec!["status", "-s"])
 }
 
 pub fn diff_file(path: &str) -> Vec<String> {
     run(vec![
-        "--no-pager".to_string(),
-        "diff".to_string(),
-        path.to_string(),
+        "--no-pager",
+        "diff",
+        path,
     ])
 }
 
 pub fn add_file(path: &str) {
-    run(vec!["add".to_string(), path.to_string()]);
+    run(vec!["add", path]);
 }
 
 pub fn unstage_file(path: &str) {
     run(vec![
-        "restore".to_string(),
-        "--staged".to_string(),
-        path.to_string(),
+        "restore",
+        "--staged",
+        path,
     ]);
 }
 
-fn run(args: Vec<String>) -> Vec<String> {
+pub fn commit(message: &str) {
+    run(vec!["commit", "-m", message]);
+}
+
+fn run(args: Vec<&str>) -> Vec<String> {
     let output = std::process::Command::new("git")
         .args(args)
         .output()

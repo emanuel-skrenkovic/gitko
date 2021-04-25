@@ -1,3 +1,4 @@
+use crate::git::commands as git;
 use crate::render::ascii_table::*;
 use crate::render::window::Window;
 
@@ -6,7 +7,9 @@ pub fn on_activate(_win: &mut Window) {}
 pub fn on_key_press(win: &mut Window, c: i32) {
     match c {
         KEY_LF => {
-            win.buffer.push("NOT IMPLEMENTED".to_string());
+            if !win.value_buffer.is_empty() {
+                git::commit(&win.value_buffer[1]);
+            }
         }
 
         KEY_DEL => {

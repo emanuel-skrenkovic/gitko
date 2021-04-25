@@ -167,7 +167,6 @@ impl Window {
         let width = max_width - position.x;
 
         let mut child_window = Window::new(position, height, width, on_activate, on_key_press);
-        // child_window.buffer = buffer;
         child_window.value_buffer = buffer;
         self.children.push(child_window);
 

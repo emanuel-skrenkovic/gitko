@@ -63,11 +63,15 @@ pub fn on_key_press(win: &mut Window, c: i32) {
         KEY_T_LOWER => {
             let path = &win.get_cursor_line()[3..];
             git::add_file(&path);
+
+            (win.on_activate)(win);
         }
 
         KEY_U_LOWER => {
             let path = &win.get_cursor_line()[3..];
             git::unstage_file(&path);
+
+            (win.on_activate)(win);
         }
 
         KEY_Q_LOWER => {
