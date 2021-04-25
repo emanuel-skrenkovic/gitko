@@ -18,10 +18,7 @@ pub fn on_key_press(win: &mut Window, c: i32) {
         }
 
         KEY_K_LOWER => {
-            win.move_cursor(Point {
-                x: 0,
-                y: 0
-            });
+            win.move_cursor(Point { x: 0, y: 0 });
 
             win.move_cursor_up();
         }
