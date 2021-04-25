@@ -1,4 +1,5 @@
-use crate::git;
+use crate::git::GitRunner;
+use crate::git::commands as git;
 use crate::render::ascii_table::*;
 use crate::render::Point;
 use crate::render::Render;
@@ -171,9 +172,6 @@ impl Window {
         self.write_buffer();
 
         if !self.children.is_empty() {
-            // remove all the empty lines that were placed where the sub window is
-            self.buffer.retain(|l| !l.is_empty());
-
             // remove all the children marked for deletion
             for (_, child) in self
                 .children
@@ -241,10 +239,10 @@ impl Render for Window {
     }
 }
 
-impl git::GitRunner for Window {
+impl GitRunner for Window {
     fn run_git_command(&mut self) {
         // TODO: need to somehow capture curses command to know
         // which git command to send
-        self.buffer = git::run_status_command()
+        self.buffer = git::status()
     }
 }

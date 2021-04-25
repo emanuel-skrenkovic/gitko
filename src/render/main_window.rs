@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use crate::git;
+use crate::git::commands as git;
 use crate::render::ascii_table::*;
 use crate::render::commit_window;
 use crate::render::diff_window;
@@ -9,7 +9,7 @@ use crate::render::Point;
 use crate::render::Render;
 
 pub fn on_activate(win: &mut Window) {
-    let git_status: Vec<String> = git::run_status_command();
+    let git_status: Vec<String> = git::status();
 
     let mut new_changes: Vec<String> = git_status
         .iter()
@@ -60,7 +60,7 @@ pub fn on_key_press(win: &mut Window, c: i32) {
 
         KEY_T_LOWER => {
             let path = &win.get_cursor_line()[3..];
-            git::run_add_command(&path);
+            git::add_file(&path);
         }
 
         KEY_U_LOWER => {
@@ -95,7 +95,7 @@ pub fn on_key_press(win: &mut Window, c: i32) {
                 return;
             }
 
-            let diff_lines = git::run_diff_command(&path);
+            let diff_lines = git::diff_file(&path);
 
             win.write_at(&diff_lines, win.cursor.y as usize);
             win.queue_update();
