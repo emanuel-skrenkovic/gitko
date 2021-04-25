@@ -1,4 +1,7 @@
 pub mod ascii_table;
+pub mod commit_window;
+pub mod diff_window;
+pub mod main_window;
 pub mod renderer;
 pub mod window;
 

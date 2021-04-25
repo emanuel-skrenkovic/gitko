@@ -26,6 +26,12 @@ pub fn unstage_file(path: &str) {
     ]);
 }
 
+/*
+pub fn commit(message: Vec<str>) {
+
+}
+*/
+
 fn run(args: Vec<String>) -> Vec<String> {
     let output = std::process::Command::new("git")
         .args(args)

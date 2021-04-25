@@ -1,4 +1,4 @@
-use crate::git;
+use crate::render::main_window;
 use crate::render::window;
 use crate::render::Point;
 use crate::render::Render;
@@ -17,33 +17,8 @@ impl Drop for Renderer {
 
 impl Render for Renderer {
     fn render(&mut self) {
-        let git_status: Vec<String> = git::run_status_command();
-
-        let unstaged_changes: Vec<String> = git_status
-            .iter()
-            .cloned()
-            .filter(|c| c.starts_with(" M"))
-            .collect();
-
-        let unstaged_length: i32 = unstaged_changes.len() as i32;
-
-        let staged_changes: Vec<String> = git_status
-            .iter()
-            .cloned()
-            .filter(|c| c.starts_with(" A"))
-            .collect();
-
-        let _unstaged_window = self
-            .main_window
-            .spawn_child(Point { x: 0, y: 0 }, unstaged_changes);
-
-        let _staged_window = self.main_window.spawn_child(
-            Point {
-                x: 0,
-                y: unstaged_length + 1,
-            },
-            staged_changes,
-        );
+        // do initial refresh on entire ncurses
+        ncurses::refresh();
 
         self.main_window.render();
     }
@@ -58,7 +33,13 @@ impl Renderer {
         ncurses::noecho();
 
         Renderer {
-            main_window: window::Window::new(Point { y: 0, x: 0 }, height, width),
+            main_window: window::Window::new(
+                Point { y: 0, x: 0 },
+                height,
+                width,
+                main_window::on_activate,
+                main_window::on_key_press,
+            ),
         }
     }
 }

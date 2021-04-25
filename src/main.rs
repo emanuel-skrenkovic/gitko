@@ -1,5 +1,6 @@
 mod git;
 mod render;
+mod num;
 
 use crate::render::Render;
 

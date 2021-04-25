@@ -2,25 +2,39 @@ use crate::git;
 use crate::render::ascii_table::*;
 use crate::render::Point;
 use crate::render::Render;
+use crate::num;
 
 use ncurses;
 
 pub struct Window {
-    height: i32,
-    width: i32,
+    pub height: i32,
+    pub width: i32,
 
-    cursor: Point,
+    pub cursor: Point,
 
-    curses_window: ncurses::WINDOW,
+    pub curses_window: ncurses::WINDOW,
+
+    pub start: usize,
+
+    pub value_buffer: Vec<String>,
 
     pub buffer: Vec<String>,
     pub children: Vec<Window>,
 
     pub delete: bool,
+
+    pub on_activate: fn(win: &mut Window),
+    pub on_key_press: fn(win: &mut Window, c: i32),
 }
 
 impl Window {
-    pub fn new(position: Point, height: i32, width: i32) -> Window {
+    pub fn new(
+        position: Point,
+        height: i32,
+        width: i32,
+        on_activate: fn(win: &mut Window),
+        on_key_press: fn(win: &mut Window, c: i32),
+    ) -> Window {
         let curses_window = ncurses::newwin(height, width, position.y, position.x);
 
         ncurses::box_(curses_window, 0, 0);
@@ -34,25 +48,109 @@ impl Window {
 
             curses_window: curses_window,
 
+            start: 0,
+
+            value_buffer: vec![],
             buffer: vec![],
             children: vec![],
+
+            on_activate: on_activate,
+            on_key_press: on_key_press,
 
             delete: false,
         }
     }
 
-    pub fn get_cursor_line(&self) -> &String {
-        let line_number = self.cursor.y as usize;
-        &self.buffer[line_number]
+    pub fn move_cursor_up(&mut self) {
+        let position = Point {
+            x: self.cursor.x,
+            y: self.cursor.y - 1,
+        };
+
+        self.move_cursor(position);
     }
 
-    pub fn spawn_child(&mut self, position: Point, buffer: Vec<String>) -> &mut Window {
+    pub fn move_cursor_down(&mut self) {
+        let position = Point {
+            x: self.cursor.x,
+            y: self.cursor.y + 1,
+        };
+
+        self.move_cursor(position);
+    }
+
+    pub fn move_cursor_left(&mut self) {
+        let position = Point {
+            x: self.cursor.x - 1,
+            y: self.cursor.y,
+        };
+
+        self.move_cursor(position);
+    }
+
+    pub fn move_cursor_right(&mut self) {
+        let position = Point {
+            x: self.cursor.x + 1,
+            y: self.cursor.y,
+        };
+
+        self.move_cursor(position);
+    }
+
+    pub fn move_cursor(&mut self, position: Point) {
+        let max: i32 = self.value_buffer.len() as i32;
+
+        if position.y >= self.height && position.y <= max {
+            self.start += 1;
+        } 
+
+        if position.y < 0 && self.start > 0 {
+            self.start -= 1;
+        }
+
+        let end = num::clamp(self.height + self.start as i32, self.height, max) as usize;
+
+        self.cursor = Point {
+            x: num::clamp(position.x, 0, self.width),
+            y: num::clamp(position.y, 0, self.height)
+        };
+
+        self.buffer = self.value_buffer[self.start..end].to_vec();
+        ncurses::wmove(self.curses_window, self.cursor.y, self.cursor.x);
+    }
+
+    pub fn get_cursor_line(&self) -> &str {
+        let line_number = self.cursor.y as usize;
+
+        // TODO: terrible, not sure if even needed
+        if line_number > self.buffer.len() {
+            &""
+        } else {
+            &self.buffer[line_number]
+        }
+    }
+
+    pub fn spawn_child(
+        &mut self,
+        position: Point,
+        buffer: Vec<String>,
+        on_activate: fn(win: &mut Window),
+        on_key_press: fn(win: &mut Window, c: i32),
+    ) -> &mut Window {
         let height = buffer.len() as i32;
-        let width = buffer.iter().map(|x| x.len()).max().unwrap_or_default() as i32;
+        // let width = buffer.iter().map(|x| x.len()).max().unwrap_or_default() as i32;
 
-        let mut child_window = Window::new(position, height, width);
+        let mut max_height = 0;
+        let mut max_width = 0;
+
+        // TODO: read about what this actually does
+        ncurses::getmaxyx(self.curses_window, &mut max_height, &mut max_width);
+
+        // let height = max_height - position.y;
+        let width = max_width - position.x;
+
+        let mut child_window = Window::new(position, height, width, on_activate, on_key_press);
         child_window.buffer = buffer;
-
         self.children.push(child_window);
 
         self.children.last_mut().unwrap()
@@ -69,7 +167,7 @@ impl Window {
         ncurses::wmove(self.curses_window, self.cursor.y, self.cursor.x);
     }
 
-    pub fn update(&mut self) {
+    pub fn queue_update(&mut self) {
         self.write_buffer();
 
         if !self.children.is_empty() {
@@ -91,6 +189,12 @@ impl Window {
         }
 
         ncurses::wnoutrefresh(self.curses_window);
+    }
+
+    pub fn refresh(&mut self) {
+        (self.on_activate)(self);
+        self.queue_update();
+        ncurses::doupdate();
     }
 
     pub fn write_at(&mut self, buffer: &Vec<String>, position: usize) {
@@ -124,109 +228,13 @@ impl Window {
 impl Render for Window {
     fn render(&mut self) {
         ncurses::wmove(self.curses_window, 0, 0);
-        ncurses::refresh();
+        self.refresh();
 
         let mut c: i32 = 0;
         while c != KEY_Q_LOWER {
-            self.update();
-            ncurses::doupdate();
+            (self.on_key_press)(self, c);
 
-            match c {
-                // cursor movement
-                /*
-                KEY_H_LOWER => {
-                    self.cursor.x = if self.cursor.x == 0 {
-                        self.cursor.x
-                    } else {
-                        self.cursor.x - 1
-                    };
-                    ncurses::wmove(self.curses_window, self.cursor.y, self.cursor.x);
-                }
-                */
-                KEY_J_LOWER => {
-                    self.cursor.y = if self.cursor.y == self.height {
-                        self.cursor.y
-                    } else {
-                        self.cursor.y + 1
-                    };
-                    ncurses::wmove(self.curses_window, self.cursor.y, self.cursor.x);
-                }
-                KEY_K_LOWER => {
-                    self.cursor.y = if self.cursor.y == 0 {
-                        0
-                    } else {
-                        self.cursor.y - 1
-                    };
-                    ncurses::wmove(self.curses_window, self.cursor.y, self.cursor.x);
-                }
-                /*
-                KEY_L_LOWER => {
-                    self.cursor.x = if self.cursor.x == self.width {
-                        self.cursor.x
-                    } else {
-                        self.cursor.x + 1
-                    };
-                    ncurses::wmove(self.curses_window, self.cursor.y, self.cursor.x);
-                }
-                */
-
-                KEY_ZERO => {
-                    self.cursor.x = 0;
-                    ncurses::wmove(self.curses_window, self.cursor.y, self.cursor.x);
-                }
-
-                KEY_DOLLAR => {
-                    let path_line = self.get_cursor_line();
-                    self.cursor.x = path_line.chars().count() as i32;
-
-                    ncurses::wmove(self.curses_window, self.cursor.y, self.cursor.x);
-                }
-
-                KEY_T_LOWER => {
-                    let path = &self.get_cursor_line()[3..];
-                    git::run_add_command(&path);
-                }
-
-                KEY_U_LOWER => {
-                    let path = &self.get_cursor_line()[3..];
-                    git::unstage_file(&path);
-                }
-
-                KEY_C_LOWER => {
-                    self.buffer.retain(|l| !l.is_empty());
-                }
-
-                KEY_Q_LOWER => {
-                    self.delete = true;
-                }
-
-                KEY_W_LOWER => {
-                    let line_number = self.cursor.y as usize;
-
-                    let path = &self.get_cursor_line()[3..];
-                    let diff_lines = git::run_diff_command(&path);
-
-                    self.write_at(&diff_lines, line_number);
-                    self.update();
-
-                    let child_position = Point {
-                        y: self.cursor.y + 1,
-                        x: 5,
-                    };
-                    let child: &mut Window = self.spawn_child(child_position, diff_lines);
-
-                    child.render();
-                }
-                _ => {}
-            }
-
-            self.update();
-
-            if !self.children.is_empty() {
-                display_children(&mut self.children);
-            }
-
-            ncurses::doupdate();
+            self.refresh();
 
             c = ncurses::wgetch(self.curses_window);
         }
@@ -238,15 +246,5 @@ impl git::GitRunner for Window {
         // TODO: need to somehow capture curses command to know
         // which git command to send
         self.buffer = git::run_status_command()
-    }
-}
-
-fn display_children(windows: &mut Vec<Window>) {
-    for (_, window) in windows.iter_mut().enumerate() {
-        if !window.children.is_empty() {
-            display_children(&mut window.children);
-        }
-
-        window.render()
     }
 }
