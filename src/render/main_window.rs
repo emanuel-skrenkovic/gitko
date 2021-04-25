@@ -44,7 +44,9 @@ pub fn on_activate(win: &mut Window) {
     status.push("Staged:".to_string());
     status.append(&mut staged_changes);
 
-    win.buffer = status;
+    let status_copy = status.clone();
+    // win.buffer = status;
+    win.value_buffer = status_copy;
 }
 
 pub fn on_key_press(win: &mut Window, c: i32) {
@@ -84,7 +86,6 @@ pub fn on_key_press(win: &mut Window, c: i32) {
             );
 
             child.move_cursor_down();
-
             child.render();
         }
 
@@ -105,7 +106,7 @@ pub fn on_key_press(win: &mut Window, c: i32) {
             let child: &mut Window = win.spawn_child(
                 Point {
                     y: win.cursor.y + 1,
-                    x: 5,
+                    x: 3,
                 },
                 diff_lines,
                 diff_window::on_activate,

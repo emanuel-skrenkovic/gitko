@@ -14,7 +14,7 @@ pub fn on_key_press(win: &mut Window, c: i32) {
                 return;
             }
 
-            win.buffer[1].pop();
+            win.value_buffer[1].pop();
             win.move_cursor_left();
         }
 
@@ -23,7 +23,7 @@ pub fn on_key_press(win: &mut Window, c: i32) {
                 return;
             }
 
-            win.buffer[1].push_str(ascii_to_char(c));
+            win.value_buffer[1].push_str(ascii_to_char(c));
             win.move_cursor_right();
         }
     }

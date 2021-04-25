@@ -1,5 +1,3 @@
-use crate::git::commands as git;
-use crate::git::GitRunner;
 use crate::num;
 use crate::render::ascii_table::*;
 use crate::render::color;
@@ -115,24 +113,27 @@ impl Window {
 
     pub fn move_cursor(&mut self, position: Point) {
         let max: i32 = self.value_buffer.len() as i32;
+        let above = position.y >= self.height && position.y <= max;
 
-        if position.y >= self.height && position.y <= max {
+        if above {
             self.start += 1;
         }
 
-        if position.y < 0 && self.start > 0 {
+        let below = position.y < 0 && self.start > 0;
+
+        if below {
             self.start -= 1;
         }
-
-        let end = num::clamp(self.height + self.start as i32, self.height, max) as usize;
 
         self.cursor = Point {
             x: num::clamp(position.x, 0, self.width),
             y: num::clamp(position.y, 0, self.height),
         };
-
-        self.buffer = self.value_buffer[self.start..end].to_vec();
         ncurses::wmove(self.curses_window, self.cursor.y, self.cursor.x);
+
+        if above || below {
+            self.set_buffer_to_position();
+        }
     }
 
     pub fn get_cursor_line(&self) -> &str {
@@ -166,28 +167,33 @@ impl Window {
         let width = max_width - position.x;
 
         let mut child_window = Window::new(position, height, width, on_activate, on_key_press);
-        child_window.buffer = buffer;
+        // child_window.buffer = buffer;
+        child_window.value_buffer = buffer;
         self.children.push(child_window);
 
         self.children.last_mut().unwrap()
     }
 
-    pub fn write_buffer(&self) {
+    pub fn set_buffer_to_position(&mut self) {
+        let max: i32 = self.value_buffer.len() as i32;
+        let end = num::clamp(self.height + self.start as i32, self.height, max) as usize;
+        self.buffer = self.value_buffer[self.start..end].to_vec();
+    }
+
+    pub fn write_buffer(&mut self) {
         ncurses::wclear(self.curses_window);
 
         for (_, line) in self.buffer.iter().enumerate() {
             self.apply_colors(&line);
             ncurses::waddch(self.curses_window, KEY_LF as u32);
-       }
+        }
 
+        // TODO: can't remember why this is here; check if needed
         ncurses::wmove(self.curses_window, self.cursor.y, self.cursor.x);
     }
 
     pub fn queue_update(&mut self) {
-        self.write_buffer();
-
         if !self.children.is_empty() {
-            // remove all the children marked for deletion
             for (_, child) in self
                 .children
                 .iter()
@@ -201,34 +207,26 @@ impl Window {
             self.children.retain(|c| !c.delete);
         }
 
+        self.write_buffer();
+
         ncurses::wnoutrefresh(self.curses_window);
     }
 
     pub fn refresh(&mut self) {
-        (self.on_activate)(self);
+        self.set_buffer_to_position();
         self.queue_update();
         ncurses::doupdate();
     }
 
     pub fn write_at(&mut self, buffer: &Vec<String>, position: usize) {
+        let mut before: Vec<String> = self.buffer[0..position + 1].to_vec();
+        let mut middle: Vec<String> = vec!["".to_string(); buffer.len()].to_vec();
+        let mut after: Vec<String> = self.buffer[position + 1..].to_vec();
+
         let mut new_buffer: Vec<String> = Vec::with_capacity(self.height as usize);
-
-        let mut before: Vec<String> = if position == 0 {
-            vec![self.buffer[0].clone()]
-        } else {
-            self.buffer[0..position + 1].to_vec()
-        };
-        let after = &self.buffer[position + 1..];
-
         new_buffer.append(&mut before);
-
-        for _ in 0..buffer.len() {
-            new_buffer.push("".to_string());
-        }
-
-        for (_, line) in after.iter().enumerate() {
-            new_buffer.push(line.to_string());
-        }
+        new_buffer.append(&mut middle);
+        new_buffer.append(&mut after);
 
         self.buffer = new_buffer;
     }
@@ -241,6 +239,9 @@ impl Window {
 impl Render for Window {
     fn render(&mut self) {
         ncurses::wmove(self.curses_window, 0, 0);
+
+        (self.on_activate)(self);
+
         self.refresh();
 
         let mut c: i32 = 0;
@@ -279,13 +280,5 @@ impl ColoredWindow for Window {
         } else {
             ncurses::waddstr(self.curses_window, line);
         }
-    }
-}
-
-impl GitRunner for Window {
-    fn run_git_command(&mut self) {
-        // TODO: need to somehow capture curses command to know
-        // which git command to send
-        self.buffer = git::status()
     }
 }
