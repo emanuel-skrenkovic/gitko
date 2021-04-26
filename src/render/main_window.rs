@@ -20,7 +20,7 @@ pub fn on_activate(win: &mut Window) {
     let mut deleted: Vec<String> = git_status
         .iter()
         .cloned()
-        .filter(|c| c.starts_with("D"))
+        .filter(|c| c.starts_with(" D"))
         .collect();
 
     let mut unstaged: Vec<String> = git_status
@@ -32,7 +32,7 @@ pub fn on_activate(win: &mut Window) {
     let mut staged: Vec<String> = git_status
         .iter()
         .cloned()
-        .filter(|c| c.starts_with("M") || c.starts_with("A"))
+        .filter(|c| c.starts_with("M") || c.starts_with("A") || c.starts_with("D"))
         .collect();
 
     let mut status: Vec<String> = vec![];
