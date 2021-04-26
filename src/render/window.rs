@@ -1,9 +1,10 @@
 use crate::num;
 use crate::render::ascii_table::*;
-use crate::render::color;
-use crate::render::color::ColoredWindow;
 use crate::render::Point;
 use crate::render::Render;
+
+pub const GREEN_TEXT_PAIR: i16 = 1;
+pub const RED_TEXT_PAIR: i16 = 2;
 
 use ncurses;
 
@@ -41,12 +42,12 @@ impl Window {
         ncurses::start_color();
 
         ncurses::init_pair(
-            color::GREEN_TEXT_PAIR,
+            GREEN_TEXT_PAIR,
             ncurses::COLOR_GREEN,
             ncurses::COLOR_BLACK,
         );
         ncurses::init_pair(
-            color::RED_TEXT_PAIR,
+            RED_TEXT_PAIR,
             ncurses::COLOR_RED,
             ncurses::COLOR_BLACK,
         );
@@ -181,8 +182,31 @@ impl Window {
     pub fn write_buffer(&mut self) {
         ncurses::wclear(self.curses_window);
 
+        // applies colors as well
         for (_, line) in self.buffer.iter().enumerate() {
-            self.apply_colors(&line);
+            if line.starts_with("+") {
+                ncurses::wattron(
+                    self.curses_window,
+                    ncurses::COLOR_PAIR(GREEN_TEXT_PAIR),
+                );
+                ncurses::waddstr(self.curses_window, line);
+                ncurses::wattroff(
+                    self.curses_window,
+                    ncurses::COLOR_PAIR(GREEN_TEXT_PAIR),
+                );
+            } else if line.starts_with("-") {
+                ncurses::wattron(
+                    self.curses_window,
+                    ncurses::COLOR_PAIR(RED_TEXT_PAIR),
+                );
+                ncurses::waddstr(self.curses_window, line);
+                ncurses::wattroff(
+                    self.curses_window,
+                    ncurses::COLOR_PAIR(RED_TEXT_PAIR),
+                );
+            } else {
+                ncurses::waddstr(self.curses_window, line);
+            }
             ncurses::waddch(self.curses_window, KEY_LF as u32);
         }
 
@@ -249,34 +273,6 @@ impl Render for Window {
             self.refresh();
 
             c = ncurses::wgetch(self.curses_window);
-        }
-    }
-}
-
-impl ColoredWindow for Window {
-    fn apply_colors(&self, line: &str) {
-        if line.starts_with("+") {
-            ncurses::wattron(
-                self.curses_window,
-                ncurses::COLOR_PAIR(color::GREEN_TEXT_PAIR),
-            );
-            ncurses::waddstr(self.curses_window, line);
-            ncurses::wattroff(
-                self.curses_window,
-                ncurses::COLOR_PAIR(color::GREEN_TEXT_PAIR),
-            );
-        } else if line.starts_with("-") {
-            ncurses::wattron(
-                self.curses_window,
-                ncurses::COLOR_PAIR(color::RED_TEXT_PAIR),
-            );
-            ncurses::waddstr(self.curses_window, line);
-            ncurses::wattroff(
-                self.curses_window,
-                ncurses::COLOR_PAIR(color::RED_TEXT_PAIR),
-            );
-        } else {
-            ncurses::waddstr(self.curses_window, line);
         }
     }
 }

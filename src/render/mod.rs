@@ -1,5 +1,4 @@
 pub mod ascii_table;
-pub mod color;
 pub mod commit_window;
 pub mod diff_window;
 pub mod main_window;
