@@ -106,7 +106,12 @@ pub fn on_key_press(win: &mut Window, c: i32) {
 
             let child: &mut Window = win.spawn_child(
                 Point { x: 0, y: 0 },
-                vec!["Commit message below:".to_string(), "".to_string()],
+                vec![
+                    "Commit message below:".to_string(),
+                    "".to_string(),
+                    "".to_string(),
+                    "".to_string(),
+                ],
                 commit_window::on_activate,
                 commit_window::on_key_press,
             );

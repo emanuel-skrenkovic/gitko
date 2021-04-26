@@ -9,6 +9,10 @@ pub fn on_key_press(win: &mut Window, c: i32) {
         KEY_LF => {
             if !win.value_buffer.is_empty() {
                 git::commit(&win.value_buffer[1]);
+
+                let notification_message =
+                    format!("Commited with message: {}", &win.value_buffer[1]);
+                win.value_buffer[3].push_str(&notification_message);
             }
         }
 

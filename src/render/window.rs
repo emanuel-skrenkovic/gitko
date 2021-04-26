@@ -41,16 +41,8 @@ impl Window {
 
         ncurses::start_color();
 
-        ncurses::init_pair(
-            GREEN_TEXT_PAIR,
-            ncurses::COLOR_GREEN,
-            ncurses::COLOR_BLACK,
-        );
-        ncurses::init_pair(
-            RED_TEXT_PAIR,
-            ncurses::COLOR_RED,
-            ncurses::COLOR_BLACK,
-        );
+        ncurses::init_pair(GREEN_TEXT_PAIR, ncurses::COLOR_GREEN, ncurses::COLOR_BLACK);
+        ncurses::init_pair(RED_TEXT_PAIR, ncurses::COLOR_RED, ncurses::COLOR_BLACK);
 
         ncurses::box_(curses_window, 0, 0);
         ncurses::wrefresh(curses_window);
@@ -155,7 +147,6 @@ impl Window {
         on_activate: fn(win: &mut Window),
         on_key_press: fn(win: &mut Window, c: i32),
     ) -> &mut Window {
-
         let mut max_height = 0;
         let mut max_width = 0;
 
@@ -185,25 +176,13 @@ impl Window {
         // applies colors as well
         for (_, line) in self.buffer.iter().enumerate() {
             if line.starts_with("+") {
-                ncurses::wattron(
-                    self.curses_window,
-                    ncurses::COLOR_PAIR(GREEN_TEXT_PAIR),
-                );
+                ncurses::wattron(self.curses_window, ncurses::COLOR_PAIR(GREEN_TEXT_PAIR));
                 ncurses::waddstr(self.curses_window, line);
-                ncurses::wattroff(
-                    self.curses_window,
-                    ncurses::COLOR_PAIR(GREEN_TEXT_PAIR),
-                );
+                ncurses::wattroff(self.curses_window, ncurses::COLOR_PAIR(GREEN_TEXT_PAIR));
             } else if line.starts_with("-") {
-                ncurses::wattron(
-                    self.curses_window,
-                    ncurses::COLOR_PAIR(RED_TEXT_PAIR),
-                );
+                ncurses::wattron(self.curses_window, ncurses::COLOR_PAIR(RED_TEXT_PAIR));
                 ncurses::waddstr(self.curses_window, line);
-                ncurses::wattroff(
-                    self.curses_window,
-                    ncurses::COLOR_PAIR(RED_TEXT_PAIR),
-                );
+                ncurses::wattroff(self.curses_window, ncurses::COLOR_PAIR(RED_TEXT_PAIR));
             } else {
                 ncurses::waddstr(self.curses_window, line);
             }
