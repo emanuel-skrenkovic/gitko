@@ -11,41 +11,63 @@ use crate::render::Render;
 pub fn on_activate(win: &mut Window) {
     let git_status: Vec<String> = git::status();
 
-    let mut new_changes: Vec<String> = git_status
+    let mut added: Vec<String> = git_status
         .iter()
         .cloned()
         .filter(|c| c.starts_with("??"))
         .collect();
 
-    let mut unstaged_changes: Vec<String> = git_status
+    let mut deleted: Vec<String> = git_status
         .iter()
         .cloned()
-        .filter(|c| c.starts_with(" M"))
+        .filter(|c| c.starts_with("D"))
         .collect();
 
-    let mut staged_changes: Vec<String> = git_status
+    let mut unstaged: Vec<String> = git_status
         .iter()
         .cloned()
-        .filter(|c| c.starts_with("M ") || c.starts_with("A "))
+        .filter(|c| c.starts_with(" M") || c.starts_with("MM"))
+        .collect();
+
+    let mut staged: Vec<String> = git_status
+        .iter()
+        .cloned()
+        .filter(|c| c.starts_with("M") || c.starts_with("A"))
         .collect();
 
     let mut status: Vec<String> = vec![];
 
-    status.push("New:".to_string());
-    status.append(&mut new_changes);
+    if !added.is_empty() {
+        status.push("Added:".to_string());
+        status.append(&mut added);
 
-    status.push("".to_string());
+        status.push("".to_string());
+    }
 
-    status.push("Modified:".to_string());
-    status.append(&mut unstaged_changes);
+    if !deleted.is_empty() {
+        status.push("Deleted:".to_string());
+        status.append(&mut deleted);
 
-    status.push("".to_string());
+        status.push("".to_string());
+    }
 
-    status.push("Staged:".to_string());
-    status.append(&mut staged_changes);
+    if !unstaged.is_empty() {
+        status.push("Modified:".to_string());
+        status.append(&mut unstaged);
+
+        status.push("".to_string());
+    }
+
+    if !staged.is_empty() {
+        status.push("Staged:".to_string());
+        status.append(&mut staged);
+    }
+
+    if status.is_empty() {
+        status.push("No changes found.".to_string());
+    }
 
     let status_copy = status.clone();
-    // win.buffer = status;
     win.value_buffer = status_copy;
 }
 

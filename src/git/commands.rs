@@ -3,11 +3,7 @@ pub fn status() -> Vec<String> {
 }
 
 pub fn diff_file(path: &str) -> Vec<String> {
-    run(vec![
-        "--no-pager",
-        "diff",
-        path,
-    ])
+    run(vec!["--no-pager", "diff", path])
 }
 
 pub fn add_file(path: &str) {
@@ -15,11 +11,7 @@ pub fn add_file(path: &str) {
 }
 
 pub fn unstage_file(path: &str) {
-    run(vec![
-        "restore",
-        "--staged",
-        path,
-    ]);
+    run(vec!["restore", "--staged", path]);
 }
 
 pub fn commit(message: &str) {

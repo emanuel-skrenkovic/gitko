@@ -154,8 +154,6 @@ impl Window {
         on_activate: fn(win: &mut Window),
         on_key_press: fn(win: &mut Window, c: i32),
     ) -> &mut Window {
-        let height = buffer.len() as i32;
-        // let width = buffer.iter().map(|x| x.len()).max().unwrap_or_default() as i32;
 
         let mut max_height = 0;
         let mut max_width = 0;
@@ -163,11 +161,12 @@ impl Window {
         // TODO: read about what this actually does
         ncurses::getmaxyx(self.curses_window, &mut max_height, &mut max_width);
 
-        // let height = max_height - position.y;
+        let height = buffer.len() as i32;
         let width = max_width - position.x;
 
         let mut child_window = Window::new(position, height, width, on_activate, on_key_press);
         child_window.value_buffer = buffer;
+
         self.children.push(child_window);
 
         self.children.last_mut().unwrap()
