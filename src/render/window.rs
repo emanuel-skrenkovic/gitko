@@ -174,7 +174,7 @@ impl Window {
         ncurses::wclear(self.curses_window);
 
         // applies colors as well
-        for (_, line) in self.buffer.iter().enumerate() {
+        for line in self.buffer.iter() {
             if line.starts_with("+") {
                 ncurses::wattron(self.curses_window, ncurses::COLOR_PAIR(GREEN_TEXT_PAIR));
                 ncurses::waddstr(self.curses_window, line);
@@ -195,11 +195,10 @@ impl Window {
 
     pub fn queue_update(&mut self) {
         if !self.children.is_empty() {
-            for (_, child) in self
+            for child in self
                 .children
                 .iter()
                 .filter(|&child| child.delete)
-                .enumerate()
             {
                 child.close(); // frees the resources used by ncurses
             }
