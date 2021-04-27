@@ -2,6 +2,7 @@ use std::path::Path;
 
 use crate::git::commands as git;
 use crate::render::ascii_table::*;
+use crate::render::log_window;
 use crate::render::commit_window;
 use crate::render::diff_window;
 use crate::render::window::Window;
@@ -11,6 +12,8 @@ use crate::render::Render;
 pub fn on_activate(win: &mut Window) {
     let git_status: Vec<String> = git::status();
 
+    // TODO: lists folders instead of all files in the newly
+    // added folder
     let mut added: Vec<String> = git_status
         .iter()
         .cloned()
@@ -80,6 +83,20 @@ pub fn on_key_press(win: &mut Window, c: i32) {
 
         KEY_K_LOWER => {
             win.move_cursor_up();
+        }
+
+        KEY_L_LOWER => {
+            win.buffer = vec![];
+            win.queue_update();
+
+            let child: &mut Window = win.spawn_child(
+                Point { x: 0, y: 0 },
+                git::log(),
+                log_window::on_activate,
+                log_window::on_key_press,
+            );
+
+            child.render();
         }
 
         KEY_T_LOWER => {

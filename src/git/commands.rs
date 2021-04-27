@@ -18,6 +18,16 @@ pub fn commit(message: &str) {
     run(vec!["commit", "-m", message]);
 }
 
+pub fn log() -> Vec<String> {
+    run(vec![
+        "--no-pager",
+        "log",
+        "--graph",
+        "--oneline",
+        "--decorate",
+    ])
+}
+
 fn run(args: Vec<&str>) -> Vec<String> {
     let output = std::process::Command::new("git")
         .args(args)
