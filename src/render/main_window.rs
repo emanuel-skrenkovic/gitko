@@ -16,26 +16,26 @@ pub fn on_activate(win: &mut Window) {
     // added folder
     let mut added: Vec<String> = git_status
         .iter()
-        .cloned()
         .filter(|c| c.starts_with("??"))
+        .cloned()
         .collect();
 
     let mut deleted: Vec<String> = git_status
         .iter()
-        .cloned()
         .filter(|c| c.starts_with(" D"))
+        .cloned()
         .collect();
 
     let mut unstaged: Vec<String> = git_status
         .iter()
-        .cloned()
         .filter(|c| c.starts_with(" M") || c.starts_with("MM"))
+        .cloned()
         .collect();
 
     let mut staged: Vec<String> = git_status
         .iter()
-        .cloned()
         .filter(|c| c.starts_with("M") || c.starts_with("A") || c.starts_with("D"))
+        .cloned()
         .collect();
 
     let mut status: Vec<String> = vec![];
