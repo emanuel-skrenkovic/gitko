@@ -4,10 +4,13 @@ use crate::render::Point;
 
 pub fn on_activate(_win: &mut Window) {}
 
-pub fn on_key_press(win: &mut Window, c:i32) {
+pub fn on_key_press(win: &mut Window, c: i32) {
     match c {
         KEY_J_LOWER => {
-            win.move_cursor(Point { x: 0, y: win.height });
+            win.move_cursor(Point {
+                x: 0,
+                y: win.height,
+            });
             win.move_cursor_down();
         }
 
@@ -17,7 +20,7 @@ pub fn on_key_press(win: &mut Window, c:i32) {
         }
 
         KEY_Q_LOWER => {
-            win.delete = true;
+            win.marked_for_delete = true;
         }
 
         _ => {}

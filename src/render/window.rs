@@ -3,30 +3,36 @@ use crate::render::ascii_table::*;
 use crate::render::Point;
 use crate::render::Render;
 
-pub const GREEN_TEXT_PAIR: i16 = 1;
-pub const RED_TEXT_PAIR: i16 = 2;
+use std::convert::TryInto;
 
 use ncurses;
 
+pub struct ColorRule {
+    pub foreground: i16,
+    pub background: i16,
+    pub rule: fn(&str) -> bool,
+}
+
 pub struct Window {
+    pub start: usize,
     pub height: i32,
     pub width: i32,
 
     pub cursor: Point,
 
-    pub curses_window: ncurses::WINDOW,
-
-    pub start: usize,
-
-    pub value_buffer: Vec<String>,
-
-    pub buffer: Vec<String>,
-    pub children: Vec<Window>,
-
-    pub delete: bool,
+    pub marked_for_delete: bool,
 
     pub on_activate: fn(win: &mut Window),
     pub on_key_press: fn(win: &mut Window, c: i32),
+
+    pub color_rules: Vec<ColorRule>,
+
+    value_buffer: Vec<String>,
+    buffer: Vec<String>,
+
+    children: Vec<Window>,
+
+    curses_window: ncurses::WINDOW,
 }
 
 impl Window {
@@ -41,31 +47,66 @@ impl Window {
 
         ncurses::start_color();
 
-        ncurses::init_pair(GREEN_TEXT_PAIR, ncurses::COLOR_GREEN, ncurses::COLOR_BLACK);
-        ncurses::init_pair(RED_TEXT_PAIR, ncurses::COLOR_RED, ncurses::COLOR_BLACK);
-
-        ncurses::box_(curses_window, 0, 0);
+        ncurses::wmove(curses_window, 0, 0);
         ncurses::wrefresh(curses_window);
 
+
         Window {
+            start: 0,
             height: height,
             width: width,
 
             cursor: Point { x: 0, y: 0 },
 
-            curses_window: curses_window,
+            marked_for_delete: false,
 
-            start: 0,
+            color_rules: vec![],
 
             value_buffer: vec![],
             buffer: vec![],
-            children: vec![],
 
             on_activate: on_activate,
             on_key_press: on_key_press,
 
-            delete: false,
+            children: vec![],
+
+            curses_window: curses_window,
         }
+    }
+
+    pub fn apply_color_rules(&mut self, color_rules: Vec<ColorRule>) {
+        self.color_rules = color_rules;
+
+        for (i, color_rule) in self.color_rules.iter().enumerate() {
+            ncurses::init_pair((i + 1) as i16, color_rule.foreground, color_rule.background);
+        }
+    }
+
+    pub fn set_value(&mut self, value: Vec<String>) {
+        self.value_buffer = value;
+    }
+
+    pub fn get_value(&self) -> &Vec<String> {
+        &self.value_buffer
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.get_value().is_empty()
+    }
+
+    pub fn update_value_at(&mut self, index: usize, new_value: String) {
+        assert!(index < self.value_buffer.len());
+        self.value_buffer[index] = new_value;
+    }
+
+    pub fn value_at(&self, index: usize) -> String {
+        assert!(index < self.get_value().len());
+        self.buffer[index].clone()
+    }
+
+    pub fn line_at(&self, line_number: usize) -> String {
+        assert!(line_number < self.height.try_into().unwrap());
+        self.buffer[line_number].clone()
     }
 
     pub fn move_cursor_up(&mut self) {
@@ -105,7 +146,7 @@ impl Window {
     }
 
     pub fn move_cursor(&mut self, position: Point) {
-        let max: i32 = self.value_buffer.len() as i32;
+        let max: i32 = self.get_value().len() as i32;
         let above = position.y >= self.height && position.y <= max;
 
         if above {
@@ -118,14 +159,18 @@ impl Window {
             self.start -= 1;
         }
 
-        self.cursor = Point {
-            x: num::clamp(position.x, 0, self.width),
-            y: num::clamp(position.y, 0, self.height),
-        };
-        ncurses::wmove(self.curses_window, self.cursor.y, self.cursor.x);
+        // TODO: works better without this if for some ungodly reason.
+        if position.y < max {
+            self.cursor = Point {
+                x: num::clamp(position.x, 0, self.width),
+                y: num::clamp(position.y, 0, self.height),
+            };
 
-        if above || below {
-            self.set_buffer_to_position();
+            ncurses::wmove(self.curses_window, self.cursor.y, self.cursor.x);
+
+            if above || below {
+                self.set_buffer_to_position();
+            }
         }
     }
 
@@ -157,7 +202,7 @@ impl Window {
         let width = max_width - position.x;
 
         let mut child_window = Window::new(position, height, width, on_activate, on_key_press);
-        child_window.value_buffer = buffer;
+        child_window.set_value(buffer);
 
         self.children.push(child_window);
 
@@ -165,32 +210,47 @@ impl Window {
     }
 
     pub fn set_buffer_to_position(&mut self) {
-        let max: i32 = self.value_buffer.len() as i32;
+        let max: i32 = self.get_value().len() as i32;
         let end = num::clamp(self.height + self.start as i32, self.height, max) as usize;
-        self.buffer = self.value_buffer[self.start..end].to_vec();
+        self.buffer = self.get_value()[self.start..end].to_vec();
+    }
+
+    pub fn clear_buffer(&mut self) {
+        self.buffer = Vec::with_capacity(self.height as usize);
     }
 
     pub fn write_buffer(&mut self) {
         ncurses::wclear(self.curses_window);
 
-        // applies colors as well
         for line in self.buffer.iter() {
-            if line.starts_with("+") {
-                ncurses::wattron(self.curses_window, ncurses::COLOR_PAIR(GREEN_TEXT_PAIR));
-                ncurses::waddstr(self.curses_window, line);
-                ncurses::wattroff(self.curses_window, ncurses::COLOR_PAIR(GREEN_TEXT_PAIR));
-            } else if line.starts_with("-") {
-                ncurses::wattron(self.curses_window, ncurses::COLOR_PAIR(RED_TEXT_PAIR));
-                ncurses::waddstr(self.curses_window, line);
-                ncurses::wattroff(self.curses_window, ncurses::COLOR_PAIR(RED_TEXT_PAIR));
-            } else {
-                ncurses::waddstr(self.curses_window, line);
-            }
-            ncurses::waddch(self.curses_window, KEY_LF as u32);
+            self.write_line(line);
         }
 
-        // TODO: can't remember why this is here; check if needed
+        // Needs to be here because of the clear above.
         ncurses::wmove(self.curses_window, self.cursor.y, self.cursor.x);
+    }
+
+    pub fn write_line(&self, line: &str) {
+        let has_colors = !self.color_rules.is_empty();
+
+        if has_colors {
+            for (i, color_rule) in self.color_rules.iter().enumerate() {
+                if (color_rule.rule)(line) {
+                    ncurses::wattron(self.curses_window, ncurses::COLOR_PAIR((i + 1) as i16));
+                }
+            }
+        }
+
+        ncurses::waddstr(self.curses_window, line);
+        ncurses::waddch(self.curses_window, KEY_LF as u32);
+
+        if has_colors {
+            for (i, color_rule) in self.color_rules.iter().enumerate() {
+                if (color_rule.rule)(line) {
+                    ncurses::wattroff(self.curses_window, ncurses::COLOR_PAIR((i + 1) as i16));
+                }
+            }
+        }
     }
 
     pub fn queue_update(&mut self) {
@@ -198,15 +258,15 @@ impl Window {
             for child in self
                 .children
                 .iter()
-                .filter(|&child| child.delete)
+                .filter(|&child| child.marked_for_delete)
             {
                 child.close(); // frees the resources used by ncurses
             }
 
             // remove the deleted windows from children vec
-            self.children.retain(|c| !c.delete);
+            self.children.retain(|c| !c.marked_for_delete);
         }
-
+;
         self.write_buffer();
 
         ncurses::wnoutrefresh(self.curses_window);
@@ -215,6 +275,7 @@ impl Window {
     pub fn refresh(&mut self) {
         self.set_buffer_to_position();
         self.queue_update();
+
         ncurses::doupdate();
     }
 

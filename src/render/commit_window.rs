@@ -7,12 +7,11 @@ pub fn on_activate(_win: &mut Window) {}
 pub fn on_key_press(win: &mut Window, c: i32) {
     match c {
         KEY_LF => {
-            if !win.value_buffer.is_empty() {
-                git::commit(&win.value_buffer[1]);
+            if !win.is_empty() {
+                git::commit(&win.line_at(1));
 
-                let notification_message =
-                    format!("Commited with message: {}", &win.value_buffer[1]);
-                win.value_buffer[3].push_str(&notification_message);
+                let notification_message = format!("Commited with message: {}", &win.line_at(1));
+                win.update_value_at(3, notification_message);
             }
         }
 
@@ -21,7 +20,7 @@ pub fn on_key_press(win: &mut Window, c: i32) {
                 return;
             }
 
-            win.value_buffer[1].pop();
+            win.value_at(1).pop();
             win.move_cursor_left();
         }
 
@@ -30,7 +29,10 @@ pub fn on_key_press(win: &mut Window, c: i32) {
                 return;
             }
 
-            win.value_buffer[1].push_str(ascii_to_char(c));
+            let mut new_value = win.value_at(1);
+            new_value.push_str(ascii_to_char(c));
+
+            win.update_value_at(1, new_value);
             win.move_cursor_right();
         }
     }

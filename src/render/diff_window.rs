@@ -1,8 +1,33 @@
 use crate::render::ascii_table::*;
+use crate::render::window::ColorRule;
 use crate::render::window::Window;
 use crate::render::Point;
 
-pub fn on_activate(_win: &mut Window) {
+use ncurses;
+
+fn added_change_color_rule(line: &str) -> bool {
+    line.starts_with("+")
+}
+
+fn removed_change_color_rule(line: &str) -> bool {
+    line.starts_with("-")
+}
+
+pub fn on_activate(win: &mut Window) {
+    win.apply_color_rules(vec![
+        ColorRule {
+            foreground: ncurses::COLOR_RED,
+            background: ncurses::COLOR_BLACK,
+            rule: removed_change_color_rule,
+        },
+        ColorRule {
+            foreground: ncurses::COLOR_GREEN,
+            background: ncurses::COLOR_BLACK,
+            rule: added_change_color_rule,
+        },
+    ]);
+
+    // TODO: make cursor invisible. Currently stays invisible after exit
     // ncurses::curs_set(ncurses::CURSOR_VISIBILITY::CURSOR_INVISIBLE);
 }
 
@@ -23,7 +48,7 @@ pub fn on_key_press(win: &mut Window, c: i32) {
 
         KEY_Q_LOWER => {
             // ncurses::curs_set(ncurses::CURSOR_VISIBILITY::CURSOR_VISIBLE);
-            win.delete = true;
+            win.marked_for_delete = true;
         }
 
         _ => {}

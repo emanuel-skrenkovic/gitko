@@ -2,9 +2,9 @@ use std::path::Path;
 
 use crate::git::commands as git;
 use crate::render::ascii_table::*;
-use crate::render::log_window;
 use crate::render::commit_window;
 use crate::render::diff_window;
+use crate::render::log_window;
 use crate::render::window::Window;
 use crate::render::Point;
 use crate::render::Render;
@@ -70,8 +70,9 @@ pub fn on_activate(win: &mut Window) {
         status.push("No changes found.".to_string());
     }
 
-    let status_copy = status.clone();
-    win.value_buffer = status_copy;
+    // TODO: recent commits
+
+    win.set_value(status);
 }
 
 pub fn on_key_press(win: &mut Window, c: i32) {
@@ -86,7 +87,7 @@ pub fn on_key_press(win: &mut Window, c: i32) {
         }
 
         KEY_L_LOWER => {
-            win.buffer = vec![];
+            win.clear_buffer();
             win.queue_update();
 
             let child: &mut Window = win.spawn_child(
@@ -114,11 +115,11 @@ pub fn on_key_press(win: &mut Window, c: i32) {
         }
 
         KEY_Q_LOWER => {
-            win.delete = true;
+            win.marked_for_delete = true;
         }
 
         KEY_C_LOWER => {
-            win.buffer = vec![];
+            win.clear_buffer();
             win.queue_update();
 
             let child: &mut Window = win.spawn_child(
@@ -161,7 +162,7 @@ pub fn on_key_press(win: &mut Window, c: i32) {
                 diff_window::on_key_press,
             );
 
-            child.value_buffer = copy;
+            child.set_value(copy);
             child.render();
         }
         _ => {}
