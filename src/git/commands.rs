@@ -18,14 +18,17 @@ pub fn commit(message: &str) {
     run(vec!["commit", "-m", message]);
 }
 
-pub fn log() -> Vec<String> {
-    run(vec![
-        "--no-pager",
-        "log",
-        "--graph",
-        "--oneline",
-        "--decorate",
-    ])
+pub fn log(max_count: Option<u32>) -> Vec<String> {
+    let mut args = vec!["--no-pager", "log", "--graph", "--oneline", "--decorate"];
+
+    let max_count_arg;
+
+    if let Some(max) = max_count {
+        max_count_arg = format!("--max-count={}", max);
+        args.push(&max_count_arg);
+    }
+
+    run(args)
 }
 
 fn run(args: Vec<&str>) -> Vec<String> {

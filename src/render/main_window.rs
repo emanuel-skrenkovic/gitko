@@ -38,6 +38,8 @@ pub fn on_activate(win: &mut Window) {
         .cloned()
         .collect();
 
+    let mut recent_commits: Vec<String> = git::log(Some(10));
+
     let mut status: Vec<String> = vec![];
 
     if !added.is_empty() {
@@ -66,11 +68,15 @@ pub fn on_activate(win: &mut Window) {
         status.append(&mut staged);
     }
 
+    if !recent_commits.is_empty() {
+        status.append(&mut vec!["".to_string(); 5]);
+        status.push("Recent commits:".to_string());
+        status.append(&mut recent_commits);
+    }
+
     if status.is_empty() {
         status.push("No changes found.".to_string());
     }
-
-    // TODO: recent commits
 
     win.set_value(status);
 }
@@ -92,7 +98,7 @@ pub fn on_key_press(win: &mut Window, c: i32) {
 
             let child: &mut Window = win.spawn_child(
                 Point { x: 0, y: 0 },
-                git::log(),
+                git::log(None),
                 log_window::on_activate,
                 log_window::on_key_press,
             );

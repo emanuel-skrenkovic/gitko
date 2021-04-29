@@ -50,7 +50,6 @@ impl Window {
         ncurses::wmove(curses_window, 0, 0);
         ncurses::wrefresh(curses_window);
 
-
         Window {
             start: 0,
             height: height,
@@ -266,7 +265,7 @@ impl Window {
             // remove the deleted windows from children vec
             self.children.retain(|c| !c.marked_for_delete);
         }
-;
+
         self.write_buffer();
 
         ncurses::wnoutrefresh(self.curses_window);
