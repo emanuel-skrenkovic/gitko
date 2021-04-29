@@ -2,8 +2,7 @@ use crate::render::ascii_table::*;
 use crate::render::window::ColorRule;
 use crate::render::window::Window;
 use crate::render::Point;
-
-use ncurses;
+use crate::render::color;
 
 fn added_change_color_rule(line: &str) -> bool {
     line.starts_with("+")
@@ -16,13 +15,13 @@ fn removed_change_color_rule(line: &str) -> bool {
 pub fn on_activate(win: &mut Window) {
     win.apply_color_rules(vec![
         ColorRule {
-            foreground: ncurses::COLOR_RED,
-            background: ncurses::COLOR_BLACK,
+            foreground: color::RED,
+            background: color::BLACK,
             rule: removed_change_color_rule,
         },
         ColorRule {
-            foreground: ncurses::COLOR_GREEN,
-            background: ncurses::COLOR_BLACK,
+            foreground: color::GREEN,
+            background: color::BLACK,
             rule: added_change_color_rule,
         },
     ]);

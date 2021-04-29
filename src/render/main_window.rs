@@ -144,7 +144,7 @@ pub fn on_key_press(win: &mut Window, c: i32) {
             child.render();
         }
 
-        KEY_W_LOWER => {
+        KEY_LF => {
             let path = &win.get_cursor_line()[3..];
 
             if path.is_empty() || !Path::new(path).exists() {

@@ -279,13 +279,15 @@ impl Window {
     }
 
     pub fn write_at(&mut self, buffer: &Vec<String>, position: usize) {
-        let mut before: Vec<String> = self.buffer[0..position + 1].to_vec();
-        let mut middle: Vec<String> = vec!["".to_string(); buffer.len()].to_vec();
-        let mut after: Vec<String> = self.buffer[position + 1..].to_vec();
-
         let mut new_buffer: Vec<String> = Vec::with_capacity(self.height as usize);
+
+        let mut before: Vec<String> = self.buffer[0..position + 1].to_vec();
         new_buffer.append(&mut before);
+
+        let mut middle: Vec<String> = vec!["".to_string(); buffer.len()].to_vec();
         new_buffer.append(&mut middle);
+
+        let mut after: Vec<String> = self.buffer[position + 1..].to_vec();
         new_buffer.append(&mut after);
 
         self.buffer = new_buffer;
