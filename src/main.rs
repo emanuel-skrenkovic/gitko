@@ -2,8 +2,9 @@ mod git;
 mod num;
 mod render;
 
+use crate::render::renderer::Renderer;
 use crate::render::Render;
 
 fn main() {
-    render::renderer::Renderer::new(800, 600).render();
+    Renderer::new(800, 600).render();
 }

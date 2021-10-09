@@ -1,12 +1,10 @@
 use crate::render::main_window;
-use crate::render::window;
+use crate::render::window::Window;
 use crate::render::Point;
 use crate::render::Render;
 
-use ncurses;
-
 pub struct Renderer {
-    main_window: window::Window,
+    main_window: Window,
 }
 
 impl Drop for Renderer {
@@ -16,7 +14,7 @@ impl Drop for Renderer {
 }
 
 impl Render for Renderer {
-    fn render(&mut self) {
+    fn render(&mut self){
         // do initial refresh on entire ncurses
         ncurses::refresh();
 
@@ -32,14 +30,14 @@ impl Renderer {
         ncurses::keypad(ncurses::stdscr(), true);
         ncurses::noecho();
 
-        Renderer {
-            main_window: window::Window::new(
-                Point { y: 0, x: 0 },
-                height,
-                width,
-                main_window::on_activate,
-                main_window::on_key_press,
-            ),
-        }
+        let mut main_window = Window::new(
+            height,
+            width,
+            main_window::on_activate,
+            main_window::on_key_press,
+        );
+        main_window.position(Point { x: 0, y: 0 });
+
+        Renderer { main_window }
     }
 }

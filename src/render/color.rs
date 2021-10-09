@@ -1,7 +1,5 @@
 #![allow(dead_code)]
 
-use ncurses;
-
 pub const BLACK: i16 = ncurses::COLOR_BLACK;
 pub const RED: i16 = ncurses::COLOR_RED;
 pub const GREEN: i16 = ncurses::COLOR_GREEN;

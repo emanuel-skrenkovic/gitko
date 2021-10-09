@@ -34,7 +34,7 @@ pub fn on_activate(win: &mut Window) {
 
     let mut staged: Vec<String> = git_status
         .iter()
-        .filter(|c| c.starts_with("M") || c.starts_with("A") || c.starts_with("D"))
+        .filter(|c| c.starts_with('M') || c.starts_with('A') || c.starts_with('D'))
         .cloned()
         .collect();
 
@@ -43,28 +43,28 @@ pub fn on_activate(win: &mut Window) {
     let mut status: Vec<String> = vec![];
 
     if !added.is_empty() {
-        status.push("Added:".to_string());
+        status.push("Untracked files:".to_string());
         status.append(&mut added);
 
         status.push("".to_string());
     }
 
     if !deleted.is_empty() {
-        status.push("Deleted:".to_string());
+        status.push("Deleted files:".to_string());
         status.append(&mut deleted);
 
         status.push("".to_string());
     }
 
     if !unstaged.is_empty() {
-        status.push("Modified:".to_string());
+        status.push("Modified files:".to_string());
         status.append(&mut unstaged);
 
         status.push("".to_string());
     }
 
     if !staged.is_empty() {
-        status.push("Staged:".to_string());
+        status.push("Staged files:".to_string());
         status.append(&mut staged);
     }
 
@@ -96,12 +96,12 @@ pub fn on_key_press(win: &mut Window, c: i32) {
             win.clear_buffer();
             win.queue_update();
 
-            let child: &mut Window = win.spawn_child(
-                Point { x: 0, y: 0 },
+            let child = win.spawn_child(
                 git::log(None),
                 log_window::on_activate,
                 log_window::on_key_press,
             );
+            child.position(Point { x: 0, y: 0 });
 
             child.render();
         }
@@ -110,14 +110,14 @@ pub fn on_key_press(win: &mut Window, c: i32) {
             let path = &win.get_cursor_line()[3..];
             git::add_file(&path);
 
-            (win.on_activate)(win);
+            win.on_activate();
         }
 
         KEY_U_LOWER => {
             let path = &win.get_cursor_line()[3..];
             git::unstage_file(&path);
 
-            (win.on_activate)(win);
+            win.on_activate();
         }
 
         KEY_Q_LOWER => {
@@ -128,8 +128,7 @@ pub fn on_key_press(win: &mut Window, c: i32) {
             win.clear_buffer();
             win.queue_update();
 
-            let child: &mut Window = win.spawn_child(
-                Point { x: 0, y: 0 },
+            win.spawn_child(
                 vec![
                     "Commit message below:".to_string(),
                     "".to_string(),
@@ -138,10 +137,9 @@ pub fn on_key_press(win: &mut Window, c: i32) {
                 ],
                 commit_window::on_activate,
                 commit_window::on_key_press,
-            );
-
-            child.move_cursor_down();
-            child.render();
+            )
+            .position(Point { x: 0, y: 0 })
+            .render();
         }
 
         KEY_LF => {
@@ -156,20 +154,19 @@ pub fn on_key_press(win: &mut Window, c: i32) {
             win.write_at(&diff_lines, win.cursor.y as usize);
             win.queue_update();
 
-            let copy = diff_lines.clone();
+            let child_x = 3;
+            let child_y = win.cursor.y;
 
-            let child: &mut Window = win.spawn_child(
-                Point {
-                    y: win.cursor.y + 1,
-                    x: 3,
-                },
+            win.spawn_child(
                 diff_lines,
                 diff_window::on_activate,
                 diff_window::on_key_press,
-            );
-
-            child.set_value(copy);
-            child.render();
+            )
+            .position(Point {
+                x: child_x,
+                y: child_y,
+            })
+            .render();
         }
         _ => {}
     }

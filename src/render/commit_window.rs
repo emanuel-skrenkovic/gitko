@@ -2,7 +2,9 @@ use crate::git::commands as git;
 use crate::render::ascii_table::*;
 use crate::render::window::Window;
 
-pub fn on_activate(_win: &mut Window) {}
+pub fn on_activate(win: &mut Window) {
+    win.move_cursor_down();
+}
 
 pub fn on_key_press(win: &mut Window, c: i32) {
     match c {

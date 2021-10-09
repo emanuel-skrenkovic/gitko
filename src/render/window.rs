@@ -5,7 +5,9 @@ use crate::render::Render;
 
 use std::convert::TryInto;
 
-use ncurses;
+pub struct Style {
+    pub color_rules: Vec<ColorRule>,
+}
 
 pub struct ColorRule {
     pub foreground: i16,
@@ -22,10 +24,10 @@ pub struct Window {
 
     pub marked_for_delete: bool,
 
-    pub on_activate: fn(win: &mut Window),
-    pub on_key_press: fn(win: &mut Window, c: i32),
+    pub style: Option<Style>,
 
-    pub color_rules: Vec<ColorRule>,
+    on_activate_fn: fn(win: &mut Window),
+    on_key_press_fn: fn(win: &mut Window, c: i32),
 
     value_buffer: Vec<String>,
     buffer: Vec<String>,
@@ -37,48 +39,56 @@ pub struct Window {
 
 impl Window {
     pub fn new(
-        position: Point,
         height: i32,
         width: i32,
         on_activate: fn(win: &mut Window),
         on_key_press: fn(win: &mut Window, c: i32),
     ) -> Window {
-        let curses_window = ncurses::newwin(height, width, position.y, position.x);
-
         ncurses::start_color();
 
-        ncurses::wmove(curses_window, 0, 0);
+        let curses_window = ncurses::newwin(height, width, 0, 0);
         ncurses::wrefresh(curses_window);
 
         Window {
             start: 0,
-            height: height,
-            width: width,
+            height,
+            width,
 
             cursor: Point { x: 0, y: 0 },
 
             marked_for_delete: false,
 
-            color_rules: vec![],
+            style: None,
 
             value_buffer: vec![],
-            buffer: vec![],
+            buffer: vec![], // TODO: rename to display_buffer or something similar
 
-            on_activate: on_activate,
-            on_key_press: on_key_press,
+            on_activate_fn: on_activate,
+            on_key_press_fn: on_key_press,
 
             children: vec![],
 
-            curses_window: curses_window,
+            curses_window,
         }
     }
 
-    pub fn apply_color_rules(&mut self, color_rules: Vec<ColorRule>) {
-        self.color_rules = color_rules;
+    pub fn position(&mut self, coords: Point) -> &mut Self {
+        ncurses::mvderwin(self.curses_window, coords.y, coords.x);
+        // ncurses::mvwin(self.curses_window, coords.y, coords.x);
+        // ncurses::wrefresh(self.curses_window);
+        self
+    }
 
-        for (i, color_rule) in self.color_rules.iter().enumerate() {
+    pub fn style(&mut self, style: Style) -> &mut Self {
+        self.style = Some(style);
+
+        let style = self.style.as_ref().unwrap();
+
+        for (i, color_rule) in style.color_rules.iter().enumerate() {
             ncurses::init_pair((i + 1) as i16, color_rule.foreground, color_rule.background);
         }
+
+        self
     }
 
     pub fn set_value(&mut self, value: Vec<String>) {
@@ -109,67 +119,64 @@ impl Window {
     }
 
     pub fn move_cursor_up(&mut self) {
-        let position = Point {
+        self.move_cursor(Point {
             x: self.cursor.x,
-            y: self.cursor.y - 1,
-        };
+            y: self.cursor.y - 1
+        });
+    }
 
-        self.move_cursor(position);
+    pub fn move_cursor_up_n(&mut self, n: u32) {
+        self.move_cursor(Point {
+            x: self.cursor.x,
+            y: self.cursor.y - n as i32
+        });
     }
 
     pub fn move_cursor_down(&mut self) {
-        let position = Point {
+        self.move_cursor(Point {
             x: self.cursor.x,
-            y: self.cursor.y + 1,
-        };
+            y: self.cursor.y + self.start as i32 + 1,
+        });
+    }
 
-        self.move_cursor(position);
+    pub fn move_cursor_down_n(&mut self, n: u32) {
+        self.move_cursor(Point {
+            x: self.cursor.x,
+            y: self.cursor.y + n as i32
+        });
     }
 
     pub fn move_cursor_left(&mut self) {
-        let position = Point {
+        self.move_cursor(Point {
             x: self.cursor.x - 1,
             y: self.cursor.y,
-        };
-
-        self.move_cursor(position);
+        });
     }
 
     pub fn move_cursor_right(&mut self) {
-        let position = Point {
+        self.move_cursor(Point {
             x: self.cursor.x + 1,
             y: self.cursor.y,
-        };
-
-        self.move_cursor(position);
+        });
     }
 
     pub fn move_cursor(&mut self, position: Point) {
-        let max: i32 = self.get_value().len() as i32;
-        let above = position.y >= self.height && position.y <= max;
+        let new_end = position.y as usize;
 
-        if above {
-            self.start += 1;
-        }
+        if position.y < self.start as i32 { // move up
+            let diff = (self.start as i32 - (self.start as i32 - position.y)).abs();
+            self.start = if (self.start as i32) - diff >= 0 { self.start - (diff as usize) } else { 0 };
 
-        let below = position.y < 0 && self.start > 0;
-
-        if below {
-            self.start -= 1;
-        }
-
-        // TODO: works better without this if for some ungodly reason.
-        if position.y < max {
+            self.set_buffer_to_position();
+        } else if position.y > self.start as i32 && new_end > self.height as usize - 1 { // move down
+            self.start = (self.start as i32 +
+                         (position.y - self.height - 1).abs()) as usize;
+            self.set_buffer_to_position();
+        } else {
             self.cursor = Point {
-                x: num::clamp(position.x, 0, self.width),
-                y: num::clamp(position.y, 0, self.height),
+                x: position.x,
+                y: position.y
             };
-
-            ncurses::wmove(self.curses_window, self.cursor.y, self.cursor.x);
-
-            if above || below {
-                self.set_buffer_to_position();
-            }
         }
     }
 
@@ -186,7 +193,6 @@ impl Window {
 
     pub fn spawn_child(
         &mut self,
-        position: Point,
         buffer: Vec<String>,
         on_activate: fn(win: &mut Window),
         on_key_press: fn(win: &mut Window, c: i32),
@@ -198,19 +204,20 @@ impl Window {
         ncurses::getmaxyx(self.curses_window, &mut max_height, &mut max_width);
 
         let height = buffer.len() as i32;
-        let width = max_width - position.x;
+        let width = max_width;
 
-        let mut child_window = Window::new(position, height, width, on_activate, on_key_press);
+        let mut child_window = Window::new(height, width, on_activate, on_key_press);
         child_window.set_value(buffer);
-
         self.children.push(child_window);
 
         self.children.last_mut().unwrap()
     }
 
     pub fn set_buffer_to_position(&mut self) {
-        let max: i32 = self.get_value().len() as i32;
-        let end = num::clamp(self.height + self.start as i32, self.height, max) as usize;
+        let end = num::clamp(self.height + self.start as i32,
+                             self.height,
+                             self.get_value().len() as i32) as usize;
+
         self.buffer = self.get_value()[self.start..end].to_vec();
     }
 
@@ -230,10 +237,11 @@ impl Window {
     }
 
     pub fn write_line(&self, line: &str) {
-        let has_colors = !self.color_rules.is_empty();
+        let is_styled = self.style.is_some();
 
-        if has_colors {
-            for (i, color_rule) in self.color_rules.iter().enumerate() {
+        if is_styled {
+            let style = self.style.as_ref().unwrap();
+            for (i, color_rule) in style.color_rules.iter().enumerate() {
                 if (color_rule.rule)(line) {
                     ncurses::wattron(self.curses_window, ncurses::COLOR_PAIR((i + 1) as i16));
                 }
@@ -243,8 +251,9 @@ impl Window {
         ncurses::waddstr(self.curses_window, line);
         ncurses::waddch(self.curses_window, KEY_LF as u32);
 
-        if has_colors {
-            for (i, color_rule) in self.color_rules.iter().enumerate() {
+        if is_styled {
+            let style = self.style.as_ref().unwrap();
+            for (i, color_rule) in style.color_rules.iter().enumerate() {
                 if (color_rule.rule)(line) {
                     ncurses::wattroff(self.curses_window, ncurses::COLOR_PAIR((i + 1) as i16));
                 }
@@ -274,11 +283,10 @@ impl Window {
     pub fn refresh(&mut self) {
         self.set_buffer_to_position();
         self.queue_update();
-
         ncurses::doupdate();
     }
 
-    pub fn write_at(&mut self, buffer: &Vec<String>, position: usize) {
+    pub fn write_at(&mut self, buffer: &[String], position: usize) {
         let mut new_buffer: Vec<String> = Vec::with_capacity(self.height as usize);
 
         let mut before: Vec<String> = self.buffer[0..position + 1].to_vec();
@@ -296,19 +304,27 @@ impl Window {
     pub fn close(&self) {
         ncurses::delwin(self.curses_window);
     }
+
+    pub fn on_activate(&mut self) {
+        (self.on_activate_fn)(self);
+    }
+
+    pub fn on_key_press(&mut self, c: i32) {
+        (self.on_key_press_fn)(self, c);
+    }
 }
 
 impl Render for Window {
     fn render(&mut self) {
         ncurses::wmove(self.curses_window, 0, 0);
 
-        (self.on_activate)(self);
+        self.on_activate();
 
         self.refresh();
 
         let mut c: i32 = 0;
         while c != KEY_Q_LOWER {
-            (self.on_key_press)(self, c);
+            self.on_key_press(c);
 
             self.refresh();
 
