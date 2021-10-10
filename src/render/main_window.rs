@@ -42,6 +42,13 @@ pub fn on_activate(win: &mut Window) {
 
     let mut status: Vec<String> = vec![];
 
+    if staged.is_empty()
+        && unstaged.is_empty()
+        && added.is_empty()
+        && deleted.is_empty() {
+        status.push("No changes found".to_string());
+    }
+
     if !added.is_empty() {
         status.push("Untracked files:".to_string());
         status.append(&mut added);
