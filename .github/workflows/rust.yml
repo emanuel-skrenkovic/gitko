@@ -18,12 +18,3 @@ jobs:
     - uses: actions/checkout@v2
     - name: Build
       run: cargo build --verbose
-
-  build-windows:
-
-    runs-on: tomaka/rust-mingw-docker
-
-    steps:
-    - uses: actions/checkout@v2
-    - name: Build
-      run: cargo build --verbose
