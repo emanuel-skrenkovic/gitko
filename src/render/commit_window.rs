@@ -22,7 +22,10 @@ pub fn on_key_press(win: &mut Window, c: i32) {
                 return;
             }
 
-            win.value_at(1).pop();
+            let line = win.line_at(1); // Commit window line is always at index 1.
+            let new_line = line[0..line.len() - 1].to_string(); // Remove last char.
+
+            win.update_value_at(1, new_line);
             win.move_cursor_left();
         }
 
