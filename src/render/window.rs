@@ -121,14 +121,14 @@ impl Window {
     pub fn move_cursor_up(&mut self) {
         self.move_cursor(Point {
             x: self.cursor.x,
-            y: self.cursor.y - 1
+            y: self.cursor.y - 1,
         });
     }
 
     pub fn move_cursor_up_n(&mut self, n: u32) {
         self.move_cursor(Point {
             x: self.cursor.x,
-            y: self.cursor.y - n as i32
+            y: self.cursor.y - n as i32,
         });
     }
 
@@ -142,7 +142,7 @@ impl Window {
     pub fn move_cursor_down_n(&mut self, n: u32) {
         self.move_cursor(Point {
             x: self.cursor.x,
-            y: self.cursor.y + n as i32
+            y: self.cursor.y + n as i32,
         });
     }
 
@@ -161,21 +161,35 @@ impl Window {
     }
 
     pub fn move_cursor(&mut self, position: Point) {
-        let new_end = position.y as usize;
-
         if position.y < self.start as i32 { // move up
+            /*
+                Get the absolute value of the difference between the new pointer position,
+                and the screen limit.
+            */
             let diff = (self.start as i32 - (self.start as i32 - position.y)).abs();
-            self.start = if (self.start as i32) - diff >= 0 { self.start - (diff as usize) } else { 0 };
+
+            /*
+                Move the start position by the diff value,
+                or set to 0 if it's the end of the screen.
+            */
+            self.start = if (self.start as i32) - diff >= 0 {
+                self.start - (diff as usize)
+            } else {
+                0
+            };
 
             self.set_buffer_to_position();
-        } else if position.y > self.start as i32 && new_end > self.height as usize - 1 { // move down
-            self.start = (self.start as i32 +
-                         (position.y - self.height - 1).abs()) as usize;
+        } else if position.y > self.start as i32 && position.y > self.height - 1 { // move down
+            /*
+                Move the start position by the difference between the pointer
+                position and screen end.
+            */
+            self.start = (self.start as i32 + (position.y - self.height - 1).abs()) as usize;
             self.set_buffer_to_position();
         } else {
             self.cursor = Point {
                 x: position.x,
-                y: position.y
+                y: position.y,
             };
         }
     }
@@ -214,9 +228,11 @@ impl Window {
     }
 
     pub fn set_buffer_to_position(&mut self) {
-        let end = num::clamp(self.height + self.start as i32,
-                             self.height,
-                             self.get_value().len() as i32) as usize;
+        let end = num::clamp(
+            self.height + self.start as i32,
+            self.height,
+            self.get_value().len() as i32,
+        ) as usize;
 
         self.buffer = self.get_value()[self.start..end].to_vec();
     }

@@ -14,7 +14,7 @@ impl Drop for Renderer {
 }
 
 impl Render for Renderer {
-    fn render(&mut self){
+    fn render(&mut self) {
         // do initial refresh on entire ncurses
         ncurses::refresh();
 
