@@ -143,6 +143,8 @@ impl Window2 {
 
     // region Data
 
+    // TODO: Find out which of these are unnecessary and delete them!
+
     pub fn get_data(&self, from: Position, length: usize) -> String {
         let mut output: Vec<u32> = Vec::with_capacity(length);
         ncurses::winchnstr(
@@ -156,6 +158,16 @@ impl Window2 {
             .collect();
 
         chars.iter().fold(String::new(), |acc, c| acc + c)
+    }
+
+    pub fn get_line_data(&self, line_number: i32) -> String {
+        self.get_data(
+            (line_number, 0),
+            (self.cols() - 1).try_into().unwrap())
+    }
+
+    pub fn get_cursor_line_data(&self) -> String {
+        self.get_line_data(self.cursor_position().0)
     }
 
     // endregion
@@ -188,9 +200,7 @@ impl BaseWindow for MainWindow {
         // TODO: remove, just for testing getting data.
         match c {
             KEY_LF => {
-                let line = self.window.get_data(
-                    self.window.cursor_position(),
-                    (self.window.cols() -1).try_into().unwrap());
+                let line = self.window.get_cursor_line_data();
                 self.window.queue_write(line, (0, 0));
             }
             _ => {}
