@@ -1,6 +1,7 @@
 use crate::num;
 use crate::render::ascii_table::*;
 
+use std::path::Path;
 use std::convert::TryInto;
 
 pub type Position = (i32, i32);
@@ -30,6 +31,18 @@ pub trait BaseWindow {
 
     fn window(&self) -> ncurses::WINDOW;
 
+    fn close(&self);
+    fn clear(&self);
+
+    fn render_child<T>(&mut self, mut child: T) where T : BaseWindow {
+        // TODO: seems to work for now. Might be busted.
+        // Take a closer look.
+        child.render();
+        child.close();
+        self.clear();
+        self.on_activate();
+    }
+
     fn render(&mut self) {
         let win = self.window();
         ncurses::wmove(win, 0, 0);
@@ -49,6 +62,7 @@ pub trait BaseWindow {
             match c {
                 KEY_J_LOWER => { self.move_cursor_down(); }
                 KEY_K_LOWER => { self.move_cursor_up(); }
+                KEY_Q_LOWER => { self.close(); }
                 _ => {}
             }
             
@@ -87,6 +101,11 @@ impl Window2 {
         }
     }
 
+    pub fn close(&self) {
+        ncurses::wclear(self.curses_window);
+        ncurses::delwin(self.curses_window);
+    }
+
     // region Display
 
     pub fn lines(&self) -> i32 {
@@ -97,7 +116,7 @@ impl Window2 {
         self.cols
     }
 
-    pub fn queue_write(&self, data: String, position: Position) {
+    pub fn queue_write(&self, data: &String, position: Position) {
         // https://linux.die.net/man/3/waddstr
         ncurses::mvwaddstr(
             self.curses_window,
@@ -108,6 +127,11 @@ impl Window2 {
     }
 
     fn refresh(&self) {
+        ncurses::doupdate();
+    }
+
+    fn clear(&self) {
+        ncurses::wclear(self.curses_window);
         ncurses::doupdate();
     }
 
@@ -193,6 +217,67 @@ impl MainWindow {
     }
 }
 
+pub struct DiffWindow {
+    path: String,
+    data: Vec<String>,
+    window: Window2
+}
+
+impl DiffWindow {
+    pub fn new(size: ScreenSize, path: &str) -> DiffWindow {
+        DiffWindow {
+            path: path.to_string(),
+            data: vec![],
+            window: Window2::new(size)
+        }
+    }
+}
+
+impl BaseWindow for DiffWindow {
+    fn on_keypress(&mut self, c: i32) {
+        
+    }
+
+    fn on_activate(&mut self) {
+        self.data = git::diff_file(&self.path);
+
+        for (i, line) in self.data.iter().enumerate() {
+            self.window.queue_write(&line.to_string(), (i as i32, 0));
+        }
+    }
+
+    // TODO: Passthrough methods are evil!
+    // Think of a better way.
+
+    fn window(&self) -> ncurses::WINDOW { 
+        self.window.curses_window
+    }
+
+    fn cursor_position(&self) -> Position {
+        self.window.cursor_position()
+    }
+
+    fn move_cursor_down(&mut self) {
+        self.window.move_cursor_down();
+    }
+
+    fn move_cursor_up(&mut self) {
+        self.window.move_cursor_up();
+    }
+
+    fn move_cursor(&mut self, position: Position) {
+        self.window.move_cursor(position);
+    }
+
+    fn close(&self) {
+        self.window.close();
+    }
+
+    fn clear(&self) {
+        self.window.clear();
+    }
+}
+
 use crate::git::commands as git;
 
 impl BaseWindow for MainWindow {
@@ -201,7 +286,24 @@ impl BaseWindow for MainWindow {
         match c {
             KEY_LF => {
                 let line = self.window.get_cursor_line_data();
-                self.window.queue_write(line, (0, 0));
+
+                let path = &line[3..].trim_end().to_string();
+                let path_exists = Path::new(path).exists();
+
+                if path_exists {
+                    self.window.queue_write(
+                        &path_exists.to_string(), (self.window.lines() - 2, 0));
+                    self.window.queue_write(&path, (self.window.lines() - 1, 0));
+
+                    let mut diff_window = DiffWindow::new(ScreenSize::max(), path);
+                    self.render_child(diff_window);
+
+                    /*
+                    for (i, line) in self.data.iter().enumerate() {
+                        self.window.queue_write(&line.to_string(), (i as i32, 0));
+                    }
+                    */
+                }
             }
             _ => {}
         }
@@ -283,7 +385,7 @@ impl BaseWindow for MainWindow {
         self.data = status.clone();
 
         for (i, line) in self.data.iter().enumerate() {
-            self.window.queue_write(line.to_string(), (i as i32, 0));
+            self.window.queue_write(&line.to_string(), (i as i32, 0));
         }
     }
 
@@ -308,5 +410,13 @@ impl BaseWindow for MainWindow {
 
     fn move_cursor(&mut self, position: Position) {
         self.window.move_cursor(position);
+    }
+
+    fn close(&self) {
+        self.window.close();
+    }
+
+    fn clear(&self) {
+        self.window.clear();
     }
 }

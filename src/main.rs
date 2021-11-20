@@ -7,13 +7,13 @@ use crate::render::window2::BaseWindow;
 use crate::render::window2::ScreenSize;
 
 fn main() {
-    init_curses();
+    init_ncurses();
 
     let mut main_window = MainWindow::new(ScreenSize::max());
     main_window.render();
 }
 
-fn init_curses() {
+fn init_ncurses() {
     ncurses::initscr();
     ncurses::raw();
     ncurses::keypad(ncurses::stdscr(), true);
