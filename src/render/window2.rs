@@ -1,6 +1,8 @@
 use crate::num;
 use crate::render::ascii_table::*;
 
+use std::convert::TryInto;
+
 pub type Position = (i32, i32);
 
 pub struct ScreenSize {
@@ -36,6 +38,9 @@ pub trait BaseWindow {
 
         let mut c: i32 = 0;
         while c != KEY_Q_LOWER {
+            // TODO: two updates per keypress for now.
+            // Need to understand better.
+            ncurses::wmove(win, self.cursor_position().0, self.cursor_position().1);
             ncurses::doupdate();
 
             // TODO: move cursor here. on_keypress
@@ -48,6 +53,8 @@ pub trait BaseWindow {
             }
             
             self.on_keypress(c);
+            ncurses::doupdate();
+            ncurses::wmove(win, self.cursor_position().0, self.cursor_position().1);
             c = ncurses::wgetch(win);
         }
     }
@@ -80,6 +87,8 @@ impl Window2 {
         }
     }
 
+    // region Display
+
     pub fn lines(&self) -> i32 {
         self.lines
     }
@@ -102,16 +111,22 @@ impl Window2 {
         ncurses::doupdate();
     }
 
+    // endregion
+
+    // region Cursor
+
     fn cursor_position(&self) -> Position {
         self.cursor_position
     }
 
     fn move_cursor_down(&mut self) {
-        self.move_cursor((self.cursor_position.0 + 1, self.cursor_position.1));
+        self.move_cursor(
+            (self.cursor_position.0 + 1, self.cursor_position.1));
     }
 
     fn move_cursor_up(&mut self) {
-        self.move_cursor((self.cursor_position.0 - 1, self.cursor_position.1));
+        self.move_cursor(
+            (self.cursor_position.0 - 1, self.cursor_position.1));
     }
 
     fn move_cursor(&mut self, position: Position) {
@@ -123,6 +138,27 @@ impl Window2 {
         ncurses::wmove(self.curses_window, y, x);
         self.cursor_position = (y, x);
     }
+
+    // endregion
+
+    // region Data
+
+    pub fn get_data(&self, from: Position, length: usize) -> String {
+        let mut output: Vec<u32> = Vec::with_capacity(length);
+        ncurses::winchnstr(
+            self.curses_window,
+            &mut output,
+            length.try_into().unwrap());
+
+        let chars: Vec<&str> = output
+            .iter()
+            .map(|c| ascii_to_char(*c as i32))
+            .collect();
+
+        chars.iter().fold(String::new(), |acc, c| acc + c)
+    }
+
+    // endregion
 }
 
 impl Drop for Window2 {
@@ -148,7 +184,18 @@ impl MainWindow {
 use crate::git::commands as git;
 
 impl BaseWindow for MainWindow {
-    fn on_keypress(&mut self, c: i32) { }
+    fn on_keypress(&mut self, c: i32) {
+        // TODO: remove, just for testing getting data.
+        match c {
+            KEY_LF => {
+                let line = self.window.get_data(
+                    self.window.cursor_position(),
+                    (self.window.cols() -1).try_into().unwrap());
+                self.window.queue_write(line, (0, 0));
+            }
+            _ => {}
+        }
+    }
 
     fn on_activate(&mut self) {
         let git_status: Vec<String> = git::status();
