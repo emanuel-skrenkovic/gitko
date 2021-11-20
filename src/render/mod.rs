@@ -7,6 +7,8 @@ pub mod main_window;
 pub mod renderer;
 pub mod window;
 
+pub mod window2;
+
 pub trait Render {
     fn render(&mut self);
 }
