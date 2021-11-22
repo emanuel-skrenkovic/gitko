@@ -1,10 +1,11 @@
+use crate::gitko::main_window::MainWindow;
+use crate::render::window::BaseWindow;
+use crate::render::window::ScreenSize;
+
 mod git;
 mod num;
 mod render;
-
-use crate::render::window2::MainWindow;
-use crate::render::window2::BaseWindow;
-use crate::render::window2::ScreenSize;
+mod gitko;
 
 fn main() {
     init_ncurses();
