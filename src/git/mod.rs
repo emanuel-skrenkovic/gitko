@@ -1,7 +1,3 @@
-use std::fmt::Display;
-use std::fmt::Formatter;
-use std::fmt::Result;
-
 pub mod commands;
 
 pub enum FileState {

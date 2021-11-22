@@ -24,8 +24,17 @@ pub trait BaseWindow {
     fn on_activate(&mut self);
 
     fn cursor_position(&self) -> Position;
+
+    // TODO: scrolling functionality
+
+    // I think it needs to be here, rather than the Window struct impl.
+    // Window struct should not know about the data storage, and just
+    // display what it is given.
+
     fn move_cursor_down(&mut self);
+
     fn move_cursor_up(&mut self);
+
     fn move_cursor(&mut self, position: Position);
 
     fn window(&self) -> ncurses::WINDOW;
@@ -125,6 +134,16 @@ impl Window {
         ncurses::wnoutrefresh(self.curses_window);
     }
 
+    pub fn queue_write_buffer(&self, data: &Vec<String>) {
+        ncurses::wclear(self.curses_window);
+
+        for (i, line) in data.iter().enumerate() {
+            ncurses::mvwaddstr(self.curses_window, i as i32, 0, &line);
+        }
+
+        ncurses::wnoutrefresh(self.curses_window);
+    }
+
     fn refresh(&self) {
         ncurses::doupdate();
     }
@@ -142,24 +161,33 @@ impl Window {
         self.cursor_position
     }
 
-    pub fn move_cursor_down(&mut self) {
+    pub fn try_move_cursor_down(&mut self) -> i32 {
         self.move_cursor(
-            (self.cursor_position.0 + 1, self.cursor_position.1));
+            (self.cursor_position.0 + 1, self.cursor_position.1))
     }
 
-    pub fn move_cursor_up(&mut self) {
+    pub fn try_move_cursor_up(&mut self) -> i32 {
         self.move_cursor(
-            (self.cursor_position.0 - 1, self.cursor_position.1));
+            (self.cursor_position.0 - 1, self.cursor_position.1))
     }
 
-    pub fn move_cursor(&mut self, position: Position) {
+    // Returns the delta between the attempted cursor
+    // position move and actual end position.
+    // This is the value which the data needs to be
+    // scrolled by.
+    // TODO: pretty confusing, need better way.
+    pub fn move_cursor(&mut self, position: Position) -> i32 {
         // TODO: optimize by not doing anything when
         // trying to go beyong edges (unless scrolling).
         let y = num::clamp(position.0, 0, self.lines() - 1);
         let x = num::clamp(position.1, 0, self.cols() - 1);
+
+        let delta = position.0 - y;
         
         ncurses::wmove(self.curses_window, y, x);
         self.cursor_position = (y, x);
+
+        delta
     }
 
     // endregion

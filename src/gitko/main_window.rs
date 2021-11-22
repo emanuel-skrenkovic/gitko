@@ -1,5 +1,3 @@
-use std::path::Path;
-
 use crate::git::commands as git;
 use crate::git::FileState;
 use crate::git::parse_file_state;
@@ -134,11 +132,11 @@ impl BaseWindow for MainWindow {
     }
 
     fn move_cursor_down(&mut self) {
-        self.window.move_cursor_down();
+        self.window.try_move_cursor_down();
     }
 
     fn move_cursor_up(&mut self) {
-        self.window.move_cursor_up();
+        self.window.try_move_cursor_up();
     }
 
     fn move_cursor(&mut self, position: Position) {

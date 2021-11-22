@@ -7,6 +7,7 @@ use crate::git::commands as git;
 
 pub struct DiffWindow {
     path: String,
+    data_start: i32, 
     data: Vec<String>,
     window: Window
 }
@@ -15,6 +16,7 @@ impl DiffWindow {
     pub fn new(size: ScreenSize, path: &str) -> DiffWindow {
         DiffWindow {
             path: path.to_string(),
+            data_start: 0,
             data: vec![],
             window: Window::new(size)
         }
@@ -46,11 +48,26 @@ impl BaseWindow for DiffWindow {
     }
 
     fn move_cursor_down(&mut self) {
-        self.window.move_cursor_down();
+        let delta = self.window.try_move_cursor_down();
+
+        if delta > 0 {
+            self.data_start += delta;
+
+            self.window.queue_write_buffer(
+                &self.data[(self.data_start as usize)..].to_vec());
+        }
     }
 
     fn move_cursor_up(&mut self) {
-        self.window.move_cursor_up();
+        let delta = self.window.try_move_cursor_up();
+        let delta_abs = delta.abs();
+
+        if delta < 0 && (self.data_start - delta_abs >= 0) {
+           self.data_start -= delta_abs;
+
+            self.window.queue_write_buffer(
+                &self.data[(self.data_start as usize)..].to_vec());
+        }
     }
 
     fn move_cursor(&mut self, position: Position) {
