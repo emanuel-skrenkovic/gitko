@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 pub fn status() -> Vec<String> {
     run(vec!["status", "-s"])
 }
