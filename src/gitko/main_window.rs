@@ -123,29 +123,18 @@ impl Window for MainWindow {
     // TODO: Passthrough methods are evil!
     // Think of a better way.
 
+    fn data(&self) -> &Vec<String> {
+        &self.data
+    }
+
+    fn start_position(&self) -> usize { 0 }
+
+    fn set_start_position(&mut self, _new_position: usize) { }
+
     fn display(&self) -> &Display { &self.display }
+    fn display_mut(&mut self) -> &mut Display { &mut self.display }
 
     fn cursor_position(&self) -> Position {
         self.display.cursor_position()
-    }
-
-    fn move_cursor_down(&mut self) {
-        self.display.try_move_cursor_down();
-    }
-
-    fn move_cursor_up(&mut self) {
-        self.display.try_move_cursor_up();
-    }
-
-    fn move_cursor(&mut self, position: Position) {
-        self.display.move_cursor(position);
-    }
-
-    fn close(&self) {
-        self.display.close();
-    }
-
-    fn clear(&self) {
-        self.display.clear();
     }
 }

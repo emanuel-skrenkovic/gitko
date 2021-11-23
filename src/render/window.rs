@@ -1,3 +1,5 @@
+use std::convert::TryInto;
+
 use crate::render::ascii_table::*;
 use crate::render::display::Display;
 
@@ -23,27 +25,43 @@ pub trait Window {
 
     fn cursor_position(&self) -> Position;
 
-    // TODO: scrolling functionality
-
-    // I think it needs to be here, rather than the Window struct impl.
-    // Window struct should not know about the data storage, and just
-    // display what it is given.
-
-    // // TODO
-    // fn data() -> Vec<String>;
-    // fn start_position() -> usize;
-    // fn set_start_position(&mut self);
+    fn data(&self) -> &Vec<String>;
+    fn start_position(&self) -> usize;
+    fn set_start_position(&mut self, new_position: usize);
 
     // TODO
-    fn move_cursor_down(&mut self);
-    fn move_cursor_up(&mut self);
+    fn move_cursor_down(&mut self) {
+        let delta = self.display_mut().try_move_cursor_down();
 
-    fn move_cursor(&mut self, position: Position);
+        if delta > 0 {
+            self.set_start_position(self.start_position() + delta as usize);
+
+            self.display().queue_write_buffer(
+                &self.data()[self.start_position()..].to_vec());
+        }
+    }
+
+    fn move_cursor_up(&mut self) {
+        let delta = self.display_mut().try_move_cursor_up();
+        let delta_abs = delta.abs();
+
+        if delta < 0 && self.start_position() as i32 - delta_abs >=0 {
+            self.set_start_position(self.start_position() - delta_abs as usize);
+
+            self.display().queue_write_buffer(
+                &self.data()[self.start_position()..].to_vec());
+        }
+    }
 
     fn display(&self) -> &Display;
+    fn display_mut(&mut self) -> &mut Display;
 
-    fn close(&self);
-    fn clear(&self);
+    fn close(&self) {
+        self.display().close();
+    }
+    fn clear(&self) {
+        self.display().clear();
+    }
 
     fn render_child<T>(&mut self, mut child: T) where T : Window {
         // TODO: seems to work for now. Might be busted.
