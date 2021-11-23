@@ -8,7 +8,7 @@ pub struct Display {
     lines: i32,
     cols: i32,
     cursor_position: Position,
-    pub curses_window: ncurses::WINDOW
+    curses_window: ncurses::WINDOW
 }
 
 impl Display {
@@ -21,6 +21,7 @@ impl Display {
         let mut x: i32 = 0;
         ncurses::getmaxyx(curses_window, &mut y, &mut x);
 
+        ncurses::wmove(curses_window, 0, 0);
         ncurses::wrefresh(curses_window);
 
         Display {
@@ -34,6 +35,10 @@ impl Display {
     pub fn close(&self) {
         ncurses::wclear(self.curses_window);
         ncurses::delwin(self.curses_window);
+    }
+
+    pub fn listen_input(&self) -> i32 {
+        ncurses::wgetch(self.curses_window)
     }
 
     // region Display
@@ -66,7 +71,9 @@ impl Display {
         ncurses::wnoutrefresh(self.curses_window);
     }
 
-    fn refresh(&self) {
+    pub fn refresh(&self) {
+        let cursor = self.cursor_position();
+        ncurses::wmove(self.curses_window, cursor.0, cursor.1);
         ncurses::doupdate();
     }
 

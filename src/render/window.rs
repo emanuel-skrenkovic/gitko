@@ -1,4 +1,5 @@
 use crate::render::ascii_table::*;
+use crate::render::display::Display;
 
 pub type Position = (i32, i32);
 
@@ -39,7 +40,7 @@ pub trait Window {
 
     fn move_cursor(&mut self, position: Position);
 
-    fn window(&self) -> ncurses::WINDOW;
+    fn display(&self) -> &Display;
 
     fn close(&self);
     fn clear(&self);
@@ -49,28 +50,19 @@ pub trait Window {
         // Take a closer look.
         child.render();
         child.close();
+
         self.clear();
         self.on_activate();
     }
 
     fn render(&mut self) {
-        let win = self.window();
-        ncurses::wmove(win, 0, 0);
-
         self.on_activate();
 
         let mut c: i32 = 0;
         while c != KEY_Q_LOWER {
             // TODO: two updates per keypress for now.
             // Need to understand better.
-
-            // TODO: create abstraction so BaseWindow does not need to understand.
-            // Hard to find balance and create a simple API.
-            ncurses::wmove(win, self.cursor_position().0, self.cursor_position().1);
-            ncurses::doupdate();
-
-            // TODO: move cursor here. on_keypress
-            // is for custom functionality.
+            self.display().refresh();
 
             match c {
                 KEY_J_LOWER => { self.move_cursor_down(); }
@@ -80,9 +72,9 @@ pub trait Window {
             }
             
             self.on_keypress(c);
-            ncurses::doupdate();
-            ncurses::wmove(win, self.cursor_position().0, self.cursor_position().1);
-            c = ncurses::wgetch(win);
+            self.display().refresh();
+
+            c = self.display().listen_input();
         }
     }
 }

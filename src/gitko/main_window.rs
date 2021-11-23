@@ -123,9 +123,7 @@ impl Window for MainWindow {
     // TODO: Passthrough methods are evil!
     // Think of a better way.
 
-    fn window(&self) -> ncurses::WINDOW { 
-        self.display.curses_window
-    }
+    fn display(&self) -> &Display { &self.display }
 
     fn cursor_position(&self) -> Position {
         self.display.cursor_position()
