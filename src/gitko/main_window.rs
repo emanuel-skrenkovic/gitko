@@ -30,6 +30,8 @@ impl Window for MainWindow {
                 self.render_child(LogWindow::new(ScreenSize::max()));
             }
             KEY_T_LOWER => {
+                // TODO: add parse git status that returns file state
+                // and file path?
                 let line = self.display.get_cursor_line_data();
                 let file_state = parse_file_state(&line);
 
@@ -37,6 +39,7 @@ impl Window for MainWindow {
                     git::add_file(line[3..].trim());
                 }
 
+                // TODO: is refresh always necessary?
                 self.refresh();
             }
             KEY_U_LOWER => {
