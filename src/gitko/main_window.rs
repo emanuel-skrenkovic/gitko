@@ -3,9 +3,9 @@ use crate::git::FileState;
 use crate::git::parse_file_state;
 use crate::render::ascii_table::*;
 use crate::render::display::Display;
-use crate::render::window::Position;
 use crate::render::window::ScreenSize;
 use crate::render::window::Window;
+use crate::gitko::log_window::LogWindow;
 use crate::gitko::diff_window::DiffWindow;
 
 pub struct MainWindow {
@@ -26,6 +26,9 @@ impl Window for MainWindow {
     fn on_keypress(&mut self, c: i32) {
         // TODO: remove, just for testing getting data.
         match c {
+            KEY_L_LOWER => {
+                self.render_child(LogWindow::new(ScreenSize::max()));
+            }
             KEY_LF => {
                 let line = self.display.get_cursor_line_data();
                 let file_state = parse_file_state(&line);
@@ -133,8 +136,4 @@ impl Window for MainWindow {
 
     fn display(&self) -> &Display { &self.display }
     fn display_mut(&mut self) -> &mut Display { &mut self.display }
-
-    fn cursor_position(&self) -> Position {
-        self.display.cursor_position()
-    }
 }

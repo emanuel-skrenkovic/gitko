@@ -1,7 +1,6 @@
-use crate::render::window::ScreenSize;
-use crate::render::window::Position;
-use crate::render::display::Display;
 use crate::render::window::Window;
+use crate::render::display::Display;
+use crate::render::window::ScreenSize;
 
 use crate::git::commands as git;
 
@@ -41,10 +40,6 @@ impl Window for DiffWindow {
 
     fn display(&self) -> &Display { &self.display }
     fn display_mut(&mut self) -> &mut Display { &mut self.display }
-
-    fn cursor_position(&self) -> Position {
-        self.display.cursor_position()
-    }
 
     fn data(&self) -> &Vec<String> {
         &self.data

@@ -1,5 +1,3 @@
-use std::convert::TryInto;
-
 use crate::render::ascii_table::*;
 use crate::render::display::Display;
 
@@ -23,7 +21,9 @@ pub trait Window {
     fn on_keypress(&mut self, c: i32);
     fn on_activate(&mut self);
 
-    fn cursor_position(&self) -> Position;
+    fn cursor_position(&self) -> Position {
+        self.display().cursor_position()
+    }
 
     fn data(&self) -> &Vec<String>;
     fn start_position(&self) -> usize;
