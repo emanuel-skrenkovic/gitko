@@ -1,5 +1,5 @@
 use crate::gitko::main_window::MainWindow;
-use crate::render::window::BaseWindow;
+use crate::render::window::Window;
 use crate::render::window::ScreenSize;
 
 mod git;
