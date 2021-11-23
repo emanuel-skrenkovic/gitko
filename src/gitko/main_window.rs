@@ -7,6 +7,7 @@ use crate::render::window::ScreenSize;
 use crate::render::window::Window;
 use crate::gitko::log_window::LogWindow;
 use crate::gitko::diff_window::DiffWindow;
+use crate::gitko::command_window::CommandWindow;
 
 pub struct MainWindow {
     data: Vec<String>,
@@ -51,6 +52,9 @@ impl Window for MainWindow {
                 }
 
                 self.refresh();
+            }
+            KEY_COLON => {
+                self.render_child(CommandWindow::new(ScreenSize { lines: 10, cols: self.display.cols() }));
             }
             KEY_LF => {
                 let line = self.display.get_cursor_line_data();
