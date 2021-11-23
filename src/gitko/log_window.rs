@@ -20,9 +20,6 @@ impl LogWindow {
 }
 
 impl Window for LogWindow {
-    fn on_keypress(&mut self, _c: i32) {
-    }
-
     fn on_activate(&mut self) {
         self.data = git::log(None);
         self.display.queue_write_buffer(&self.data);

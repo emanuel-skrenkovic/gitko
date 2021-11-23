@@ -23,10 +23,6 @@ impl DiffWindow {
 }
 
 impl Window for DiffWindow {
-    fn on_keypress(&mut self, _c: i32) {
-        
-    }
-
     fn on_activate(&mut self) {
         self.data = git::diff_file(&self.path);
 

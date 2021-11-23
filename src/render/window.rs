@@ -18,8 +18,8 @@ impl ScreenSize {
 }
 
 pub trait Window {
-    fn on_keypress(&mut self, c: i32);
-    fn on_activate(&mut self);
+    fn on_keypress(&mut self, _c: i32) { }
+    fn on_activate(&mut self) { }
 
     fn cursor_position(&self) -> Position {
         self.display().cursor_position()
