@@ -29,6 +29,26 @@ impl Window for MainWindow {
             KEY_L_LOWER => {
                 self.render_child(LogWindow::new(ScreenSize::max()));
             }
+            KEY_T_LOWER => {
+                let line = self.display.get_cursor_line_data();
+                let file_state = parse_file_state(&line);
+
+                if !matches!(file_state, FileState::Staged) {
+                    git::add_file(line[3..].trim());
+                }
+
+                self.refresh();
+            }
+            KEY_U_LOWER => {
+                let line = self.display.get_cursor_line_data();
+                let file_state = parse_file_state(&line);
+
+                if matches!(file_state, FileState::Staged) {
+                    git::unstage_file(line[3..].trim());
+                }
+
+                self.refresh();
+            }
             KEY_LF => {
                 let line = self.display.get_cursor_line_data();
                 let file_state = parse_file_state(&line);

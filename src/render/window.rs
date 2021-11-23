@@ -59,8 +59,14 @@ pub trait Window {
     fn close(&self) {
         self.display().close();
     }
+
     fn clear(&self) {
         self.display().clear();
+    }
+
+    fn refresh(&mut self) {
+        self.clear();
+        self.on_activate();
     }
 
     fn render_child<T>(&mut self, mut child: T) where T : Window {
