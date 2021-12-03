@@ -1,7 +1,7 @@
 use crate::render::window::Window;
 use crate::render::display::Display;
 use crate::render::window::ScreenSize;
-use crate::render::ascii_table::*;
+use crate::render::writeable_display::WriteableDisplay;
 
 pub struct CommandWindow {
     data: Vec<String>,
@@ -18,23 +18,30 @@ impl CommandWindow {
 }
 
 impl Window for CommandWindow {
-    fn on_keypress(&mut self, c: i32) {
-        if c == KEY_NULL {
-            return;
-        }
+    fn on_keypress(&mut self, _c: i32) -> bool {
+        let writeable_display = self.display.as_writeable_mut();
+        writeable_display.listen();
 
-        // let mut line = &mut self.data[0];
-        // line.push_str(ascii_to_char(c));
-        let char = ascii_to_char(c);
-        &mut self.data[0].push_str(char);
+        let line = self.display.get_cursor_line_data().trim().to_string();
 
-        let cursor = self.cursor_position();
-        self.display.move_cursor((cursor.0, cursor.1 + 1));
+        if line.is_empty() { return true }
 
-        self.refresh();
+        // I know, I know, unsafe, but this is
+        // just for personal use.
+        let output = std::process::Command::new("bash")
+            .arg("-c")
+            .arg(line)
+            .output()
+            .unwrap();
 
-        // TODO: get display as writeable - allows
-        // for regular typing in display.
+        let raw_output = if output.status.success() { output.stdout } else { output.stderr };
+        let output_str = String::from_utf8(raw_output).expect("invalid string encoding");
+
+        let output = output_str.split('\n').map(str::to_string).collect();
+
+        self.display.queue_write(&output, (self.display.lines() - 1, 0));
+
+        true
     }
 
     fn on_activate(&mut self) {

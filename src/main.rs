@@ -16,7 +16,7 @@ fn main() {
 
 fn init_ncurses() {
     ncurses::initscr();
-    ncurses::raw();
+    ncurses::cbreak();
     ncurses::keypad(ncurses::stdscr(), true);
     ncurses::noecho();   
 }

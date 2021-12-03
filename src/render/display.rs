@@ -3,6 +3,9 @@ use std::convert::TryInto;
 use crate::num;
 use crate::render::window::Position;
 use crate::render::window::ScreenSize;
+use crate::render::writeable_display::WriteableDisplay;
+
+use crate::render::ascii_table::*;
 
 pub struct Display {
     lines: i32,
@@ -126,12 +129,22 @@ impl Display {
     pub fn get_cursor_line_data(&self) -> String {
         let length = self.cols();
 
+        // Move the cursor to the beginning of the line
+        // to get all the characters.
+        ncurses::wmove(self.curses_window, self.cursor_position.0, 0);
+
         let mut output: String = String::with_capacity(
             length.try_into().unwrap());
         ncurses::winnstr(
             self.curses_window,
             &mut output,
             length);
+
+        // Move the cursor back to its original position.
+        ncurses::wmove(
+            self.curses_window,
+            self.cursor_position.0,
+            self.cursor_position.1);
 
         output
     }
@@ -142,5 +155,36 @@ impl Display {
 impl Drop for Display {
     fn drop(&mut self) {
         ncurses::endwin();
+    }
+}
+
+impl WriteableDisplay for Display {
+    fn listen(&mut self) {
+        loop {
+            let c = ncurses::wgetch(self.curses_window);
+            match c {
+                KEY_DEL => {
+                    let cursor = self.cursor_position;
+                    self.move_cursor((cursor.0, cursor.1 - 1));
+
+                    ncurses::wdelch(self.curses_window);
+                }
+                KEY_ETB => {
+                    // TODO: delete everything and then break out.
+                    self.move_cursor((0, 0));
+                    self.clear();
+                    self.refresh();
+
+                    break;
+                }
+                KEY_LF => { break; }
+                _ => {
+                    ncurses::waddch(self.curses_window, c as u32);
+
+                    let cursor = self.cursor_position;
+                    self.move_cursor((cursor.0, cursor.1 + 1));
+                }
+            }
+        }
     }
 }

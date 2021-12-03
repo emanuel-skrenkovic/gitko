@@ -33,7 +33,7 @@ pub fn log(max_count: Option<u32>) -> Vec<String> {
     run(args)
 }
 
-fn run(args: Vec<&str>) -> Vec<String> {
+pub fn run(args: Vec<&str>) -> Vec<String> {
     let output = std::process::Command::new("git")
         .args(args)
         .output()

@@ -18,7 +18,7 @@ impl ScreenSize {
 }
 
 pub trait Window {
-    fn on_keypress(&mut self, _c: i32) { }
+    fn on_keypress(&mut self, _c: i32) -> bool { true }
     fn on_activate(&mut self) { }
 
     fn cursor_position(&self) -> Position {
@@ -95,7 +95,9 @@ pub trait Window {
                 _ => {}
             }
             
-            self.on_keypress(c);
+            let cont = self.on_keypress(c);
+            if !cont { break; }
+
             self.display().refresh();
 
             c = self.display().listen_input();
