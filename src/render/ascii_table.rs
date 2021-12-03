@@ -2,8 +2,12 @@
 
 pub const KEY_NULL: i32 = 0;
 pub const KEY_EOT: i32 = 4;
+pub const KEY_BS: i32 = 8;
 pub const KEY_LF: i32 = 10;
 pub const KEY_NAK: i32 = 21;
+pub const KEY_ETB: i32 = 27;
+pub const KEY_ESC: i32 = 33;
+pub const KEY_COLON: i32 = 58;
 pub const KEY_C_LOWER: i32 = 99;
 pub const KEY_Q_LOWER: i32 = 113;
 pub const KEY_H_LOWER: i32 = 104;

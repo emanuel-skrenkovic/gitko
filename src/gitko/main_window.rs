@@ -7,6 +7,7 @@ use crate::render::window::ScreenSize;
 use crate::render::window::Window;
 use crate::gitko::log_window::LogWindow;
 use crate::gitko::diff_window::DiffWindow;
+use crate::gitko::command_window::CommandWindow;
 
 pub struct MainWindow {
     data: Vec<String>,
@@ -23,7 +24,7 @@ impl MainWindow {
 }
 
 impl Window for MainWindow {
-    fn on_keypress(&mut self, c: i32) {
+    fn on_keypress(&mut self, c: i32) -> bool {
         // TODO: remove, just for testing getting data.
         match c {
             KEY_L_LOWER => {
@@ -52,6 +53,12 @@ impl Window for MainWindow {
 
                 self.refresh();
             }
+            KEY_COLON => {
+                self.render_child(
+                    CommandWindow::new(ScreenSize {
+                        lines: self.display.lines(), cols: self.display.cols()
+                    }));
+            }
             KEY_LF => {
                 let line = self.display.get_cursor_line_data();
                 let file_state = parse_file_state(&line);
@@ -64,6 +71,8 @@ impl Window for MainWindow {
             }
             _ => {}
         }
+
+        true
     }
 
     fn on_activate(&mut self) {
