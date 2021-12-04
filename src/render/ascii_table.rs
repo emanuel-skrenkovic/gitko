@@ -8,6 +8,7 @@ pub const KEY_NAK: i32 = 21;
 pub const KEY_ETB: i32 = 27;
 pub const KEY_ESC: i32 = 33;
 pub const KEY_COLON: i32 = 58;
+pub const KEY_B_LOWER: i32 = 98; 
 pub const KEY_C_LOWER: i32 = 99;
 pub const KEY_Q_LOWER: i32 = 113;
 pub const KEY_H_LOWER: i32 = 104;
