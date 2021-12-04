@@ -7,6 +7,7 @@ use crate::render::window::ScreenSize;
 use crate::render::window::Window;
 use crate::gitko::log_window::LogWindow;
 use crate::gitko::diff_window::DiffWindow;
+use crate::gitko::branch_window::BranchWindow;
 use crate::gitko::command_window::CommandWindow;
 
 pub struct MainWindow {
@@ -27,6 +28,9 @@ impl Window for MainWindow {
     fn on_keypress(&mut self, c: i32) -> bool {
         // TODO: remove, just for testing getting data.
         match c {
+            KEY_B_LOWER => {
+                self.render_child(BranchWindow::new(ScreenSize::max()));
+            }
             KEY_L_LOWER => {
                 self.render_child(LogWindow::new(ScreenSize::max()));
             }

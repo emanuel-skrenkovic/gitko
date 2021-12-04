@@ -20,6 +20,14 @@ pub fn commit(message: &str) {
     run(vec!["commit", "-m", message]);
 }
 
+pub fn branch() -> Vec<String> {
+    run (vec!["--no-pager", "branch"])
+}
+
+pub fn checkout_branch(branch_name: &str) -> Vec<String> {
+    run (vec!["checkout", branch_name])
+}
+
 pub fn log(max_count: Option<u32>) -> Vec<String> {
     let mut args = vec!["--no-pager", "log", "--graph", "--oneline", "--decorate"];
 
