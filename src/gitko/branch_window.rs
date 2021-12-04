@@ -24,12 +24,7 @@ impl Window for BranchWindow {
             KEY_LF => {
                 let line = self.display.get_cursor_line_data();
                 if !line.starts_with("*") {
-                    let output = git::checkout_branch(line.trim());
-
-                    for (i, line) in output.iter().enumerate() {
-                        self.display.queue_write(&line.to_string(), (i as i32 + 15, 0));
-                    }
-
+                    git::checkout_branch(line.trim());
                     self.on_activate();
                 }
             }
