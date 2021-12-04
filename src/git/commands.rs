@@ -24,8 +24,8 @@ pub fn branch() -> Vec<String> {
     run (vec!["--no-pager", "branch"])
 }
 
-pub fn checkout_branch(branch_name: &str) {
-    run (vec!["checkout", branch_name]);
+pub fn checkout_branch(branch_name: &str) -> Vec<String> {
+    run (vec!["checkout", branch_name])
 }
 
 pub fn log(max_count: Option<u32>) -> Vec<String> {
