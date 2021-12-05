@@ -54,21 +54,21 @@ impl Display {
         self.cols
     }
 
-    pub fn queue_write(&self, data: &String, position: Position) {
+    pub fn queue_write(&self, data: &str, position: Position) {
         // https://linux.die.net/man/3/waddstr
         ncurses::mvwaddstr(
             self.curses_window,
             position.0,
             position.1,
-            &data);
+            data);
         ncurses::wnoutrefresh(self.curses_window);
     }
 
-    pub fn queue_write_buffer(&self, data: &Vec<String>) {
+    pub fn queue_write_buffer(&self, data: &[String]) {
         ncurses::wclear(self.curses_window);
 
         for (i, line) in data.iter().enumerate() {
-            ncurses::mvwaddstr(self.curses_window, i as i32, 0, &line);
+            ncurses::mvwaddstr(self.curses_window, i as i32, 0, line);
         }
 
         ncurses::wnoutrefresh(self.curses_window);

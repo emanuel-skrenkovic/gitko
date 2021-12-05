@@ -26,7 +26,7 @@ impl Window for BranchWindow {
             KEY_D_LOWER => {
                 let line = self.display.get_cursor_line_data();
 
-                if !line.starts_with("*") {
+                if !line.starts_with('*') {
                     let branch = line.trim();
 
                     let mut prompt = PromptWindow::new(
@@ -45,7 +45,7 @@ impl Window for BranchWindow {
             }
             KEY_LF => {
                 let line = self.display.get_cursor_line_data();
-                if !line.starts_with("*") {
+                if !line.starts_with('*') {
                     git::checkout_branch(line.trim());
                     self.on_activate();
                 }

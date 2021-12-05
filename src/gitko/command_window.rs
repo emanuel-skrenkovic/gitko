@@ -35,11 +35,10 @@ impl Window for CommandWindow {
             .unwrap();
 
         let raw_output = if output.status.success() { output.stdout } else { output.stderr };
-        let output_str = String::from_utf8(raw_output).expect("invalid string encoding");
-
-        let output = output_str.split('\n').map(str::to_string).collect();
-
-        self.display.queue_write(&output, (self.display.lines() - 1, 0));
+        self.display.queue_write(
+            &String::from_utf8(raw_output)
+                .expect("invalid string encoding"),
+            (self.display.lines() - 1, 0));
 
         true
     }
