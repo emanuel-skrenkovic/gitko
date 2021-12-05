@@ -28,6 +28,10 @@ pub fn checkout_branch(branch_name: &str) -> Vec<String> {
     run (vec!["checkout", branch_name])
 }
 
+pub fn delete_branch(branch_name: &str) -> Vec<String> {
+    run(vec!["branch", "-D", branch_name])
+}
+
 pub fn log(max_count: Option<u32>) -> Vec<String> {
     let mut args = vec!["--no-pager", "log", "--graph", "--oneline", "--decorate"];
 
