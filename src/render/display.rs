@@ -7,6 +7,9 @@ use crate::render::writeable_display::WriteableDisplay;
 
 use crate::render::ascii_table::*;
 
+const GREEN_TEXT: i16 = 1;
+const RED_TEXT: i16 = 2;
+
 pub struct Display {
     lines: i32,
     cols: i32,
@@ -16,7 +19,6 @@ pub struct Display {
 
 impl Display {
     pub fn new(size: ScreenSize) -> Display {
-        ncurses::start_color();
 
         let curses_window = ncurses::newwin(size.lines, size.cols, 0, 0);
 
@@ -56,11 +58,7 @@ impl Display {
 
     pub fn queue_write(&self, data: &str, position: Position) {
         // https://linux.die.net/man/3/waddstr
-        ncurses::mvwaddstr(
-            self.curses_window,
-            position.0,
-            position.1,
-            data);
+        self.write_line(data, position);
         ncurses::wnoutrefresh(self.curses_window);
     }
 
@@ -68,10 +66,38 @@ impl Display {
         ncurses::wclear(self.curses_window);
 
         for (i, line) in data.iter().enumerate() {
-            ncurses::mvwaddstr(self.curses_window, i as i32, 0, line);
+            self.write_line(line, (i as i32, 0));
         }
 
         ncurses::wnoutrefresh(self.curses_window);
+    }
+
+    fn write_line(&self, line: &str, position: Position) {
+        let color: Option<i16> = match line.chars().next() {
+            Some('+') => { Some(GREEN_TEXT) }, // 43 == '+'
+            Some('-') => { Some(RED_TEXT) }, // 45 == '-'
+            _         => { None }
+        };
+
+        let color_on = color.is_some();
+        if color_on {
+            ncurses::wattron(
+                self.curses_window,
+                ncurses::COLOR_PAIR(color.unwrap()));
+        }
+
+        // https://linux.die.net/man/3/waddstr
+        ncurses::mvwaddstr(
+            self.curses_window,
+            position.0,
+            position.1,
+            line);
+
+        if color_on {
+            ncurses::wattroff(
+                self.curses_window,
+                ncurses::COLOR_PAIR(color.unwrap()));
+        }
     }
 
     pub fn refresh(&self) {
