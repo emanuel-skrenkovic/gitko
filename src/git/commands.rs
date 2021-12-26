@@ -8,6 +8,10 @@ pub fn diff_file(path: &str) -> Vec<String> {
     run(vec!["--no-pager", "diff", path])
 }
 
+pub fn diff_commit(commit_hash: &str) -> Vec<String> {
+    run(vec!["--no-pager", "diff", &(commit_hash.to_owned() + "^!")])
+}
+
 pub fn add_file(path: &str) {
     run(vec!["add", path]);
 }
