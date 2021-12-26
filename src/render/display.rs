@@ -8,7 +8,8 @@ use crate::render::writeable_display::WriteableDisplay;
 use crate::render::ascii_table::*;
 
 const GREEN_TEXT: i16 = 1;
-const RED_TEXT: i16 = 2;
+const RED_TEXT: i16   = 2;
+const BLUE_TEXT: i16  = 3;
 
 pub struct Display {
     lines: i32,
@@ -73,11 +74,21 @@ impl Display {
     }
 
     fn write_line(&self, line: &str, position: Position) {
-        let color: Option<i16> = match line.chars().next() {
-            Some('+') => { Some(GREEN_TEXT) }, // 43 == '+'
-            Some('-') => { Some(RED_TEXT) }, // 45 == '-'
-            _         => { None }
-        };
+        // Ugly, but more control.
+        let color: Option<i16> =
+            if line.starts_with("+++") {
+                None
+            } else if line.starts_with("---") {
+                None
+            } else if line.starts_with("+") {
+                Some(GREEN_TEXT)
+            } else if line.starts_with("-") {
+                Some(RED_TEXT)
+            } else if line.starts_with("@@") {
+                Some(BLUE_TEXT)
+            } else {
+                None
+            };
 
         let color_on = color.is_some();
         if color_on {

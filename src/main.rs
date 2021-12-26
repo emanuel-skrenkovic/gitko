@@ -23,4 +23,5 @@ fn init_ncurses() {
 
     ncurses::init_pair(1, ncurses::COLOR_GREEN, ncurses::COLOR_BLACK);
     ncurses::init_pair(2, ncurses::COLOR_RED, ncurses::COLOR_BLACK);
+    ncurses::init_pair(3, ncurses::COLOR_CYAN, ncurses::COLOR_BLACK);
 }
