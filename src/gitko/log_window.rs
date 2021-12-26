@@ -3,6 +3,10 @@ use crate::render::window::Window;
 use crate::render::display::Display;
 use crate::render::window::ScreenSize;
 
+use crate::render::ascii_table::*;
+
+use crate::gitko::commit_diff_window::CommitDiffWindow;
+
 pub struct LogWindow {
     data: Vec<String>,
     display: Display,
@@ -23,6 +27,22 @@ impl Window for LogWindow {
     fn on_activate(&mut self) {
         self.data = git::log(None);
         self.display.queue_write_buffer(&self.data);
+    }
+
+    fn on_keypress(&mut self, c: i32) -> bool {
+        match c {
+            KEY_LF => {
+                let line = self.display.get_cursor_line_data();
+                let trimmed_line = line
+                    .trim_matches(|c| c == '|' || c == '\\' || c == '*' || c == ' ');
+                let commit_hash = &trimmed_line[0..7];
+
+                self.render_child(CommitDiffWindow::new(ScreenSize::max(), commit_hash));
+            }
+            _ => {}
+        }
+
+        true
     }
 
     fn data(&self) -> &Vec<String> { &self.data }
