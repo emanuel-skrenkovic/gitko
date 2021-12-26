@@ -33,7 +33,10 @@ pub trait Window {
     fn move_cursor_down(&mut self) {
         let delta = self.display_mut().try_move_cursor_down();
 
-        if delta > 0 {
+        let next_position = self.start_position() + delta as usize;
+        let next_end = next_position + self.display().lines() as usize;
+
+        if delta > 0 && next_end < self.data().len() {
             self.set_start_position(self.start_position() + delta as usize);
 
             self.display().queue_write_buffer(
