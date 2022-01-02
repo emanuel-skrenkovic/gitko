@@ -108,7 +108,20 @@ impl Window for MainWindow {
             .cloned()
             .collect();
 
-        let mut recent_commits: Vec<String> = git::log(Some(10));
+        let sections_count = 4;
+        let lines_between = 5;
+
+        let used_lines = added.len()
+            + deleted.len()
+            + unstaged.len()
+            + staged.len()
+            + sections_count
+            + lines_between;
+
+        let remaining_lines = self.display().lines() - used_lines as i32;
+        let recent_commits_count = (remaining_lines - 1) as u32;
+
+        let mut recent_commits: Vec<String> = git::log(Some(recent_commits_count));
 
         let mut status: Vec<String> = vec![];
 
@@ -143,7 +156,7 @@ impl Window for MainWindow {
         }
 
         if !recent_commits.is_empty() {
-            status.append(&mut vec!["".to_string(); 5]);
+            status.append(&mut vec!["".to_string(); lines_between]);
             status.push("Recent commits:".to_string());
             status.append(&mut recent_commits);
         }
