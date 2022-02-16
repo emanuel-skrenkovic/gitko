@@ -31,6 +31,16 @@ impl Window for MainWindow {
             KEY_B_LOWER => {
                 self.render_child(BranchWindow::new(ScreenSize::max()));
             }
+            KEY_C_LOWER => {
+                let line = self.display.get_cursor_line_data();
+                let file_state = parse_file_state(&line);
+
+                if matches!(file_state, FileState::Modified) {
+                    git::checkout_file(line[3..].trim());
+                }
+
+                self.refresh();
+            }
             KEY_L_LOWER => {
                 self.render_child(LogWindow::new(ScreenSize::max()));
             }

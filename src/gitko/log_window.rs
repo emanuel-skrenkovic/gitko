@@ -30,16 +30,13 @@ impl Window for LogWindow {
     }
 
     fn on_keypress(&mut self, c: i32) -> bool {
-        match c {
-            KEY_LF => {
+        if c == KEY_LF {
                 let line = self.display.get_cursor_line_data();
                 let trimmed_line = line
                     .trim_matches(|c| c == '|' || c == '\\' || c == '*' || c == ' ');
                 let commit_hash = &trimmed_line[0..7];
 
                 self.render_child(CommitDiffWindow::new(ScreenSize::max(), commit_hash));
-            }
-            _ => {}
         }
 
         true

@@ -76,13 +76,11 @@ impl Display {
     fn write_line(&self, line: &str, position: Position) {
         // Ugly, but more control.
         let color: Option<i16> =
-            if line.starts_with("+++") {
+            if line.starts_with("+++") || line.starts_with("---") {
                 None
-            } else if line.starts_with("---") {
-                None
-            } else if line.starts_with("+") {
+            } else if line.starts_with('+') {
                 Some(GREEN_TEXT)
-            } else if line.starts_with("-") {
+            } else if line.starts_with('-') {
                 Some(RED_TEXT)
             } else if line.starts_with("@@") {
                 Some(BLUE_TEXT)

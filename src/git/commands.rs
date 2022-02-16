@@ -32,6 +32,10 @@ pub fn checkout_branch(branch_name: &str) -> Vec<String> {
     run (vec!["checkout", branch_name])
 }
 
+pub fn checkout_file(file_path: &str) -> Vec<String> {
+    run (vec!["checkout", file_path])
+}
+
 pub fn delete_branch(branch_name: &str) -> Vec<String> {
     run(vec!["branch", "-D", branch_name])
 }
