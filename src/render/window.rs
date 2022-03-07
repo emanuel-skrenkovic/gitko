@@ -38,8 +38,6 @@ impl<T: Component<T>> Renderer<T> {
 
         let mut c: i32 = 0;
         loop {
-            self.refresh();
-
             if !self.on_keypress(c) { break; }
             if !self.component.on_render(&mut self.window) { break; }
 
