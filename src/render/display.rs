@@ -207,11 +207,7 @@ impl WriteableDisplay for Display {
                     ncurses::wdelch(self.curses_window);
                 }
                 KEY_ETB => {
-                    // TODO: delete everything and then break out.
-                    self.move_cursor((0, 0));
                     self.clear();
-                    self.refresh();
-
                     break;
                 }
                 KEY_LF => { break; }
