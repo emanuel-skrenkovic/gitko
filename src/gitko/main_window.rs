@@ -14,13 +14,9 @@ pub struct MainWindow {
 
 impl MainWindow {
     pub fn new() -> MainWindow {
-        MainWindow {
-            data: vec![],
-        }
+        MainWindow { data: vec![] }
     }
-}
 
-impl MainWindow {
     fn diff_file(&mut self, window: &mut Window<MainWindow>) -> bool {
         let line = window.get_cursor_line();
         let file_state = parse_file_state(&line);

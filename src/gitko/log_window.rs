@@ -11,9 +11,7 @@ pub struct LogWindow {
 
 impl LogWindow {
     pub fn new() -> LogWindow {
-        LogWindow {
-            data: vec![],
-        }
+        LogWindow { data: vec![] }
     }
 
     fn get_log(&mut self) {

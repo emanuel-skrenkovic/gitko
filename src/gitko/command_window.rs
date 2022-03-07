@@ -8,9 +8,7 @@ pub struct CommandWindow {
 
 impl CommandWindow {
     pub fn new() -> CommandWindow {
-        CommandWindow {
-            data: vec![String::new()],
-        }
+        CommandWindow { data: vec![String::new()] }
     }
 
     // lol

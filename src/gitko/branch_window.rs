@@ -10,9 +10,7 @@ pub struct BranchWindow {
 
 impl BranchWindow {
     pub fn new() -> BranchWindow {
-        BranchWindow {
-            data: vec![],
-        }
+        BranchWindow { data: vec![] }
     }
 
     fn open_delete_branch_prompt(
@@ -21,11 +19,11 @@ impl BranchWindow {
         let line = window.get_cursor_line();
 
         if !line.starts_with('*') {
-            let branch = line.trim().to_string();
+            let branch = line.trim();
             let prompt = PromptWindow::new(
                 &format!("Are you sure you want to delete branch '{}'? y/n", branch),
-                Box::new(|| { git::delete_branch(window.get_cursor_line().trim()); }),
-                Box::new(|| { }));
+                || { git::delete_branch(branch); },
+                || { });
 
             Renderer::new(
                 prompt,
