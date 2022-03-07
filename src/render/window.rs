@@ -137,16 +137,16 @@ impl<T> Window<T> where T: Component<T> {
     }
 
     pub fn move_screen_down(&mut self, data: &[String], delta: usize) {
-        self.screen_start += delta;
-        // self.screen_start = num::clamp(self.screen_start as i32, 0, self.height() - 1) as usize;
+        if self.screen_start + delta >= data.len() { return; }
 
+        self.screen_start += delta;
         self.display.queue_write_buffer(&data[self.screen_start..]);
     }
 
     pub fn move_screen_up(&mut self, data: &[String], delta: usize) {
-        self.screen_start -= delta;
-        // self.screen_start = num::clamp(self.screen_start as i32, 0, self.height() - 1) as usize;
+        if (self.screen_start as i32 - delta as i32 ) < 0 { return; }
 
+        self.screen_start -= delta;
         self.display.queue_write_buffer(&data[self.screen_start..]);
     }
 
