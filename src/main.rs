@@ -1,6 +1,5 @@
 use crate::gitko::main_window::MainWindow;
-use crate::render::window::Window;
-use crate::render::window::ScreenSize;
+use crate::render::window::{Renderer, ScreenSize};
 
 mod git;
 mod num;
@@ -10,8 +9,11 @@ mod gitko;
 fn main() {
     init_ncurses();
 
-    let mut main_window = MainWindow::new(ScreenSize::max());
-    main_window.render();
+    Renderer::new(
+        MainWindow::new(),
+        ScreenSize::max(),
+        (0, 0)
+    ).render();
 }
 
 fn init_ncurses() {

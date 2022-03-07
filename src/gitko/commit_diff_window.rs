@@ -1,57 +1,43 @@
-use crate::render::window::Window;
-use crate::render::display::Display;
-use crate::render::window::ScreenSize;
+use crate::render::window::{Component, Window};
 
+use crate::render::ascii_table::*;
 use crate::git::commands as git;
 
 pub struct CommitDiffWindow {
     commit_hash: String,
-    data_start: usize,
     data: Vec<String>,
-    display: Display
 }
 
 impl CommitDiffWindow {
-    pub fn new(size: ScreenSize, commit_hash: &str) -> CommitDiffWindow {
+    pub fn new(commit_hash: &str) -> CommitDiffWindow {
         CommitDiffWindow {
-            commit_hash: commit_hash.to_string(),
-            data_start: 0,
-            data: vec![],
-            display: Display::new(size)
+            commit_hash: commit_hash.to_owned(),
+            data: vec![]
         }
+    }
+
+    fn move_screen_up(&mut self, window: &mut Window<CommitDiffWindow>) -> bool {
+        window.move_screen_up(&self.data, 1); // TODO: fix move above screen crash
+        true
+    }
+
+    fn move_screen_down(&mut self, window: &mut Window<CommitDiffWindow>) -> bool {
+        window.move_screen_down(&self.data, 1);
+        true
     }
 }
 
-impl Window for CommitDiffWindow {
-    fn on_activate(&mut self) {
+impl Component<CommitDiffWindow> for CommitDiffWindow {
+    fn on_start(&mut self) {
         self.data = git::diff_commit(&self.commit_hash);
-
-        self.display.queue_write_buffer(&self.data);
     }
 
-    // TODO: Passthrough methods are evil!
-    // Think of a better way.
-
-    fn display(&self) -> &Display { &self.display }
-    fn display_mut(&mut self) -> &mut Display { &mut self.display }
-
-    fn data(&self) -> &Vec<String> {
+    fn data(&self) -> &[String] {
         &self.data
     }
 
-    fn start_position(&self) -> usize {
-        self.data_start
-    }
-
-    fn set_start_position(&mut self, new_position: usize) {
-        self.data_start = new_position;
-    }
-
-    fn close(&self) {
-        self.display.close();
-    }
-
-    fn clear(&self) {
-        self.display.clear();
+    fn register_handlers(&self, window: &mut Window<CommitDiffWindow>) {
+        window.register_handler(KEY_J_LOWER, CommitDiffWindow::move_screen_down);
+        window.register_handler(KEY_K_LOWER, CommitDiffWindow::move_screen_up);
     }
 }

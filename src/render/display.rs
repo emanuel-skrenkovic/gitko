@@ -19,9 +19,9 @@ pub struct Display {
 }
 
 impl Display {
-    pub fn new(size: ScreenSize) -> Display {
+    pub fn new(size: ScreenSize, position: Position) -> Display {
 
-        let curses_window = ncurses::newwin(size.lines, size.cols, 0, 0);
+        let curses_window = ncurses::newwin(size.lines, size.cols, position.1, position.0);
 
         let mut y: i32 = 0;
         let mut x: i32 = 0;

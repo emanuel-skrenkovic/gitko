@@ -2,9 +2,7 @@ use crate::git::commands as git;
 use crate::git::FileState;
 use crate::git::parse_file_state;
 use crate::render::ascii_table::*;
-use crate::render::display::Display;
-use crate::render::window::ScreenSize;
-use crate::render::window::Window;
+use crate::render::window::{Renderer, Component, ScreenSize, Window};
 use crate::gitko::log_window::LogWindow;
 use crate::gitko::diff_window::DiffWindow;
 use crate::gitko::branch_window::BranchWindow;
@@ -12,85 +10,109 @@ use crate::gitko::command_window::CommandWindow;
 
 pub struct MainWindow {
     data: Vec<String>,
-    display: Display
 }
 
 impl MainWindow {
-    pub fn new(size: ScreenSize) -> MainWindow {
+    pub fn new() -> MainWindow {
         MainWindow {
             data: vec![],
-            display: Display::new(size)
         }
     }
 }
 
-impl Window for MainWindow {
-    fn on_keypress(&mut self, c: i32) -> bool {
-        // TODO: remove, just for testing getting data.
-        match c {
-            KEY_B_LOWER => {
-                self.render_child(BranchWindow::new(ScreenSize::max()));
-            }
-            KEY_C_LOWER => {
-                let line = self.display.get_cursor_line_data();
-                let file_state = parse_file_state(&line);
+impl MainWindow {
+    fn diff_file(&mut self, window: &mut Window<MainWindow>) -> bool {
+        let line = window.get_cursor_line();
+        let file_state = parse_file_state(&line);
 
-                if matches!(file_state, FileState::Modified) {
-                    git::checkout_file(line[3..].trim());
-                }
+        if !matches!(file_state, FileState::Unknown) {
+            let path = line[3..].trim();
 
-                self.refresh();
-            }
-            KEY_L_LOWER => {
-                self.render_child(LogWindow::new(ScreenSize::max()));
-            }
-            KEY_T_LOWER => {
-                // TODO: add parse git status that returns file state
-                // and file path?
-                let line = self.display.get_cursor_line_data();
-                let file_state = parse_file_state(&line);
-
-                if !matches!(file_state, FileState::Staged) {
-                    git::add_file(line[3..].trim());
-                }
-
-                // TODO: is refresh always necessary?
-                self.refresh();
-            }
-            KEY_U_LOWER => {
-                let line = self.display.get_cursor_line_data();
-                let file_state = parse_file_state(&line);
-
-                if matches!(file_state, FileState::Staged) {
-                    git::unstage_file(line[3..].trim());
-                }
-
-                self.refresh();
-            }
-            KEY_COLON => {
-                self.render_child(
-                    CommandWindow::new(ScreenSize {
-                        lines: self.display.lines(), cols: self.display.cols()
-                    }));
-            }
-            KEY_LF => {
-                let line = self.display.get_cursor_line_data();
-                let file_state = parse_file_state(&line);
-
-                if !matches!(file_state, FileState::Unknown) {
-                    let path = line[3..].trim();
-                    let diff_window = DiffWindow::new(ScreenSize::max(), path);
-                    self.render_child(diff_window);
-                }
-            }
-            _ => {}
+            Renderer::new(
+                DiffWindow::new(path),
+                ScreenSize::max(),
+                (0, 0)
+            ).render();
         }
 
         true
     }
 
-    fn on_activate(&mut self) {
-        let git_status: Vec<String> = git::status();
+    fn open_branch_window(&mut self, _window: &mut Window<MainWindow>) -> bool {
+        Renderer::new(
+            BranchWindow::new(),
+            ScreenSize::max(),
+            (0, 0)
+        ).render();
+
+        true
+    }
+
+    fn open_log_window(&mut self, _window: &mut Window<MainWindow>) -> bool {
+        Renderer::new(
+            LogWindow::new(),
+            ScreenSize::max(),
+            (0, 0)
+        ).render();
+
+        true
+    }
+
+    fn open_command_window(&mut self, window: &mut Window<MainWindow>) -> bool {
+        Renderer::new(
+            CommandWindow::new(),
+            ScreenSize { lines: 2, cols: window.width() },
+            (0, window.height() - 2)
+        ).render();
+
+        self.load_data();
+
+        true
+    }
+
+    fn git_checkout_file(&mut self, window: &mut Window<MainWindow>) -> bool {
+        let line = window.get_cursor_line();
+        let file_state = parse_file_state(&line);
+
+        if matches!(file_state, FileState::Modified) {
+            git::checkout_file(line[3..].trim());
+        }
+
+        self.load_data();
+
+        true
+    }
+
+    fn git_add_file(&mut self, window: &mut Window<MainWindow>) -> bool {
+        // TODO: add parse git status that returns file state
+        // and file path?
+        let line = window.get_cursor_line();
+        let file_state = parse_file_state(&line);
+
+        if !matches!(file_state, FileState::Staged) {
+            git::add_file(line[3..].trim());
+        }
+
+        self.load_data();
+
+        true
+    }
+
+    fn git_unstage_file(&mut self, window: &mut Window<MainWindow>) -> bool {
+        let line = window.get_cursor_line();
+        let file_state = parse_file_state(&line);
+
+        if matches!(file_state, FileState::Staged) {
+            git::unstage_file(line[3..].trim());
+        }
+
+        self.load_data();
+
+        true
+    }
+
+    fn load_data(&mut self) {
+         let git_status: Vec<String> = git::status();
 
         // TODO: lists folders instead of all files in the newly
         // added folder
@@ -118,17 +140,19 @@ impl Window for MainWindow {
             .cloned()
             .collect();
 
-        let sections_count = 4;
+        // let sections_count = 4;
         let lines_between = 5;
 
+        /*
         let used_lines = added.len()
             + deleted.len()
             + unstaged.len()
             + staged.len()
             + sections_count
             + lines_between;
+        */
 
-        let remaining_lines = self.display().lines() - used_lines as i32;
+        let remaining_lines = 10;// self.display().lines() - used_lines as i32;
         let recent_commits_count = (remaining_lines - 1) as u32;
 
         let mut recent_commits: Vec<String> = git::log(Some(recent_commits_count));
@@ -176,23 +200,25 @@ impl Window for MainWindow {
         }
 
         self.data = status.clone();
+    }
+}
 
-        for (i, line) in self.data.iter().enumerate() {
-            self.display.queue_write(&line.to_string(), (i as i32, 0));
-        }
+impl Component<MainWindow> for MainWindow {
+    fn on_start(&mut self) {
+        self.load_data();
     }
 
-    // TODO: Passthrough methods are evil!
-    // Think of a better way.
-
-    fn data(&self) -> &Vec<String> {
+    fn data(&self) -> &[String] {
         &self.data
     }
 
-    fn start_position(&self) -> usize { 0 }
-
-    fn set_start_position(&mut self, _new_position: usize) { }
-
-    fn display(&self) -> &Display { &self.display }
-    fn display_mut(&mut self) -> &mut Display { &mut self.display }
+    fn register_handlers(&self, window: &mut Window<MainWindow>) {
+        window.register_handler(KEY_LF, MainWindow::diff_file);
+        window.register_handler(KEY_B_LOWER, MainWindow::open_branch_window);
+        window.register_handler(KEY_C_LOWER, MainWindow::git_checkout_file);
+        window.register_handler(KEY_L_LOWER, MainWindow::open_log_window);
+        window.register_handler(KEY_T_LOWER, MainWindow::git_add_file);
+        window.register_handler(KEY_U_LOWER, MainWindow::git_unstage_file);
+        window.register_handler(KEY_COLON, MainWindow::open_command_window);
+    }
 }

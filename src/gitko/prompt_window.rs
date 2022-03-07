@@ -1,55 +1,39 @@
-use crate::render::window::Window;
-use crate::render::display::Display;
-use crate::render::window::ScreenSize;
-
+use crate::render::window::{Component, Window};
 use crate::render::ascii_table::*;
 
-pub struct PromptWindow {
+pub struct PromptWindow<TYes: Fn(), TNo: Fn()> {
     data: Vec<String>,
-    display: Display,
-    result: bool
+    on_yes: TYes,
+    on_no: TNo
 }
 
-impl PromptWindow {
-    pub fn new(size: ScreenSize, message: &str) -> PromptWindow {
+impl<TYes: Fn(), TNo: Fn()> PromptWindow<TYes, TNo> {
+    pub fn new(message: &str, on_yes: TYes, on_no: TNo) -> PromptWindow<TYes, TNo> {
         PromptWindow {
             data: vec![message.to_string()],
-            display: Display::new(size),
-            result: false
+            on_yes,
+            on_no
         }
     }
 
-    pub fn get_result(&self) -> bool {
-        self.result
+    fn yes(&mut self, _window: &mut Window<PromptWindow<TYes, TNo>>) -> bool {
+        (self.on_yes)();
+        false
+    }
+
+    fn no(&mut self, _window: &mut Window<PromptWindow<TYes, TNo>>) -> bool {
+        (self.on_no)();
+        false
     }
 }
 
-impl Window for &mut PromptWindow {
-    fn on_activate(&mut self) {
-        self.display.queue_write_buffer(&self.data);
+impl<TYes: Fn(), TNo: Fn()> Component<PromptWindow<TYes, TNo>> for PromptWindow<TYes, TNo> {
+    fn data(&self) -> &[String] {
+        &self.data
     }
 
-    fn on_keypress(&mut self, c: i32) -> bool {
-        match c {
-            KEY_Y_LOWER => {
-                self.result = true;
-                false
-            }
-            KEY_N_LOWER => {
-                self.result = false;
-                false
-            }
-            _ => { true }
-        }
+    fn register_handlers(&self, window: &mut Window<PromptWindow<TYes, TNo>>) {
+        window.register_handler(KEY_Y_LOWER, PromptWindow::yes);
+        window.register_handler(KEY_N_LOWER, PromptWindow::no);
     }
-
-    fn data(&self) -> &Vec<String> { &self.data }
-
-    fn start_position(&self) -> usize { 0 }
-
-    fn set_start_position(&mut self, _new_position: usize) { }
-
-    fn display (&self) -> &Display { &self.display }
-
-    fn display_mut (&mut self) -> &mut Display { &mut self.display }
 }

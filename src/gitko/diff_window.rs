@@ -1,59 +1,47 @@
-use crate::render::window::Window;
-use crate::render::display::Display;
-use crate::render::window::ScreenSize;
+use crate::render::window::{Component, Window};
 
+use crate::render::ascii_table::*;
 use crate::git::commands as git;
 
 pub struct DiffWindow {
     path: String,
-    data_start: usize, 
     data: Vec<String>,
-    display: Display
 }
 
 impl DiffWindow {
-    pub fn new(size: ScreenSize, path: &str) -> DiffWindow {
+    pub fn new(path: &str) -> DiffWindow {
         DiffWindow {
             path: path.to_string(),
-            data_start: 0,
             data: vec![],
-            display: Display::new(size)
         }
+    }
+
+    fn load_data(&mut self) {
+        self.data = git::diff_file(&self.path);
+    }
+
+    fn move_screen_up(&mut self, window: &mut Window<DiffWindow>) -> bool {
+        window.move_screen_up(&self.data, 1); // TODO: fix move above screen crash
+        true
+    }
+
+    fn move_screen_down(&mut self, window: &mut Window<DiffWindow>) -> bool {
+        window.move_screen_down(&self.data, 1);
+        true
     }
 }
 
-impl Window for DiffWindow {
-    fn on_activate(&mut self) {
-        self.data = git::diff_file(&self.path);
-
-        for (i, line) in self.data.iter().enumerate() {
-            self.display.queue_write(&line.to_string(), (i as i32, 0));
-        }
+impl Component<DiffWindow> for DiffWindow {
+    fn on_start(&mut self) {
+        self.load_data();
     }
 
-    // TODO: Passthrough methods are evil!
-    // Think of a better way.
-
-    fn display(&self) -> &Display { &self.display }
-    fn display_mut(&mut self) -> &mut Display { &mut self.display }
-
-    fn data(&self) -> &Vec<String> {
+    fn data(&self) -> &[String] {
         &self.data
     }
 
-    fn start_position(&self) -> usize {
-        self.data_start
-    }
-
-    fn set_start_position(&mut self, new_position: usize) {
-        self.data_start = new_position;
-    }
-
-    fn close(&self) {
-        self.display.close();
-    }
-
-    fn clear(&self) {
-        self.display.clear();
+    fn register_handlers(&self, window: &mut Window<DiffWindow>) {
+        window.register_handler(KEY_J_LOWER, DiffWindow::move_screen_down);
+        window.register_handler(KEY_K_LOWER, DiffWindow::move_screen_up);
     }
 }

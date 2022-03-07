@@ -1,6 +1,4 @@
-use crate::render::display::Display;
-use crate::render::window::ScreenSize;
-use crate::render::window::Window;
+use crate::render::window::{Component, Renderer, ScreenSize, Window};
 use crate::render::ascii_table::*;
 use crate::git::commands as git;
 
@@ -8,67 +6,64 @@ use crate::gitko::prompt_window::PromptWindow;
 
 pub struct BranchWindow {
     data: Vec<String>,
-    display: Display
 }
 
 impl BranchWindow {
-    pub fn new(size: ScreenSize) -> BranchWindow {
+    pub fn new() -> BranchWindow {
         BranchWindow {
             data: vec![],
-            display: Display::new(size)
         }
     }
-}
 
-impl Window for BranchWindow {
-    fn on_keypress(&mut self, c: i32) -> bool {
-        match c {
-            KEY_D_LOWER => {
-                let line = self.display.get_cursor_line_data();
+    fn open_delete_branch_prompt(
+        &mut self, window:
+        &mut Window<BranchWindow>) -> bool {
+        let line = window.get_cursor_line();
 
-                if !line.starts_with('*') {
-                    let branch = line.trim();
+        if !line.starts_with('*') {
+            let branch = line.trim().to_string();
+            let prompt = PromptWindow::new(
+                &format!("Are you sure you want to delete branch '{}'? y/n", branch),
+                Box::new(|| { git::delete_branch(window.get_cursor_line().trim()); }),
+                Box::new(|| { }));
 
-                    let mut prompt = PromptWindow::new(
-                        ScreenSize { lines: 1, cols: self.display.cols() },
-                        &format!("Are you sure you want to delete branch {}?", branch));
-                    self.render_child(&mut prompt);
+            Renderer::new(
+                prompt,
+                ScreenSize { lines: 1, cols: 0 }, // TODO
+                (0, (window.height() - 1) as i32)
+            ).render();
 
-                    if prompt.get_result() {
-                        git::delete_branch(branch);
-                    }
-
-                    // TODO: ugly, find a better way.
-                    self.clear();
-                    self.on_activate();
-                }
-            }
-            KEY_LF => {
-                let line = self.display.get_cursor_line_data();
-                if !line.starts_with('*') {
-                    git::checkout_branch(line.trim());
-                    self.on_activate();
-                }
-            }
-            _ => {}
+            self.get_branches();
         }
 
         true
     }
 
-    fn on_activate(&mut self) {
-        self.data = git::branch();
+    fn checkout_branch(&mut self, window: &mut Window<BranchWindow>) -> bool {
+        let line = window.get_cursor_line();
+        if !line.starts_with('*') {
+            git::checkout_branch(line.trim());
+        }
 
-        self.display.queue_write_buffer(&self.data);
+        true
     }
 
-    fn data(&self) -> &Vec<String> { &self.data }
+    fn get_branches(&mut self) {
+        self.data = git::branch();
+    }
+}
 
-    fn start_position(&self) -> usize { 0 }
+impl Component<BranchWindow> for BranchWindow {
+    fn on_start(&mut self) {
+        self.get_branches();
+    }
 
-    fn set_start_position(&mut self, _new_position: usize) { }
+    fn data(&self) -> &[String] {
+        &self.data
+    }
 
-    fn display (&self) -> &Display { &self.display }
-
-    fn display_mut (&mut self) -> &mut Display { &mut self.display }
+    fn register_handlers(&self, window: &mut Window<BranchWindow>) {
+        window.register_handler(KEY_LF, BranchWindow::checkout_branch);
+        window.register_handler(KEY_D_LOWER, BranchWindow::open_delete_branch_prompt);
+    }
 }

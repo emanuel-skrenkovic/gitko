@@ -1,57 +1,60 @@
-use crate::render::window::Window;
-use crate::render::display::Display;
-use crate::render::window::ScreenSize;
 use crate::render::writeable_display::WriteableDisplay;
+use crate::render::window::{Component, Window};
+use crate::render::ascii_table::*;
 
 pub struct CommandWindow {
     data: Vec<String>,
-    display: Display
 }
 
 impl CommandWindow {
-    pub fn new(size: ScreenSize) -> CommandWindow {
+    pub fn new() -> CommandWindow {
         CommandWindow {
             data: vec![String::new()],
-            display: Display::new(size)
         }
+    }
+
+    // lol
+    pub fn do_nothing(&mut self, _: &mut Window<CommandWindow>) -> bool {
+        true
     }
 }
 
-impl Window for CommandWindow {
-    fn on_keypress(&mut self, _c: i32) -> bool {
-        let writeable_display = self.display.as_writeable_mut();
-        writeable_display.listen();
+impl Component<CommandWindow> for CommandWindow {
+    fn on_render(&mut self, window: &mut Window<CommandWindow>) -> bool {
+        window.display
+              .as_writeable_mut()
+              .listen();
 
-        let line = self.display.get_cursor_line_data().trim().to_string();
+        let line = window.get_cursor_line()
+                         .trim()
+                         .to_owned();
 
-        if line.is_empty() { return true }
+        if line.is_empty() { return false; }
 
-        // I know, I know, unsafe, but this is
-        // just for personal use.
         let output = std::process::Command::new("bash")
             .arg("-c")
             .arg(line)
             .output()
             .unwrap();
 
-        let raw_output = if output.status.success() { output.stdout } else { output.stderr };
-        self.display.queue_write(
-            &String::from_utf8(raw_output)
-                .expect("invalid string encoding"),
-            (self.display.lines() - 1, 0));
+        let raw_output = if output.status.success() {
+            output.stdout
+        } else {
+            output.stderr
+        };
+
+        self.data.push(String::from_utf8(raw_output)
+                       .expect("invalid string encoding"));
 
         true
     }
 
-    fn on_activate(&mut self) {
-        self.display.queue_write_buffer(&self.data);
+    fn data(&self) -> &[String] {
+        &self.data
     }
 
-    fn data(&self) -> &Vec<String> { &self.data }
-
-    fn start_position(&self) -> usize { 0 }
-    fn set_start_position(&mut self, _new_position: usize) { }
-
-    fn display(&self) -> &Display { &self.display }
-    fn display_mut(&mut self) -> &mut Display { &mut self.display }
+    fn register_handlers(&self, window: &mut Window<CommandWindow>) {
+        window.register_handler(KEY_J_LOWER, CommandWindow::do_nothing);
+        window.register_handler(KEY_K_LOWER, CommandWindow::do_nothing);
+    }
 }
