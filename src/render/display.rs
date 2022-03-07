@@ -39,7 +39,7 @@ impl Display {
     }
 
     pub fn close(&self) {
-        ncurses::wclear(self.curses_window);
+        ncurses::werase(self.curses_window);
         ncurses::delwin(self.curses_window);
     }
 
@@ -66,7 +66,7 @@ impl Display {
      */
 
     pub fn queue_write_buffer(&self, data: &[String]) {
-        ncurses::wclear(self.curses_window);
+        ncurses::werase(self.curses_window);
 
         for (i, line) in data.iter().enumerate() {
             self.write_line(line, (i as i32, 0));
@@ -118,7 +118,7 @@ impl Display {
     }
 
     pub fn clear(&self) {
-        ncurses::wclear(self.curses_window);
+        ncurses::werase(self.curses_window);
         ncurses::doupdate();
     }
 
