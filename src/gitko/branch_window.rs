@@ -43,6 +43,8 @@ impl BranchWindow {
             git::checkout_branch(line.trim());
         }
 
+        self.get_branches();
+
         true
     }
 
