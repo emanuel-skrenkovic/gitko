@@ -32,7 +32,7 @@ impl DiffWindow {
 }
 
 impl Component<DiffWindow> for DiffWindow {
-    fn on_start(&mut self) {
+    fn on_start(&mut self, _windwo: &mut Window<DiffWindow>) {
         self.load_data();
     }
 

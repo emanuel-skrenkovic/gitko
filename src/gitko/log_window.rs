@@ -35,7 +35,7 @@ impl LogWindow {
 }
 
 impl Component<LogWindow> for LogWindow {
-    fn on_start(&mut self) {
+    fn on_start(&mut self, _window: &mut Window<LogWindow>) {
         self.get_log();
     }
 

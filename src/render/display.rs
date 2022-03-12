@@ -3,8 +3,6 @@ use std::convert::TryInto;
 use crate::num;
 use crate::render::window::Position;
 use crate::render::window::ScreenSize;
-use crate::render::writeable_display::WriteableDisplay;
-
 use crate::render::ascii_table::*;
 
 const GREEN_TEXT: i16 = 1;
@@ -21,7 +19,10 @@ pub struct Display {
 impl Display {
     pub fn new(size: ScreenSize, position: Position) -> Display {
 
-        let curses_window = ncurses::newwin(size.lines, size.cols, position.1, position.0);
+        let curses_window = ncurses::newwin(size.lines,
+                                            size.cols,
+                                            position.1,
+                                            position.0);
 
         let mut y: i32 = 0;
         let mut x: i32 = 0;
@@ -38,11 +39,6 @@ impl Display {
         }
     }
 
-    pub fn close(&self) {
-        ncurses::werase(self.curses_window);
-        ncurses::delwin(self.curses_window);
-    }
-
     pub fn listen_input(&self) -> i32 {
         ncurses::wgetch(self.curses_window)
     }
@@ -57,13 +53,11 @@ impl Display {
         self.cols
     }
 
-    /*
-    pub fn queue_write(&self, data: &str, position: Position) {
-        // https://linux.die.net/man/3/waddstr
-        self.write_line(data, position);
-        ncurses::wnoutrefresh(self.curses_window);
+    pub fn resize(&mut self, size: ScreenSize) {
+        ncurses::wresize(self.curses_window, size.lines, size.cols);
+        self.lines = size.lines;
+        self.cols = size.cols;
     }
-     */
 
     pub fn queue_write_buffer(&self, data: &[String]) {
         ncurses::werase(self.curses_window);
@@ -114,6 +108,11 @@ impl Display {
     pub fn refresh(&self) {
         let cursor = self.cursor_position();
         ncurses::wmove(self.curses_window, cursor.0, cursor.1);
+        ncurses::doupdate();
+    }
+
+    pub fn draw(&self) {
+        ncurses::curs_set(ncurses::CURSOR_VISIBILITY::CURSOR_INVISIBLE);
         ncurses::doupdate();
     }
 
@@ -191,8 +190,25 @@ impl Display {
 
 impl Drop for Display {
     fn drop(&mut self) {
+        ncurses::curs_set(ncurses::CURSOR_VISIBILITY::CURSOR_VISIBLE);
         ncurses::endwin();
     }
+}
+
+pub trait WriteableDisplay {
+    fn as_writeable(&self) -> &dyn WriteableDisplay
+        where Self : Sized
+    {
+        self
+    }
+
+    fn as_writeable_mut(&mut self) -> &mut dyn WriteableDisplay
+        where Self : Sized
+    {
+        self
+    }
+
+    fn listen(&mut self);
 }
 
 impl WriteableDisplay for Display {
