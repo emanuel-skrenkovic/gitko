@@ -22,6 +22,11 @@ impl LogWindow {
         let line = window.get_cursor_line();
         let trimmed_line = line
             .trim_matches(|c| c == '|' || c == '\\' || c == '*' || c == ' ');
+
+        if trimmed_line.is_empty() {
+            return true;
+        }
+
         let commit_hash = &trimmed_line[0..7];
 
         Renderer::new(
