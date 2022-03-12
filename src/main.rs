@@ -1,4 +1,4 @@
-use crate::render::{Renderer, ScreenSize};
+use crate::render::{Renderer, ScreenSize, Position};
 use crate::gitko::main_window::MainWindow;
 
 mod git;
@@ -26,7 +26,7 @@ fn main() {
     Renderer::new(
         MainWindow::new(),
         ScreenSize::max(),
-        (0, 0)
+        Position::default()
     ).render();
 }
 

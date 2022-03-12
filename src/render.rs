@@ -4,7 +4,17 @@ use std::collections::HashMap;
 use crate::num;
 use crate::ascii_table::*;
 
-pub type Position = (i32, i32);
+#[derive(Clone, Copy)]
+pub struct Position {
+    pub x: i32,
+    pub y: i32
+}
+
+impl Position {
+    pub fn default() -> Position {
+        Position { x: 0, y: 0 }
+    }
+}
 
 pub struct ScreenSize {
     pub lines: i32,
@@ -184,11 +194,10 @@ pub struct Display {
 
 impl Display {
     pub fn new(size: ScreenSize, position: Position) -> Display {
-
         let curses_window = ncurses::newwin(size.lines,
                                             size.cols,
-                                            position.1,
-                                            position.0);
+                                            position.y,
+                                            position.x);
 
         let mut y: i32 = 0;
         let mut x: i32 = 0;
@@ -200,7 +209,7 @@ impl Display {
         Display {
             lines: y,
             cols: x,
-            cursor_position: (0, 0),
+            cursor_position: Position::default(),
             curses_window
         }
     }
@@ -229,7 +238,7 @@ impl Display {
         ncurses::werase(self.curses_window);
 
         for (i, line) in data.iter().enumerate() {
-            self.write_line(line, (i as i32, 0));
+            self.write_line(line, Position { x: 0, y: i as i32 });
         }
 
         ncurses::wnoutrefresh(self.curses_window);
@@ -260,8 +269,8 @@ impl Display {
         // https://linux.die.net/man/3/waddstr
         ncurses::mvwaddstr(
             self.curses_window,
-            position.0,
-            position.1,
+            position.y,
+            position.x,
             line);
 
         if color_on {
@@ -273,7 +282,7 @@ impl Display {
 
     pub fn refresh(&self) {
         let cursor = self.cursor_position();
-        ncurses::wmove(self.curses_window, cursor.0, cursor.1);
+        ncurses::wmove(self.curses_window, cursor.y, cursor.x);
         ncurses::doupdate();
     }
 
@@ -297,12 +306,12 @@ impl Display {
 
     pub fn try_move_cursor_down(&mut self) -> i32 {
         self.move_cursor(
-            (self.cursor_position.0 + 1, self.cursor_position.1))
+            Position { x: self.cursor_position.x, y: self.cursor_position.y + 1 })
     }
 
     pub fn try_move_cursor_up(&mut self) -> i32 {
         self.move_cursor(
-            (self.cursor_position.0 - 1, self.cursor_position.1))
+            Position { x: self.cursor_position.x, y: self.cursor_position.y - 1 })
     }
 
     // Returns the delta between the attempted cursor
@@ -313,13 +322,13 @@ impl Display {
     pub fn move_cursor(&mut self, position: Position) -> i32 {
         // TODO: optimize by not doing anything when
         // trying to go beyond edges (unless scrolling).
-        let y = num::clamp(position.0, 0, self.lines() - 1);
-        let x = num::clamp(position.1, 0, self.cols() - 1);
+        let y = num::clamp(position.y, 0, self.lines() - 1);
+        let x = num::clamp(position.x, 0, self.cols() - 1);
 
-        let delta = position.0 - y;
+        let delta = position.y - y;
 
         ncurses::wmove(self.curses_window, y, x);
-        self.cursor_position = (y, x);
+        self.cursor_position = Position { x, y };
 
         delta
     }
@@ -333,7 +342,7 @@ impl Display {
 
         // Move the cursor to the beginning of the line
         // to get all the characters.
-        ncurses::wmove(self.curses_window, self.cursor_position.0, 0);
+        ncurses::wmove(self.curses_window, self.cursor_position.y, 0);
 
         let mut output: String = String::with_capacity(
             length.try_into().unwrap());
@@ -345,8 +354,8 @@ impl Display {
         // Move the cursor back to its original position.
         ncurses::wmove(
             self.curses_window,
-            self.cursor_position.0,
-            self.cursor_position.1);
+            self.cursor_position.y,
+            self.cursor_position.x);
 
         output
     }
@@ -384,7 +393,7 @@ impl WriteableDisplay for Display {
             match c {
                 KEY_DEL => {
                     let cursor = self.cursor_position;
-                    self.move_cursor((cursor.0, cursor.1 - 1));
+                    self.move_cursor(Position { x: cursor.x - 1, y: cursor.y });
 
                     ncurses::wdelch(self.curses_window);
                 }
@@ -397,7 +406,8 @@ impl WriteableDisplay for Display {
                     ncurses::waddch(self.curses_window, c as u32);
 
                     let cursor = self.cursor_position;
-                    self.move_cursor((cursor.0, cursor.1 + 1));
+                    self.move_cursor(Position { x: cursor.x + 1, y: cursor.y });
+
                 }
             }
         }

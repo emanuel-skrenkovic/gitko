@@ -1,6 +1,6 @@
 use crate::git;
 use crate::ascii_table::*;
-use crate::render::{Component, Renderer, ScreenSize, Window};
+use crate::render::{Component, Renderer, ScreenSize, Window, Position};
 use crate::gitko::commit_diff_window::CommitDiffWindow;
 
 pub struct LogWindow {
@@ -30,7 +30,7 @@ impl LogWindow {
         Renderer::new(
             CommitDiffWindow::new(commit_hash),
             ScreenSize::max(),
-            (0, 0)
+            Position::default()
         ).render();
 
         true

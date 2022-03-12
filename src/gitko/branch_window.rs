@@ -1,6 +1,6 @@
 use crate::git;
 use crate::ascii_table::*;
-use crate::render::{Component, Renderer, ScreenSize, Window};
+use crate::render::{Component, Renderer, ScreenSize, Window, Position};
 
 use crate::gitko::prompt_window::PromptWindow;
 
@@ -28,7 +28,7 @@ impl BranchWindow {
             Renderer::new(
                 prompt,
                 ScreenSize { lines: 1, cols: 0 }, // TODO
-                (0, (window.height() - 1) as i32)
+                Position { x: 0, y: window.height() - 1 }
             ).render();
 
             self.get_branches();

@@ -1,7 +1,7 @@
 use crate::git;
 use crate::git::{parse_file_state, FileState};
 use crate::ascii_table::*;
-use crate::render::{Renderer, Component, ScreenSize, Window};
+use crate::render::{Renderer, Component, ScreenSize, Window, Position};
 use crate::gitko::log_window::LogWindow;
 use crate::gitko::diff_window::DiffWindow;
 use crate::gitko::branch_window::BranchWindow;
@@ -27,7 +27,7 @@ impl MainWindow {
             Renderer::new(
                 DiffWindow::new(path),
                 ScreenSize { lines: window.height(), cols: window.width() },
-                (0, 0)
+                Position::default()
             ).render();
         }
 
@@ -38,7 +38,7 @@ impl MainWindow {
         Renderer::new(
             BranchWindow::new(),
             ScreenSize::max(),
-            (0, 0)
+            Position::default()
         ).render();
 
         self.on_start(window);
@@ -50,7 +50,7 @@ impl MainWindow {
         Renderer::new(
             LogWindow::new(),
             ScreenSize::max(),
-            (0, 0)
+            Position::default()
         ).render();
 
         self.on_start(window);
@@ -62,7 +62,7 @@ impl MainWindow {
         Renderer::new(
             CommandWindow::new(),
             ScreenSize { lines: 2, cols: window.width() },
-            (0, window.height() - 2)
+            Position { x: 0, y: window.height() - 2 }
         ).render();
 
         self.on_start(window);
@@ -81,7 +81,7 @@ impl MainWindow {
                                   || { git::checkout_file(file); },
                                   || {}),
                 ScreenSize { lines: 1, cols: 0 },
-                (0, window.height() - 1)
+                Position { x: 0, y: window.height() - 1 }
             ).render();
         }
 
