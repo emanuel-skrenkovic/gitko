@@ -4,13 +4,11 @@ use crate::render::{Component, Renderer, ScreenSize, Window, Position};
 
 use crate::gitko::prompt_window::PromptWindow;
 
-pub struct BranchWindow {
-    data: Vec<String>,
-}
+pub struct BranchWindow { }
 
 impl BranchWindow {
     pub fn new() -> BranchWindow {
-        BranchWindow { data: vec![] }
+        BranchWindow { }
     }
 
     fn open_delete_branch_prompt(
@@ -31,7 +29,7 @@ impl BranchWindow {
                 Position { x: 0, y: window.height() - 1 }
             ).render();
 
-            self.get_branches();
+            self.on_start(window);
         }
 
         true
@@ -43,23 +41,15 @@ impl BranchWindow {
             git::checkout_branch(line.trim());
         }
 
-        self.get_branches();
+        self.on_start(window);
 
         true
-    }
-
-    fn get_branches(&mut self) {
-        self.data = git::branch();
     }
 }
 
 impl Component<BranchWindow> for BranchWindow {
-    fn on_start(&mut self, _window: &mut Window<BranchWindow>) {
-        self.get_branches();
-    }
-
-    fn data(&self) -> &[String] {
-        &self.data
+    fn on_start(&mut self, window: &mut Window<BranchWindow>) {
+        window.data = git::branch();
     }
 
     fn register_handlers(&self, window: &mut Window<BranchWindow>) {

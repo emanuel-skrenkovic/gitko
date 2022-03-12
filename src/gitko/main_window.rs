@@ -8,13 +8,11 @@ use crate::gitko::branch_window::BranchWindow;
 use crate::gitko::command_window::CommandWindow;
 use crate::gitko::prompt_window::PromptWindow;
 
-pub struct MainWindow {
-    data: Vec<String>,
-}
+pub struct MainWindow { }
 
 impl MainWindow {
     pub fn new() -> MainWindow {
-        MainWindow { data: vec![] }
+        MainWindow { }
     }
 
     fn diff_file(&mut self, window: &mut Window<MainWindow>) -> bool {
@@ -117,8 +115,10 @@ impl MainWindow {
 
         true
     }
+}
 
-    fn load_data(&mut self) {
+impl Component<MainWindow> for MainWindow {
+    fn on_start(&mut self, window: &mut Window<MainWindow>) {
          let git_status: Vec<String> = git::status();
 
         // TODO: lists folders instead of all files in the newly
@@ -206,17 +206,7 @@ impl MainWindow {
             status.push("No changes found.".to_string());
         }
 
-        self.data = status.clone();
-    }
-}
-
-impl Component<MainWindow> for MainWindow {
-    fn on_start(&mut self, _window: &mut Window<MainWindow>) {
-        self.load_data();
-    }
-
-    fn data(&self) -> &[String] {
-        &self.data
+        window.data = status.clone();
     }
 
     fn register_handlers(&self, window: &mut Window<MainWindow>) {

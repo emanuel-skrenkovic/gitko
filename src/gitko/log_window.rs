@@ -3,17 +3,11 @@ use crate::ascii_table::*;
 use crate::render::{Component, Renderer, ScreenSize, Window, Position};
 use crate::gitko::commit_diff_window::CommitDiffWindow;
 
-pub struct LogWindow {
-    data: Vec<String>,
-}
+pub struct LogWindow { }
 
 impl LogWindow {
     pub fn new() -> LogWindow {
-        LogWindow { data: vec![] }
-    }
-
-    fn get_log(&mut self) {
-        self.data = git::log(None);
+        LogWindow { }
     }
 
     fn get_commit_log(&mut self, window: &mut Window<LogWindow>) -> bool {
@@ -38,12 +32,8 @@ impl LogWindow {
 }
 
 impl Component<LogWindow> for LogWindow {
-    fn on_start(&mut self, _window: &mut Window<LogWindow>) {
-        self.get_log();
-    }
-
-    fn data(&self) -> &[String] {
-        &self.data
+    fn on_start(&mut self, window: &mut Window<LogWindow>) {
+        window.data = git::log(None);
     }
 
     fn register_handlers(&self, window: &mut Window<LogWindow>) {

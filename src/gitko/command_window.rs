@@ -1,13 +1,11 @@
 use crate::ascii_table::*;
-use crate::render::{Component, Window, WriteableDisplay};
+use crate::render::{Component, Window, WriteableWindow};
 
-pub struct CommandWindow {
-    data: Vec<String>,
-}
+pub struct CommandWindow {}
 
 impl CommandWindow {
     pub fn new() -> CommandWindow {
-        CommandWindow { data: vec![String::new()] }
+        CommandWindow { }
     }
 
     // lol
@@ -18,8 +16,7 @@ impl CommandWindow {
 
 impl Component<CommandWindow> for CommandWindow {
     fn on_render(&mut self, window: &mut Window<CommandWindow>) -> bool {
-        window.display
-              .as_writeable_mut()
+        window.as_writeable_mut()
               .listen();
 
         let line = window.get_cursor_line()
@@ -40,14 +37,10 @@ impl Component<CommandWindow> for CommandWindow {
             output.stderr
         };
 
-        self.data.push(String::from_utf8(raw_output)
-                       .expect("invalid string encoding"));
+        window.data.push(String::from_utf8(raw_output)
+                         .expect("invalid string encoding"));
 
         true
-    }
-
-    fn data(&self) -> &[String] {
-        &self.data
     }
 
     fn register_handlers(&self, window: &mut Window<CommandWindow>) {

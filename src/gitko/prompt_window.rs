@@ -2,7 +2,7 @@ use crate::ascii_table::*;
 use crate::render::{Component, Window};
 
 pub struct PromptWindow<TYes: Fn(), TNo: Fn()> {
-    data: Vec<String>,
+    message: String,
     on_yes: TYes,
     on_no: TNo
 }
@@ -10,7 +10,7 @@ pub struct PromptWindow<TYes: Fn(), TNo: Fn()> {
 impl<TYes: Fn(), TNo: Fn()> PromptWindow<TYes, TNo> {
     pub fn new(message: &str, on_yes: TYes, on_no: TNo) -> PromptWindow<TYes, TNo> {
         PromptWindow {
-            data: vec![message.to_string()],
+            message: message.to_owned(),
             on_yes,
             on_no
         }
@@ -28,8 +28,8 @@ impl<TYes: Fn(), TNo: Fn()> PromptWindow<TYes, TNo> {
 }
 
 impl<TYes: Fn(), TNo: Fn()> Component<PromptWindow<TYes, TNo>> for PromptWindow<TYes, TNo> {
-    fn data(&self) -> &[String] {
-        &self.data
+    fn on_start(&mut self, window: &mut Window<PromptWindow<TYes, TNo>>) {
+        window.data = vec![self.message.clone()];
     }
 
     fn register_handlers(&self, window: &mut Window<PromptWindow<TYes, TNo>>) {

@@ -4,40 +4,28 @@ use crate::render::{Component, Window};
 use crate::git;
 
 pub struct DiffWindow {
-    path: String,
-    data: Vec<String>,
+    path: String
 }
 
 impl DiffWindow {
     pub fn new(path: &str) -> DiffWindow {
-        DiffWindow {
-            path: path.to_string(),
-            data: vec![],
-        }
-    }
-
-    fn load_data(&mut self) {
-        self.data = git::diff_file(&self.path);
+        DiffWindow { path: path.to_string() }
     }
 
     fn move_screen_up(&mut self, window: &mut Window<DiffWindow>) -> bool {
-        window.move_screen_up(&self.data, 1); // TODO: fix move above screen crash
+        window.move_screen_up(1); // TODO: fix move above screen crash
         true
     }
 
     fn move_screen_down(&mut self, window: &mut Window<DiffWindow>) -> bool {
-        window.move_screen_down(&self.data, 1);
+        window.move_screen_down(1);
         true
     }
 }
 
 impl Component<DiffWindow> for DiffWindow {
-    fn on_start(&mut self, _windwo: &mut Window<DiffWindow>) {
-        self.load_data();
-    }
-
-    fn data(&self) -> &[String] {
-        &self.data
+    fn on_start(&mut self, window: &mut Window<DiffWindow>) {
+        window.data = git::diff_file(&self.path);
     }
 
     fn register_handlers(&self, window: &mut Window<DiffWindow>) {
