@@ -175,7 +175,10 @@ impl Window {
 
         // Move the cursor to the beginning of the line
         // to get all the characters.
-        ncurses::wmove(self.curses_window, self.cursor_position.y, 0);
+        let move_cursor = self.cursor_position.x != 0;
+        if move_cursor {
+            ncurses::wmove(self.curses_window, self.cursor_position.y, 0);
+        }
 
         let mut output: String = String::with_capacity(
             length.try_into().unwrap());
@@ -185,10 +188,12 @@ impl Window {
             length);
 
         // Move the cursor back to its original position.
-        ncurses::wmove(
-            self.curses_window,
-            self.cursor_position.y,
-            self.cursor_position.x);
+        if move_cursor {
+            ncurses::wmove(
+                self.curses_window,
+                self.cursor_position.y,
+                self.cursor_position.x);
+        }
 
         output
     }
