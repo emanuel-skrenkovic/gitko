@@ -1,6 +1,6 @@
 use crate::git;
 use crate::ascii_table::*;
-use crate::render::{Component, Renderer, ScreenSize, Window, Position};
+use crate::render::{Component, KeyHandlers, Renderer, ScreenSize, Window, Position};
 
 use crate::gitko::prompt_window::PromptWindow;
 
@@ -13,7 +13,7 @@ impl BranchWindow {
 
     fn open_delete_branch_prompt(
         &mut self, window:
-        &mut Window<BranchWindow>) -> bool {
+        &mut Window) -> bool {
         let line = window.get_cursor_line();
 
         if !line.starts_with('*') {
@@ -35,7 +35,7 @@ impl BranchWindow {
         true
     }
 
-    fn checkout_branch(&mut self, window: &mut Window<BranchWindow>) -> bool {
+    fn checkout_branch(&mut self, window: &mut Window) -> bool {
         let line = window.get_cursor_line();
         if !line.starts_with('*') {
             git::checkout_branch(line.trim());
@@ -48,12 +48,12 @@ impl BranchWindow {
 }
 
 impl Component<BranchWindow> for BranchWindow {
-    fn on_start(&mut self, window: &mut Window<BranchWindow>) {
+    fn on_start(&mut self, window: &mut Window) {
         window.data = git::branch();
     }
 
-    fn register_handlers(&self, window: &mut Window<BranchWindow>) {
-        window.register_handler(KEY_LF, BranchWindow::checkout_branch);
-        window.register_handler(KEY_D_LOWER, BranchWindow::open_delete_branch_prompt);
+    fn register_handlers(&self, handlers: &mut KeyHandlers<BranchWindow>) {
+        handlers.insert(KEY_LF, BranchWindow::checkout_branch);
+        handlers.insert(KEY_D_LOWER, BranchWindow::open_delete_branch_prompt);
     }
 }

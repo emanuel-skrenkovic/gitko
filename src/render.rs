@@ -27,14 +27,18 @@ impl ScreenSize {
     }
 }
 
+pub type KeyHandlers<T> = HashMap<i32, fn(&mut T, &mut Window) -> bool>;
+
 pub struct Renderer<T: Component<T>> {
-    window: Window<T>,
+    key_handlers: KeyHandlers<T>,
+    window: Window,
     component: T
 }
 
 impl<T: Component<T>> Renderer<T> {
     pub fn new(component: T, size: ScreenSize, position: Position) -> Renderer<T> {
         Renderer {
+            key_handlers: HashMap::new(),
             window: Window::new(size, position),
             component
         }
@@ -42,7 +46,7 @@ impl<T: Component<T>> Renderer<T> {
 
     pub fn render(&mut self) {
         let component = &mut self.component;
-        component.register_handlers(&mut self.window);
+        component.register_handlers(&mut self.key_handlers);
         component.on_start(&mut self.window);
 
         self.refresh();
@@ -66,7 +70,7 @@ impl<T: Component<T>> Renderer<T> {
     }
 
     fn on_keypress(&mut self, c: i32) -> bool {
-        if let Some(handler) = self.window.key_handlers.get(&c) {
+        if let Some(handler) = self.key_handlers.get(&c) {
             return handler(&mut self.component, &mut self.window)
         } else {
             match c {
@@ -87,10 +91,10 @@ impl<T: Component<T>> Renderer<T> {
 }
 
 pub trait Component<T: Component<T>> {
-    fn on_start(&mut self, _window: &mut Window<T>) { }
-    fn on_render(&mut self, _window: &mut Window<T>) -> bool { true }
+    fn on_start(&mut self, _window: &mut Window) { }
+    fn on_render(&mut self, _window: &mut Window) -> bool { true }
 
-    fn register_handlers(&self, _window: &mut Window<T>) { }
+    fn register_handlers(&self, _handlers: &mut KeyHandlers<T>) { }
 }
 
 const GREEN_TEXT: i16 = 1;
@@ -98,8 +102,7 @@ const RED_TEXT: i16   = 2;
 const BLUE_TEXT: i16  = 3;
 
 // TODO: think about removing and adding functionality to Component trait
-pub struct Window<T: Component<T>> {
-    pub key_handlers: HashMap<i32, fn(&mut T, &mut Self) -> bool>,
+pub struct Window {
     pub data: Vec<String>,
     screen_start: usize,
 
@@ -110,8 +113,8 @@ pub struct Window<T: Component<T>> {
     curses_window: ncurses::WINDOW
 }
 
-impl<T> Window<T> where T: Component<T> {
-    pub fn new(size: ScreenSize, position: Position) -> Window<T> {
+impl Window {
+    pub fn new(size: ScreenSize, position: Position) -> Window {
         let curses_window = ncurses::newwin(size.lines,
                                             size.cols,
                                             position.y,
@@ -125,7 +128,6 @@ impl<T> Window<T> where T: Component<T> {
         ncurses::wrefresh(curses_window);
 
         Window {
-            key_handlers: HashMap::new(),
             data: vec![],
             screen_start: 0,
 
@@ -135,10 +137,6 @@ impl<T> Window<T> where T: Component<T> {
             cursor_position: Position::default(),
             curses_window
         }
-    }
-
-    pub fn register_handler(&mut self, key: i32, handler: fn(&mut T, &mut Self) -> bool) {
-        self.key_handlers.insert(key, handler);
     }
 
     pub fn refresh(&self) {
@@ -312,7 +310,7 @@ impl<T> Window<T> where T: Component<T> {
     }
 }
 
-impl<T: Component<T>> Drop for Window<T> {
+impl Drop for Window {
     fn drop(&mut self) {
         ncurses::curs_set(ncurses::CURSOR_VISIBILITY::CURSOR_VISIBLE);
         ncurses::endwin();
@@ -335,7 +333,7 @@ pub trait WriteableWindow {
     fn listen(&mut self);
 }
 
-impl<T: Component<T>> WriteableWindow for Window<T> {
+impl WriteableWindow for Window {
     fn listen(&mut self) {
         loop {
             let c = ncurses::wgetch(self.curses_window);

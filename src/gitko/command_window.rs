@@ -1,5 +1,5 @@
 use crate::ascii_table::*;
-use crate::render::{Component, Window, WriteableWindow};
+use crate::render::{Component, KeyHandlers, Window, WriteableWindow};
 
 pub struct CommandWindow {}
 
@@ -9,13 +9,13 @@ impl CommandWindow {
     }
 
     // lol
-    pub fn do_nothing(&mut self, _: &mut Window<CommandWindow>) -> bool {
+    pub fn do_nothing(&mut self, _: &mut Window) -> bool {
         true
     }
 }
 
 impl Component<CommandWindow> for CommandWindow {
-    fn on_render(&mut self, window: &mut Window<CommandWindow>) -> bool {
+    fn on_render(&mut self, window: &mut Window) -> bool {
         window.as_writeable_mut()
               .listen();
 
@@ -43,8 +43,8 @@ impl Component<CommandWindow> for CommandWindow {
         true
     }
 
-    fn register_handlers(&self, window: &mut Window<CommandWindow>) {
-        window.register_handler(KEY_J_LOWER, CommandWindow::do_nothing);
-        window.register_handler(KEY_K_LOWER, CommandWindow::do_nothing);
+    fn register_handlers(&self, handlers: &mut KeyHandlers<CommandWindow>) {
+        handlers.insert(KEY_J_LOWER, CommandWindow::do_nothing);
+        handlers.insert(KEY_K_LOWER, CommandWindow::do_nothing);
     }
 }

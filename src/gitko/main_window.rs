@@ -1,7 +1,9 @@
+use std::collections::HashMap;
+
 use crate::git;
 use crate::git::{parse_file_state, FileState};
 use crate::ascii_table::*;
-use crate::render::{Renderer, Component, ScreenSize, Window, Position};
+use crate::render::{Renderer, KeyHandlers, Component, ScreenSize, Window, Position};
 use crate::gitko::log_window::LogWindow;
 use crate::gitko::diff_window::DiffWindow;
 use crate::gitko::branch_window::BranchWindow;
@@ -15,7 +17,7 @@ impl MainWindow {
         MainWindow { }
     }
 
-    fn diff_file(&mut self, window: &mut Window<MainWindow>) -> bool {
+    fn diff_file(&mut self, window: &mut Window) -> bool {
         let line = window.get_cursor_line();
         let file_state = parse_file_state(&line);
 
@@ -32,7 +34,7 @@ impl MainWindow {
         true
     }
 
-    fn open_branch_window(&mut self, window: &mut Window<MainWindow>) -> bool {
+    fn open_branch_window(&mut self, window: &mut Window) -> bool {
         Renderer::new(
             BranchWindow::new(),
             ScreenSize::max(),
@@ -44,7 +46,7 @@ impl MainWindow {
         true
     }
 
-    fn open_log_window(&mut self, window: &mut Window<MainWindow>) -> bool {
+    fn open_log_window(&mut self, window: &mut Window) -> bool {
         Renderer::new(
             LogWindow::new(),
             ScreenSize::max(),
@@ -56,7 +58,7 @@ impl MainWindow {
         true
     }
 
-    fn open_command_window(&mut self, window: &mut Window<MainWindow>) -> bool {
+    fn open_command_window(&mut self, window: &mut Window) -> bool {
         Renderer::new(
             CommandWindow::new(),
             ScreenSize { lines: 2, cols: window.width() },
@@ -68,7 +70,7 @@ impl MainWindow {
         true
     }
 
-    fn git_checkout_file(&mut self, window: &mut Window<MainWindow>) -> bool {
+    fn git_checkout_file(&mut self, window: &mut Window) -> bool {
         let line = window.get_cursor_line();
         let file_state = parse_file_state(&line);
 
@@ -88,7 +90,7 @@ impl MainWindow {
         true
     }
 
-    fn git_add_file(&mut self, window: &mut Window<MainWindow>) -> bool {
+    fn git_add_file(&mut self, window: &mut Window) -> bool {
         // TODO: add parse git status that returns file state
         // and file path?
         let line = window.get_cursor_line();
@@ -103,7 +105,7 @@ impl MainWindow {
         true
     }
 
-    fn git_unstage_file(&mut self, window: &mut Window<MainWindow>) -> bool {
+    fn git_unstage_file(&mut self, window: &mut Window) -> bool {
         let line = window.get_cursor_line();
         let file_state = parse_file_state(&line);
 
@@ -118,7 +120,7 @@ impl MainWindow {
 }
 
 impl Component<MainWindow> for MainWindow {
-    fn on_start(&mut self, window: &mut Window<MainWindow>) {
+    fn on_start(&mut self, window: &mut Window) {
          let git_status: Vec<String> = git::status();
 
         // TODO: lists folders instead of all files in the newly
@@ -209,13 +211,13 @@ impl Component<MainWindow> for MainWindow {
         window.data = status.clone();
     }
 
-    fn register_handlers(&self, window: &mut Window<MainWindow>) {
-        window.register_handler(KEY_LF, MainWindow::diff_file);
-        window.register_handler(KEY_B_LOWER, MainWindow::open_branch_window);
-        window.register_handler(KEY_C_LOWER, MainWindow::git_checkout_file);
-        window.register_handler(KEY_L_LOWER, MainWindow::open_log_window);
-        window.register_handler(KEY_T_LOWER, MainWindow::git_add_file);
-        window.register_handler(KEY_U_LOWER, MainWindow::git_unstage_file);
-        window.register_handler(KEY_COLON, MainWindow::open_command_window);
+    fn register_handlers(&self, handlers: &mut KeyHandlers<MainWindow>) {
+        handlers.insert(KEY_LF, MainWindow::diff_file);
+        handlers.insert(KEY_B_LOWER, MainWindow::open_branch_window);
+        handlers.insert(KEY_C_LOWER, MainWindow::git_checkout_file);
+        handlers.insert(KEY_L_LOWER, MainWindow::open_log_window);
+        handlers.insert(KEY_T_LOWER, MainWindow::git_add_file);
+        handlers.insert(KEY_U_LOWER, MainWindow::git_unstage_file);
+        handlers.insert(KEY_COLON, MainWindow::open_command_window);
     }
 }
