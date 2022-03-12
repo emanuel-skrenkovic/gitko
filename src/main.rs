@@ -6,6 +6,19 @@ mod num;
 mod render;
 mod gitko;
 
+static mut MAX_WIDTH: i32 = 0;
+static mut MAX_HEIGHT: i32 = 0;
+
+#[allow(dead_code)]
+fn max_width() -> i32 {
+    unsafe { MAX_WIDTH }
+}
+
+#[allow(dead_code)]
+fn max_height() -> i32 {
+    unsafe { MAX_HEIGHT }
+}
+
 fn main() {
     init_ncurses();
 
@@ -17,7 +30,12 @@ fn main() {
 }
 
 fn init_ncurses() {
-    ncurses::initscr();
+    let base_window = ncurses::initscr();
+
+    unsafe {
+        ncurses::getmaxyx(base_window, &mut MAX_HEIGHT, &mut MAX_WIDTH);
+    }
+
     ncurses::cbreak();
     ncurses::keypad(ncurses::stdscr(), true);
     ncurses::noecho();   
