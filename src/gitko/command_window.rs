@@ -1,5 +1,5 @@
-use crate::render::writeable_display::WriteableDisplay;
 use crate::render::window::{Component, Window};
+use crate::render::display::WriteableDisplay;
 use crate::render::ascii_table::*;
 
 pub struct CommandWindow {

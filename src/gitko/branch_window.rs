@@ -54,7 +54,7 @@ impl BranchWindow {
 }
 
 impl Component<BranchWindow> for BranchWindow {
-    fn on_start(&mut self) {
+    fn on_start(&mut self, _window: &mut Window<BranchWindow>) {
         self.get_branches();
     }
 

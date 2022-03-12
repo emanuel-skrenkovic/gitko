@@ -26,7 +26,8 @@ impl MainWindow {
 
             Renderer::new(
                 DiffWindow::new(path),
-                ScreenSize::max(),
+                // ScreenSize::max(),
+                ScreenSize { lines: window.height(), cols: window.width() },
                 (0, 0)
             ).render();
         }
@@ -34,22 +35,26 @@ impl MainWindow {
         true
     }
 
-    fn open_branch_window(&mut self, _window: &mut Window<MainWindow>) -> bool {
+    fn open_branch_window(&mut self, window: &mut Window<MainWindow>) -> bool {
         Renderer::new(
             BranchWindow::new(),
             ScreenSize::max(),
             (0, 0)
         ).render();
 
+        self.on_start(window);
+
         true
     }
 
-    fn open_log_window(&mut self, _window: &mut Window<MainWindow>) -> bool {
+    fn open_log_window(&mut self, window: &mut Window<MainWindow>) -> bool {
         Renderer::new(
             LogWindow::new(),
             ScreenSize::max(),
             (0, 0)
         ).render();
+
+        self.on_start(window);
 
         true
     }
@@ -61,7 +66,7 @@ impl MainWindow {
             (0, window.height() - 2)
         ).render();
 
-        self.load_data();
+        self.on_start(window);
 
         true
     }
@@ -74,7 +79,7 @@ impl MainWindow {
             git::checkout_file(line[3..].trim());
         }
 
-        self.load_data();
+        self.on_start(window);
 
         true
     }
@@ -89,7 +94,7 @@ impl MainWindow {
             git::add_file(line[3..].trim());
         }
 
-        self.load_data();
+        self.on_start(window);
 
         true
     }
@@ -102,7 +107,7 @@ impl MainWindow {
             git::unstage_file(line[3..].trim());
         }
 
-        self.load_data();
+        self.on_start(window);
 
         true
     }
@@ -200,7 +205,7 @@ impl MainWindow {
 }
 
 impl Component<MainWindow> for MainWindow {
-    fn on_start(&mut self) {
+    fn on_start(&mut self, _window: &mut Window<MainWindow>) {
         self.load_data();
     }
 

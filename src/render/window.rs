@@ -32,19 +32,28 @@ impl<T: Component<T>> Renderer<T> {
     pub fn render(&mut self) {
         let component = &mut self.component;
         component.register_handlers(&mut self.window);
-        component.on_start();
+        component.on_start(&mut self.window);
 
         self.refresh();
 
         let mut c: i32 = 0;
         loop {
             if !self.on_keypress(c) { break; }
-            if !self.component.on_render(&mut self.window) { break; }
 
             self.refresh();
+            if !self.component.on_render(&mut self.window) { break; }
 
             c = self.window.listen_input();
         }
+    }
+
+    pub fn draw(&mut self) {
+        let component = &mut self.component;
+        let window = &mut self.window;
+
+        component.on_start(window);
+        window.queue_write(component.data());
+        window.display.draw();
     }
 
     fn on_keypress(&mut self, c: i32) -> bool {
@@ -69,7 +78,7 @@ impl<T: Component<T>> Renderer<T> {
 }
 
 pub trait Component<T: Component<T>> {
-    fn on_start(&mut self) { }
+    fn on_start(&mut self, _window: &mut Window<T>) { }
     fn on_render(&mut self, _window: &mut Window<T>) -> bool { true }
 
     fn data(&self) -> &[String];
@@ -107,6 +116,10 @@ impl<T> Window<T> where T: Component<T> {
 
     pub fn listen_input(&self) -> i32 {
         self.display.listen_input()
+    }
+
+    pub fn resize(&mut self, new_size: ScreenSize) {
+        self.display.resize(new_size);
     }
 
     pub fn get_cursor_line(&self) -> String {
@@ -154,15 +167,5 @@ impl<T> Window<T> where T: Component<T> {
 
     pub fn width(&self) -> i32 {
         self.display.cols()
-    }
-
-    pub fn close(&self) {
-        self.display.close();
-    }
-}
-
-impl<T: Component<T>> Drop for Window<T> {
-    fn drop(&mut self) {
-        self.close();
     }
 }

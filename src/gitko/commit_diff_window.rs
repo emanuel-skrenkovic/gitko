@@ -28,7 +28,7 @@ impl CommitDiffWindow {
 }
 
 impl Component<CommitDiffWindow> for CommitDiffWindow {
-    fn on_start(&mut self) {
+    fn on_start(&mut self, _window: &mut Window<CommitDiffWindow>) {
         self.data = git::diff_commit(&self.commit_hash);
     }
 
