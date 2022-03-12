@@ -7,11 +7,6 @@ impl CommandWindow {
     pub fn new() -> CommandWindow {
         CommandWindow { }
     }
-
-    // lol
-    pub fn do_nothing(&mut self, _: &mut Window) -> bool {
-        true
-    }
 }
 
 impl Component<CommandWindow> for CommandWindow {
@@ -44,7 +39,7 @@ impl Component<CommandWindow> for CommandWindow {
     }
 
     fn register_handlers(&self, handlers: &mut KeyHandlers<CommandWindow>) {
-        handlers.insert(KEY_J_LOWER, CommandWindow::do_nothing);
-        handlers.insert(KEY_K_LOWER, CommandWindow::do_nothing);
+        handlers.remove(&KEY_J_LOWER);
+        handlers.remove(&KEY_K_LOWER);
     }
 }

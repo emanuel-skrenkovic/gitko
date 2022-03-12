@@ -38,7 +38,7 @@ pub struct Renderer<T: Component<T>> {
 impl<T: Component<T>> Renderer<T> {
     pub fn new(component: T, size: ScreenSize, position: Position) -> Renderer<T> {
         Renderer {
-            key_handlers: HashMap::new(),
+            key_handlers: KeyHandlers::new(),
             window: Window::new(size, position),
             component
         }
@@ -63,9 +63,7 @@ impl<T: Component<T>> Renderer<T> {
     }
 
     pub fn draw(&mut self) {
-        let component = &mut self.component;
-
-        component.on_start(&mut self.window);
+        self.component.on_start(&mut self.window);
         self.window.queue_update();
     }
 
@@ -150,10 +148,10 @@ impl Window {
         ncurses::werase(self.curses_window);
 
         for (i, line) in self.data[self.screen_start..].iter().enumerate() {
-            self.write_line(line, Position {
-                x: 0,
-                y: i as i32
-            });
+            self.write_line(
+                line,
+                Position { x: 0, y: i as i32 }
+            );
         }
 
         ncurses::wnoutrefresh(self.curses_window);
@@ -171,8 +169,6 @@ impl Window {
     }
 
     pub fn get_cursor_line(&self) -> String {
-        let length = self.width();
-
         // Move the cursor to the beginning of the line
         // to get all the characters.
         let move_cursor = self.cursor_position.x != 0;
@@ -180,8 +176,8 @@ impl Window {
             ncurses::wmove(self.curses_window, self.cursor_position.y, 0);
         }
 
-        let mut output: String = String::with_capacity(
-            length.try_into().unwrap());
+        let length = self.width();
+        let mut output = String::with_capacity(length.try_into().unwrap());
         ncurses::winnstr(
             self.curses_window,
             &mut output,
