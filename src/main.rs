@@ -1,9 +1,10 @@
+use crate::render::{Renderer, ScreenSize};
 use crate::gitko::main_window::MainWindow;
-use crate::render::window::{Renderer, ScreenSize};
 
 mod git;
 mod num;
 mod render;
+mod ascii_table;
 mod gitko;
 
 static mut MAX_WIDTH: i32 = 0;

@@ -1,7 +1,7 @@
-use crate::render::window::{Component, Window};
 
-use crate::render::ascii_table::*;
-use crate::git::commands as git;
+use crate::ascii_table::*;
+use crate::render::{Component, Window};
+use crate::git;
 
 pub struct DiffWindow {
     path: String,

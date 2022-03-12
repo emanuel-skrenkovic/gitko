@@ -1,5 +1,5 @@
-use crate::render::window::{Component, Window};
-use crate::render::ascii_table::*;
+use crate::ascii_table::*;
+use crate::render::{Component, Window};
 
 pub struct PromptWindow<TYes: Fn(), TNo: Fn()> {
     data: Vec<String>,

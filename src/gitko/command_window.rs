@@ -1,6 +1,5 @@
-use crate::render::window::{Component, Window};
-use crate::render::display::WriteableDisplay;
-use crate::render::ascii_table::*;
+use crate::ascii_table::*;
+use crate::render::{Component, Window, WriteableDisplay};
 
 pub struct CommandWindow {
     data: Vec<String>,

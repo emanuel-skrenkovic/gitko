@@ -1,6 +1,6 @@
-use crate::render::window::{Component, Renderer, ScreenSize, Window};
-use crate::render::ascii_table::*;
-use crate::git::commands as git;
+use crate::git;
+use crate::ascii_table::*;
+use crate::render::{Component, Renderer, ScreenSize, Window};
 
 use crate::gitko::prompt_window::PromptWindow;
 

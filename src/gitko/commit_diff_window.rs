@@ -1,7 +1,6 @@
-use crate::render::window::{Component, Window};
-
-use crate::render::ascii_table::*;
-use crate::git::commands as git;
+use crate::git;
+use crate::ascii_table::*;
+use crate::render::{Component, Window};
 
 pub struct CommitDiffWindow {
     commit_hash: String,

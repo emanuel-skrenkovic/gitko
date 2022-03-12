@@ -1,8 +1,7 @@
-use crate::git::commands as git;
-use crate::git::FileState;
-use crate::git::parse_file_state;
-use crate::render::ascii_table::*;
-use crate::render::window::{Renderer, Component, ScreenSize, Window};
+use crate::git;
+use crate::git::{parse_file_state, FileState};
+use crate::ascii_table::*;
+use crate::render::{Renderer, Component, ScreenSize, Window};
 use crate::gitko::log_window::LogWindow;
 use crate::gitko::diff_window::DiffWindow;
 use crate::gitko::branch_window::BranchWindow;
@@ -27,7 +26,6 @@ impl MainWindow {
 
             Renderer::new(
                 DiffWindow::new(path),
-                // ScreenSize::max(),
                 ScreenSize { lines: window.height(), cols: window.width() },
                 (0, 0)
             ).render();
