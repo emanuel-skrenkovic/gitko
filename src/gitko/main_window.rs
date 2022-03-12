@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use crate::git;
 use crate::git::{parse_file_state, FileState};
 use crate::ascii_table::*;
@@ -149,19 +147,17 @@ impl Component<MainWindow> for MainWindow {
             .cloned()
             .collect();
 
-        // let sections_count = 4;
+        let sections_count = 4;
         let lines_between = 5;
 
-        /*
         let used_lines = added.len()
             + deleted.len()
             + unstaged.len()
             + staged.len()
             + sections_count
             + lines_between;
-        */
 
-        let remaining_lines = 10;// self.display().lines() - used_lines as i32;
+        let remaining_lines = window.height() - (used_lines as i32) * 2;
         let recent_commits_count = (remaining_lines - 1) as u32;
 
         let mut recent_commits: Vec<String> = git::log(Some(recent_commits_count));
