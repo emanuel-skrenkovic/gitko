@@ -7,6 +7,7 @@ use crate::gitko::log_window::LogWindow;
 use crate::gitko::diff_window::DiffWindow;
 use crate::gitko::branch_window::BranchWindow;
 use crate::gitko::command_window::CommandWindow;
+use crate::gitko::prompt_window::PromptWindow;
 
 pub struct MainWindow {
     data: Vec<String>,
@@ -76,7 +77,14 @@ impl MainWindow {
         let file_state = parse_file_state(&line);
 
         if matches!(file_state, FileState::Modified) {
-            git::checkout_file(line[3..].trim());
+            let file = line[3..].trim();
+            Renderer::new(
+                PromptWindow::new(&format!("Are you sure you want to checkout file '{}'? y/n", file),
+                                  || { git::checkout_file(file); },
+                                  || {}),
+                ScreenSize { lines: 1, cols: 0 },
+                (0, window.height() - 1)
+            ).render();
         }
 
         self.on_start(window);
