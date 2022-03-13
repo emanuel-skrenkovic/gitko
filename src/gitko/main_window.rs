@@ -1,3 +1,4 @@
+use crate::{max_width, max_height};
 use crate::git;
 use crate::git::{parse_file_state, FileState};
 use crate::ascii_table::*;
@@ -201,6 +202,22 @@ impl Component<MainWindow> for MainWindow {
         }
 
         window.data = status.clone();
+        window.resize(ScreenSize {
+            lines: max_height(),
+            cols: (max_width() as f32 * 0.8) as i32 // #horribleways
+        });
+
+        Renderer::new(
+            HelpWindow{},
+            ScreenSize {
+                lines: max_height(),
+                cols: (max_width() as f32 * 0.2) as i32
+            },
+            Position {
+                x: (max_width() as f32 * 0.8) as i32,
+                y: 0
+            }
+        ).draw();
     }
 
     fn register_handlers(&self, handlers: &mut KeyHandlers<MainWindow>) {
@@ -211,5 +228,32 @@ impl Component<MainWindow> for MainWindow {
         handlers.insert(KEY_T_LOWER, MainWindow::git_add_file);
         handlers.insert(KEY_U_LOWER, MainWindow::git_unstage_file);
         handlers.insert(KEY_COLON, MainWindow::open_command_window);
+    }
+}
+
+pub struct HelpWindow {}
+
+impl Component<HelpWindow> for HelpWindow {
+    fn on_start(&mut self, window: &mut Window) {
+        let help_text = vec![
+            "j - move cursor down",
+            "k - move cursor up",
+            "",
+            "enter - action",
+            "",
+            "t - stage file",
+            "u - unstage file",
+            "c - checkout file",
+            "",
+            "q - exit window",
+
+            "b - open branches window",
+            "l - open log window",
+            ": - open command window"
+        ];
+        window.data = help_text
+            .iter()
+            .map(|s| s.to_string())
+            .collect();
     }
 }
