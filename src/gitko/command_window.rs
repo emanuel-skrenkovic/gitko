@@ -3,12 +3,6 @@ use crate::render::{Component, KeyHandlers, Window, WriteableWindow};
 
 pub struct CommandWindow {}
 
-impl CommandWindow {
-    pub fn new() -> CommandWindow {
-        CommandWindow { }
-    }
-}
-
 impl Component<CommandWindow> for CommandWindow {
     fn on_render(&mut self, window: &mut Window) -> bool {
         window.as_writeable_mut()

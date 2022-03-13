@@ -11,10 +11,6 @@ use crate::gitko::prompt_window::PromptWindow;
 pub struct MainWindow { }
 
 impl MainWindow {
-    pub fn new() -> MainWindow {
-        MainWindow { }
-    }
-
     fn diff_file(&mut self, window: &mut Window) -> bool {
         let line = window.get_cursor_line();
         let file_state = parse_file_state(&line);
@@ -34,7 +30,7 @@ impl MainWindow {
 
     fn open_branch_window(&mut self, window: &mut Window) -> bool {
         Renderer::new(
-            BranchWindow::new(),
+            BranchWindow{},
             ScreenSize::max(),
             Position::default()
         ).render();
@@ -46,7 +42,7 @@ impl MainWindow {
 
     fn open_log_window(&mut self, window: &mut Window) -> bool {
         Renderer::new(
-            LogWindow::new(),
+            LogWindow{},
             ScreenSize::max(),
             Position::default()
         ).render();
@@ -58,7 +54,7 @@ impl MainWindow {
 
     fn open_command_window(&mut self, window: &mut Window) -> bool {
         Renderer::new(
-            CommandWindow::new(),
+            CommandWindow{},
             ScreenSize { lines: 2, cols: window.width() },
             Position { x: 0, y: window.height() - 2 }
         ).render();

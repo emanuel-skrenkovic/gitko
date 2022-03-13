@@ -7,10 +7,6 @@ use crate::gitko::prompt_window::PromptWindow;
 pub struct BranchWindow { }
 
 impl BranchWindow {
-    pub fn new() -> BranchWindow {
-        BranchWindow { }
-    }
-
     fn open_delete_branch_prompt(
         &mut self, window:
         &mut Window) -> bool {

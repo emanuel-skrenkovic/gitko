@@ -6,10 +6,6 @@ use crate::gitko::commit_diff_window::CommitDiffWindow;
 pub struct LogWindow { }
 
 impl LogWindow {
-    pub fn new() -> LogWindow {
-        LogWindow { }
-    }
-
     fn get_commit_log(&mut self, window: &mut Window) -> bool {
         let line = window.get_cursor_line();
         let trimmed_line = line
