@@ -10,14 +10,24 @@ pub enum FileState {
 }
 
 pub fn parse_file_state(path: &str) -> FileState {
-    let state_letters = &path[..3];
+    // https://git-scm.com/docs/git-status
 
-    if      state_letters.chars().nth(1).unwrap() == 'M' { FileState::Modified }
-    else if state_letters.starts_with('M')               { FileState::Staged }
-    else if state_letters.contains('D')                  { FileState::Deleted }
-    else if state_letters.contains('A')                  { FileState::Added }
-    else if state_letters.starts_with("??")              { FileState::Untracked }
-    else                                                 { FileState::Unknown }
+    let state = &path[..3];
+
+    let first  = state.chars().next().unwrap();
+    let second = state.chars().nth(1).unwrap();
+
+    if first == 'M' || first == 'A' {
+        FileState::Staged
+    } else if second == 'M' {
+        FileState::Modified
+    } else if first == 'D' || second == 'D' {
+        FileState::Deleted
+    } else if state.starts_with("??") {
+        FileState::Untracked
+    } else {
+        FileState::Unknown
+    }
 }
 
 pub fn status() -> Vec<String> {
@@ -37,7 +47,7 @@ pub fn add_file(path: &str) {
 }
 
 pub fn unstage_file(path: &str) {
-    run(vec!["restore", "--staged", path]);
+    run(vec!["reset", path]);
 }
 
 pub fn commit(message: &str) {

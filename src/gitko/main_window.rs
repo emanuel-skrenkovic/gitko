@@ -137,11 +137,8 @@ impl Component<MainWindow> for MainWindow {
                     let paths_result = read_dir(&untracked_path);
 
                     if let Ok(paths) = paths_result {
-                        for file_path in paths {
-
-                            if let Ok(path) = file_path {
-                                added.push(format!("?? {}", path.path().display()));
-                            }
+                        for path in paths.flatten() {
+                            added.push(format!("?? {}", path.path().display()));
                         }
                     }
                 } else if metadata.is_file() {
