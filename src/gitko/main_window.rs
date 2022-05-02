@@ -10,6 +10,7 @@ use crate::gitko::diff_window::DiffWindow;
 use crate::gitko::branch_window::BranchWindow;
 use crate::gitko::command_window::CommandWindow;
 use crate::gitko::prompt_window::PromptWindow;
+use crate::gitko::commit_options_window::CommitOptionsWindow;
 
 pub struct MainWindow { }
 
@@ -109,6 +110,18 @@ impl MainWindow {
         if matches!(file_state, FileState::Staged) {
             git::unstage_file(line[3..].trim());
         }
+
+        self.on_start(window);
+
+        true
+    }
+
+    fn git_commit_options(&mut self, window: &mut Window) -> bool {
+        Renderer::new(
+            CommitOptionsWindow{},
+            ScreenSize { lines: 2, cols: window.width() },
+            Position { x: 0, y: window.height() - 2 }
+        ).render();
 
         self.on_start(window);
 
@@ -249,6 +262,7 @@ impl Component<MainWindow> for MainWindow {
         handlers.insert(KEY_T_LOWER, MainWindow::git_add_file);
         handlers.insert(KEY_U_LOWER, MainWindow::git_unstage_file);
         handlers.insert(KEY_COLON, MainWindow::open_command_window);
+        handlers.insert(KEY_C_UPPER, MainWindow::git_commit_options);
     }
 }
 
@@ -266,11 +280,13 @@ impl Component<HelpWindow> for HelpWindow {
             "u - unstage file",
             "c - checkout file",
             "",
+            "",
             "q - exit window",
 
             "b - open branches window",
             "l - open log window",
-            ": - open command window"
+            ": - open command window",
+            "Capital C - git commit editor"
         ];
         window.data = help_text
             .iter()

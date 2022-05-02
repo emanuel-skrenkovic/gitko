@@ -1,5 +1,4 @@
 #![allow(dead_code)]
-
 pub enum FileState {
     Unknown,
     Modified,
@@ -50,8 +49,18 @@ pub fn unstage_file(path: &str) {
     run(vec!["reset", path]);
 }
 
-pub fn commit(message: &str) {
-    run(vec!["commit", "-m", message]);
+pub fn commit(commit_args: Option<Vec<&str>>) {
+    let mut args = vec!["commit"];
+
+    if let Some(process_args) = commit_args {
+        args.extend(process_args);
+    }
+
+    let _result = std::process::Command::new("git")
+        .args(args)
+        .spawn()
+        .unwrap()
+        .wait();
 }
 
 pub fn branch() -> Vec<String> {
