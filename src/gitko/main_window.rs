@@ -20,7 +20,7 @@ impl MainWindow {
             let path = line[3..].trim();
 
             Renderer::new(
-                DiffWindow::new(path),
+                DiffWindow::new(path, file_state),
                 ScreenSize { lines: window.height(), cols: window.width() },
                 Position::default()
             ).render();

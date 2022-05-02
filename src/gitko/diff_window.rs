@@ -1,16 +1,19 @@
 use std::collections::HashMap;
+use std::{fs::File, io::{BufReader, BufRead}};
 
 use crate::ascii_table::*;
 use crate::render::{Component, Window};
 use crate::git;
+use crate::git::{FileState};
 
 pub struct DiffWindow {
-    path: String
+    path: String,
+    file_state: FileState
 }
 
 impl DiffWindow {
-    pub fn new(path: &str) -> DiffWindow {
-        DiffWindow { path: path.to_string() }
+    pub fn new(path: &str, file_state: FileState) -> DiffWindow {
+        DiffWindow { path: path.to_string(), file_state }
     }
 
     fn move_screen_up(&mut self, window: &mut Window) -> bool {
@@ -26,7 +29,21 @@ impl DiffWindow {
 
 impl Component<DiffWindow> for DiffWindow {
     fn on_start(&mut self, window: &mut Window) {
-        window.data = git::diff_file(&self.path);
+        if matches!(self.file_state, FileState::Untracked) {
+            // Assume the path is a file path
+            // Component above should parse directories into file paths.
+
+            let file = File::open(&self.path).expect("Could not find file");
+            let lines = BufReader::new(file)
+                .lines()
+                .map(|l| l.expect("Could not parse line"))
+                .collect();
+
+            window.data = lines;
+
+        } else {
+            window.data = git::diff_file(&self.path);
+        }
     }
 
     fn register_handlers(&self, handlers: &mut HashMap<i32, fn(&mut DiffWindow, &mut Window) -> bool>) {

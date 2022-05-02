@@ -5,7 +5,8 @@ pub enum FileState {
     Modified,
     Deleted,
     Added,
-    Staged
+    Staged,
+    Untracked
 }
 
 pub fn parse_file_state(path: &str) -> FileState {
@@ -15,6 +16,7 @@ pub fn parse_file_state(path: &str) -> FileState {
     else if state_letters.starts_with('M')               { FileState::Staged }
     else if state_letters.contains('D')                  { FileState::Deleted }
     else if state_letters.contains('A')                  { FileState::Added }
+    else if state_letters.starts_with("??")              { FileState::Untracked }
     else                                                 { FileState::Unknown }
 }
 
