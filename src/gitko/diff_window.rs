@@ -1,10 +1,10 @@
 use std::collections::HashMap;
 use std::{fs::File, io::{BufReader, BufRead}};
 
-use crate::ascii_table::*;
-use crate::render::{Component, Window};
 use crate::git;
 use crate::git::{FileState};
+use crate::ascii_table::*;
+use crate::render::{Component, Window};
 
 pub struct DiffWindow {
     path: String,

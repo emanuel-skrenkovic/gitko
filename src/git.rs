@@ -50,8 +50,6 @@ pub fn unstage_file(path: &str) {
 }
 
 pub fn commit(commit_args: Option<Vec<&str>>) {
-    // run(vec!["commit"]);
-
     let mut args = vec!["commit"];
 
     if let Some(process_args) = commit_args {
