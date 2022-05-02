@@ -1,3 +1,5 @@
+use std::fs::{metadata,read_dir};
+
 use crate::{max_width, max_height};
 use crate::git;
 use crate::git::{parse_file_state, FileState};
@@ -116,15 +118,37 @@ impl MainWindow {
 
 impl Component<MainWindow> for MainWindow {
     fn on_start(&mut self, window: &mut Window) {
-         let git_status: Vec<String> = git::status();
+        let git_status: Vec<String> = git::status();
 
-        // TODO: lists folders instead of all files in the newly
-        // added folder
-        let mut added: Vec<String> = git_status
+        let untracked: Vec<String> = git_status
             .iter()
             .filter(|c| c.starts_with("??"))
             .cloned()
             .collect();
+
+        let mut added: Vec<String> = vec![];
+
+        for u in &untracked {
+            let untracked_path = u.trim_start_matches("?? ");
+            let path_metadata = metadata(untracked_path);
+
+            if let Ok(metadata) = path_metadata {
+                if metadata.is_dir() {
+                    let paths_result = read_dir(&untracked_path);
+
+                    if let Ok(paths) = paths_result {
+                        for file_path in paths {
+
+                            if let Ok(path) = file_path {
+                                added.push(format!("?? {}", path.path().display()));
+                            }
+                        }
+                    }
+                } else if metadata.is_file() {
+                    added.push(u.to_owned());
+                }
+            }
+        }
 
         let mut deleted: Vec<String> = git_status
             .iter()
