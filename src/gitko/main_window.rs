@@ -114,6 +114,14 @@ impl MainWindow {
 
         true
     }
+
+    fn git_commit(&mut self, window: &mut Window) -> bool {
+        git::commit();
+
+        self.on_start(window);
+
+        true
+    }
 }
 
 impl Component<MainWindow> for MainWindow {
@@ -249,6 +257,7 @@ impl Component<MainWindow> for MainWindow {
         handlers.insert(KEY_T_LOWER, MainWindow::git_add_file);
         handlers.insert(KEY_U_LOWER, MainWindow::git_unstage_file);
         handlers.insert(KEY_COLON, MainWindow::open_command_window);
+        handlers.insert(KEY_C_UPPER, MainWindow::git_commit);
     }
 }
 
@@ -266,11 +275,13 @@ impl Component<HelpWindow> for HelpWindow {
             "u - unstage file",
             "c - checkout file",
             "",
+            "",
             "q - exit window",
 
             "b - open branches window",
             "l - open log window",
-            ": - open command window"
+            ": - open command window",
+            "Capital C - git commit editor"
         ];
         window.data = help_text
             .iter()
