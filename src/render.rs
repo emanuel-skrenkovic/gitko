@@ -29,14 +29,14 @@ impl ScreenSize {
 
 pub type KeyHandlers<T> = HashMap<i32, fn(&mut T, &mut Window) -> bool>;
 
-pub struct Renderer<T: Component<T>> {
+pub struct Renderer<'a, T: Component<T>>  {
     key_handlers: KeyHandlers<T>,
     window: Window,
-    component: T
+    component: &'a mut T
 }
 
-impl<T: Component<T>> Renderer<T> {
-    pub fn new(component: T, size: ScreenSize, position: Position) -> Renderer<T> {
+impl<'a, T: Component<T>> Renderer<'a, T> {
+    pub fn new(component: &'a mut T, size: ScreenSize, position: Position) -> Renderer<'a, T> {
         Renderer {
             key_handlers: KeyHandlers::new(),
             window: Window::new(size, position),

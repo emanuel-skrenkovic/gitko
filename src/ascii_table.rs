@@ -7,6 +7,7 @@ pub const KEY_LF: i32 = 10;
 pub const KEY_NAK: i32 = 21;
 pub const KEY_ETB: i32 = 27;
 pub const KEY_ESC: i32 = 33;
+pub const KEY_FORWARD_SLASH: i32 = 47;
 pub const KEY_COLON: i32 = 58;
 pub const KEY_C_UPPER: i32 = 67;
 pub const KEY_B_LOWER: i32 = 98;
