@@ -24,7 +24,7 @@ fn main() {
     init_ncurses();
 
     Renderer::new(
-        MainWindow{},
+        &mut MainWindow{},
         ScreenSize::max(),
         Position::default()
     ).render();

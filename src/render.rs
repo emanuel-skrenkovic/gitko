@@ -1,3 +1,4 @@
+use std::cmp::{Ordering};
 use std::convert::TryInto;
 use std::collections::HashMap;
 
@@ -29,14 +30,14 @@ impl ScreenSize {
 
 pub type KeyHandlers<T> = HashMap<i32, fn(&mut T, &mut Window) -> bool>;
 
-pub struct Renderer<T: Component<T>> {
+pub struct Renderer<'a, T: Component<T>>  {
     key_handlers: KeyHandlers<T>,
     window: Window,
-    component: T
+    component: &'a mut T
 }
 
-impl<T: Component<T>> Renderer<T> {
-    pub fn new(component: T, size: ScreenSize, position: Position) -> Renderer<T> {
+impl<'a, T: Component<T>> Renderer<'a, T> {
+    pub fn new(component: &'a mut T, size: ScreenSize, position: Position) -> Renderer<'a, T> {
         Renderer {
             key_handlers: KeyHandlers::new(),
             window: Window::new(size, position),
@@ -69,7 +70,7 @@ impl<T: Component<T>> Renderer<T> {
 
     fn on_keypress(&mut self, c: i32) -> bool {
         if let Some(handler) = self.key_handlers.get(&c) {
-            return handler(&mut self.component, &mut self.window)
+            return handler(self.component, &mut self.window)
         } else {
             match c {
                 KEY_J_LOWER => { self.window.move_cursor_down(); }
@@ -192,6 +193,28 @@ impl Window {
         }
 
         output
+    }
+
+    pub fn set_cursor(&mut self, position: Position) {
+        let current_position = self.cursor_position.y + self.screen_start as i32;
+
+        match position.y.cmp(&current_position) {
+            Ordering::Less => {
+                let diff = current_position - position.y;
+
+                for _ in 0..diff {
+                    self.move_cursor_up();
+                }
+            }
+            Ordering::Greater => {
+                let diff = position.y - current_position;
+
+                for _ in 0..diff {
+                    self.move_cursor_down();
+                }
+            }
+            _ => {}
+        }
     }
 
     pub fn move_cursor_down(&mut self) {

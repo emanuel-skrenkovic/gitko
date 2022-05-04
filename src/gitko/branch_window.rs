@@ -14,13 +14,13 @@ impl BranchWindow {
 
         if !line.starts_with('*') {
             let branch = line.trim();
-            let prompt = PromptWindow::new(
+            let mut prompt = PromptWindow::new(
                 &format!("Are you sure you want to delete branch '{}'? y/n", branch),
                 || { git::delete_branch(branch); },
                 || { });
 
             Renderer::new(
-                prompt,
+                &mut prompt,
                 ScreenSize { lines: 1, cols: 0 }, // TODO
                 Position { x: 0, y: window.height() - 1 }
             ).render();

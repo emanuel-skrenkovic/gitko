@@ -23,7 +23,7 @@ impl MainWindow {
             let path = line[3..].trim();
 
             Renderer::new(
-                DiffWindow::new(path, file_state),
+                &mut DiffWindow::new(path, file_state),
                 ScreenSize { lines: window.height(), cols: window.width() },
                 Position::default()
             ).render();
@@ -34,7 +34,7 @@ impl MainWindow {
 
     fn open_branch_window(&mut self, window: &mut Window) -> bool {
         Renderer::new(
-            BranchWindow{},
+            &mut BranchWindow{},
             ScreenSize::max(),
             Position::default()
         ).render();
@@ -46,7 +46,7 @@ impl MainWindow {
 
     fn open_log_window(&mut self, window: &mut Window) -> bool {
         Renderer::new(
-            LogWindow{},
+            &mut LogWindow::new(),
             ScreenSize::max(),
             Position::default()
         ).render();
@@ -58,7 +58,7 @@ impl MainWindow {
 
     fn open_command_window(&mut self, window: &mut Window) -> bool {
         Renderer::new(
-            CommandWindow{},
+            &mut CommandWindow{},
             ScreenSize { lines: 2, cols: window.width() },
             Position { x: 0, y: window.height() - 2 }
         ).render();
@@ -75,7 +75,7 @@ impl MainWindow {
         if matches!(file_state, FileState::Modified) {
             let file = line[3..].trim();
             Renderer::new(
-                PromptWindow::new(&format!("Are you sure you want to checkout file '{}'? y/n", file),
+                &mut PromptWindow::new(&format!("Are you sure you want to checkout file '{}'? y/n", file),
                                   || { git::checkout_file(file); },
                                   || {}),
                 ScreenSize { lines: 1, cols: 0 },
@@ -118,7 +118,7 @@ impl MainWindow {
 
     fn git_commit_options(&mut self, window: &mut Window) -> bool {
         Renderer::new(
-            CommitOptionsWindow{},
+            &mut CommitOptionsWindow{},
             ScreenSize { lines: 2, cols: window.width() },
             Position { x: 0, y: window.height() - 2 }
         ).render();
@@ -242,7 +242,7 @@ impl Component<MainWindow> for MainWindow {
         });
 
         Renderer::new(
-            HelpWindow{},
+            &mut HelpWindow{},
             ScreenSize {
                 lines: max_height(),
                 cols: (max_width() as f32 * 0.2) as i32
