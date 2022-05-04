@@ -46,7 +46,7 @@ impl MainWindow {
 
     fn open_log_window(&mut self, window: &mut Window) -> bool {
         Renderer::new(
-            &mut LogWindow{},
+            &mut LogWindow::new(),
             ScreenSize::max(),
             Position::default()
         ).render();

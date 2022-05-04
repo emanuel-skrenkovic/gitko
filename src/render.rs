@@ -1,3 +1,4 @@
+use std::cmp::{Ordering};
 use std::convert::TryInto;
 use std::collections::HashMap;
 
@@ -69,7 +70,7 @@ impl<'a, T: Component<T>> Renderer<'a, T> {
 
     fn on_keypress(&mut self, c: i32) -> bool {
         if let Some(handler) = self.key_handlers.get(&c) {
-            return handler(&mut self.component, &mut self.window)
+            return handler(self.component, &mut self.window)
         } else {
             match c {
                 KEY_J_LOWER => { self.window.move_cursor_down(); }
@@ -192,6 +193,28 @@ impl Window {
         }
 
         output
+    }
+
+    pub fn set_cursor(&mut self, position: Position) {
+        let current_position = self.cursor_position.y + self.screen_start as i32;
+
+        match position.y.cmp(&current_position) {
+            Ordering::Less => {
+                let diff = current_position - position.y;
+
+                for _ in 0..diff {
+                    self.move_cursor_up();
+                }
+            }
+            Ordering::Greater => {
+                let diff = position.y - current_position;
+
+                for _ in 0..diff {
+                    self.move_cursor_down();
+                }
+            }
+            _ => {}
+        }
     }
 
     pub fn move_cursor_down(&mut self) {
