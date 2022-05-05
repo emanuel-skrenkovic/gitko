@@ -1,4 +1,6 @@
 use std::fs::{metadata,read_dir,remove_file};
+use std::path::{Path, PathBuf};
+use std::process::Command;
 
 use crate::{max_width, max_height};
 use crate::git;
@@ -64,6 +66,34 @@ impl MainWindow {
         ).render();
 
         self.on_start(window);
+
+        true
+    }
+
+    fn open_in_file_manager(&mut self, window: &mut Window) -> bool {
+        let command = if cfg!(unix) {
+            "xdg-open"
+        } else if cfg!(windows) {
+            "explorer"
+        } else {
+            panic!("Platform not supported.");
+        };
+
+        let path_str = window.get_cursor_line()[3..].trim().to_owned();
+        if !Path::new(&path_str).exists() {
+            return true
+        }
+
+        let mut path = PathBuf::from(window.get_cursor_line()[3..].trim());
+        path.pop();
+
+        if path.as_os_str().is_empty() {
+            path.push(".");
+        }
+
+        let _ = Command::new(command)
+            .arg(path)
+            .spawn();
 
         true
     }
@@ -280,6 +310,7 @@ impl Component<MainWindow> for MainWindow {
         handlers.insert(KEY_C_LOWER, MainWindow::git_checkout_file);
         handlers.insert(KEY_D_LOWER, MainWindow::delete_untracked_file);
         handlers.insert(KEY_L_LOWER, MainWindow::open_log_window);
+        handlers.insert(KEY_P_UPPER, MainWindow::open_in_file_manager);
         handlers.insert(KEY_T_LOWER, MainWindow::git_add_file);
         handlers.insert(KEY_U_LOWER, MainWindow::git_unstage_file);
         handlers.insert(KEY_COLON, MainWindow::open_command_window);
