@@ -20,6 +20,22 @@ impl CommitDiffWindow {
         window.move_screen_down(1);
         true
     }
+
+    fn jump_screen_up(&mut self, window: &mut Window) -> bool {
+        for _ in 0..20 {
+            self.move_screen_up(window);
+        }
+
+        true
+    }
+
+    fn jump_screen_down(&mut self, window: &mut Window) -> bool {
+        for _ in 0..20 {
+            self.move_screen_down(window);
+        }
+
+        true
+    }
 }
 
 impl Component<CommitDiffWindow> for CommitDiffWindow {
@@ -30,5 +46,7 @@ impl Component<CommitDiffWindow> for CommitDiffWindow {
     fn register_handlers(&self, handlers: &mut KeyHandlers<CommitDiffWindow>) {
         handlers.insert(KEY_J_LOWER, CommitDiffWindow::move_screen_down);
         handlers.insert(KEY_K_LOWER, CommitDiffWindow::move_screen_up);
+        handlers.insert(4, CommitDiffWindow::jump_screen_down);
+        handlers.insert(21, CommitDiffWindow::jump_screen_up);
     }
 }
