@@ -39,7 +39,7 @@ fn init_ncurses() {
 
     ncurses::cbreak();
     ncurses::keypad(ncurses::stdscr(), true);
-    ncurses::noecho();   
+    ncurses::noecho();
     ncurses::start_color();
 
     ncurses::init_pair(1, ncurses::COLOR_GREEN, ncurses::COLOR_BLACK);

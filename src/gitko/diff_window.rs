@@ -25,6 +25,22 @@ impl DiffWindow {
         window.move_screen_down(1);
         true
     }
+
+    fn jump_screen_up(&mut self, window: &mut Window) -> bool {
+        for _ in 0..20 {
+            self.move_screen_up(window);
+        }
+
+        true
+    }
+
+    fn jump_screen_down(&mut self, window: &mut Window) -> bool {
+        for _ in 0..20 {
+            self.move_screen_down(window);
+        }
+
+        true
+    }
 }
 
 impl Component<DiffWindow> for DiffWindow {
@@ -49,5 +65,7 @@ impl Component<DiffWindow> for DiffWindow {
     fn register_handlers(&self, handlers: &mut HashMap<i32, fn(&mut DiffWindow, &mut Window) -> bool>) {
         handlers.insert(KEY_J_LOWER, DiffWindow::move_screen_down);
         handlers.insert(KEY_K_LOWER, DiffWindow::move_screen_up);
+        handlers.insert(4, DiffWindow::jump_screen_down);
+        handlers.insert(21, DiffWindow::jump_screen_up);
     }
 }

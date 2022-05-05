@@ -73,9 +73,19 @@ impl<'a, T: Component<T>> Renderer<'a, T> {
             return handler(self.component, &mut self.window)
         } else {
             match c {
-                KEY_J_LOWER => { self.window.move_cursor_down(); }
-                KEY_K_LOWER => { self.window.move_cursor_up(); }
-                KEY_Q_LOWER => { return false }
+                KEY_J_LOWER => self.window.move_cursor_down(),
+                KEY_K_LOWER => self.window.move_cursor_up(),
+                KEY_Q_LOWER => return false,
+                4 => { // 4 == EOT end of transmission - a very dirty hack to get ctrl + d
+                    for _ in 0..20 {
+                        self.window.move_cursor_down();
+                    }
+                },
+                21 => { // 21 == NAK negative acknowledge - a very dirty hack to get ctrl + u
+                    for _ in 0..20 {
+                        self.window.move_cursor_up();
+                    }
+                }
                 _ => {}
             }
         }
