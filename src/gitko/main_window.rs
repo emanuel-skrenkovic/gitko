@@ -1,4 +1,4 @@
-use std::fs::{metadata,read_dir};
+use std::fs::{metadata,read_dir,remove_file};
 
 use crate::{max_width, max_height};
 use crate::git;
@@ -62,6 +62,26 @@ impl MainWindow {
             ScreenSize { lines: 2, cols: window.width() },
             Position { x: 0, y: window.height() - 2 }
         ).render();
+
+        self.on_start(window);
+
+        true
+    }
+
+    fn delete_untracked_file(&mut self, window: &mut Window) -> bool {
+        let line = window.get_cursor_line();
+        let file_state = parse_file_state(&line);
+
+        if matches!(file_state, FileState::Untracked) {
+            let file = line[3..].trim();
+            Renderer::new(
+                &mut PromptWindow::new(&format!("Are you sure you want to delete file '{}'? y/n", file),
+                                  || { let _ = remove_file(file); },
+                                  || {}),
+                ScreenSize { lines: 1, cols: 0 },
+                Position { x: 0, y: window.height() - 1 }
+            ).render();
+        }
 
         self.on_start(window);
 
@@ -258,6 +278,7 @@ impl Component<MainWindow> for MainWindow {
         handlers.insert(KEY_LF, MainWindow::diff_file);
         handlers.insert(KEY_B_LOWER, MainWindow::open_branch_window);
         handlers.insert(KEY_C_LOWER, MainWindow::git_checkout_file);
+        handlers.insert(KEY_D_LOWER, MainWindow::delete_untracked_file);
         handlers.insert(KEY_L_LOWER, MainWindow::open_log_window);
         handlers.insert(KEY_T_LOWER, MainWindow::git_add_file);
         handlers.insert(KEY_U_LOWER, MainWindow::git_unstage_file);
