@@ -16,10 +16,11 @@ pub fn parse_file_state(path: &str) -> FileState {
     let first  = state.chars().next().unwrap();
     let second = state.chars().nth(1).unwrap();
 
-    if first == 'M' || first == 'A' {
-        FileState::Staged
-    } else if second == 'M' {
+
+    if second == 'M' {
         FileState::Modified
+    } else if first == 'M' || first == 'A' {
+        FileState::Staged
     } else if first == 'D' || second == 'D' {
         FileState::Deleted
     } else if state.starts_with("??") {
