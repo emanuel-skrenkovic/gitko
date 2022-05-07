@@ -183,6 +183,8 @@ impl Component<MainWindow> for MainWindow {
     fn on_start(&mut self, window: &mut Window) {
         let git_status: Vec<String> = git::status();
 
+        let head = git::log(Some(1)).first().unwrap().to_owned();
+
         let untracked: Vec<String> = git_status
             .iter()
             .filter(|c| c.starts_with("??"))
@@ -228,29 +230,22 @@ impl Component<MainWindow> for MainWindow {
             .cloned()
             .collect();
 
-        let sections_count = 4;
-        let lines_between = 5;
+        let mut status: Vec<String> = vec![
+            format!("Head:  {}", head),
+            "".to_owned()
+        ];
 
-        let used_lines = added.len()
-            + deleted.len()
-            + unstaged.len()
-            + staged.len()
-            + sections_count
-            + lines_between;
-
-        let remaining_lines = window.height() - (used_lines as i32) * 2;
-        let recent_commits_count = (remaining_lines - 1) as u32;
-
-        let mut recent_commits: Vec<String> = git::log(Some(recent_commits_count));
-
-        let mut status: Vec<String> = vec![];
+        /*
+        status.push("Head:  ".to_owned() + &head);
+        status.push("".to_owned());
+        */
 
         if staged.is_empty() && unstaged.is_empty() && added.is_empty() && deleted.is_empty() {
             status.push("No changes found".to_string());
         }
 
         if !added.is_empty() {
-            status.push("Untracked files:".to_string());
+            status.push(format!("Untracked files: ({})", added.len()));
             status.append(&mut added);
 
             status.push("".to_string());
@@ -263,22 +258,18 @@ impl Component<MainWindow> for MainWindow {
             status.push("".to_string());
         }
 
+        status.push(format!("Modified files: ({})", unstaged.len()));
         if !unstaged.is_empty() {
-            status.push("Modified files:".to_string());
             status.append(&mut unstaged);
 
             status.push("".to_string());
         }
 
+        status.push("".to_string());
+
         if !staged.is_empty() {
             status.push("Staged files:".to_string());
             status.append(&mut staged);
-        }
-
-        if !recent_commits.is_empty() {
-            status.append(&mut vec!["".to_string(); lines_between]);
-            status.push("Recent commits:".to_string());
-            status.append(&mut recent_commits);
         }
 
         if status.is_empty() {
@@ -290,18 +281,6 @@ impl Component<MainWindow> for MainWindow {
             lines: max_height(),
             cols: (max_width() as f32 * 0.8) as i32 // #horribleways
         });
-
-        Renderer::new(
-            &mut HelpWindow{},
-            ScreenSize {
-                lines: max_height(),
-                cols: (max_width() as f32 * 0.2) as i32
-            },
-            Position {
-                x: (max_width() as f32 * 0.8) as i32,
-                y: 0
-            }
-        ).draw();
     }
 
     fn register_handlers(&self, handlers: &mut KeyHandlers<MainWindow>) {
@@ -315,34 +294,5 @@ impl Component<MainWindow> for MainWindow {
         handlers.insert(KEY_U_LOWER, MainWindow::git_unstage_file);
         handlers.insert(KEY_COLON, MainWindow::open_command_window);
         handlers.insert(KEY_C_UPPER, MainWindow::git_commit_options);
-    }
-}
-
-pub struct HelpWindow {}
-
-impl Component<HelpWindow> for HelpWindow {
-    fn on_start(&mut self, window: &mut Window) {
-        let help_text = vec![
-            "j - move cursor down",
-            "k - move cursor up",
-            "",
-            "enter - action",
-            "",
-            "t - stage file",
-            "u - unstage file",
-            "c - checkout file",
-            "",
-            "",
-            "q - exit window",
-
-            "b - open branches window",
-            "l - open log window",
-            ": - open command window",
-            "Capital C - git commit editor"
-        ];
-        window.data = help_text
-            .iter()
-            .map(|s| s.to_string())
-            .collect();
     }
 }

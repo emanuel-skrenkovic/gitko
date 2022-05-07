@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use std::cmp::{Ordering};
 use std::convert::TryInto;
 use std::collections::HashMap;
