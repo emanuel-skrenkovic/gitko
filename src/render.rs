@@ -307,6 +307,15 @@ impl Window {
         }
     }
 
+    fn draw(&self, line: &str) {
+        ncurses::mvwaddstr(
+            self.curses_window,
+            self.cursor_position.y,
+            self.cursor_position.x,
+            line
+        );
+    }
+
     fn try_move_cursor_down(&mut self) -> i32 {
         self.move_cursor(Position {
             x: self.cursor_position.x,
@@ -394,5 +403,51 @@ impl WriteableWindow for Window {
                 }
             }
         }
+    }
+}
+
+pub trait Renderable {
+    fn render(&self, window: &mut Window);
+}
+
+impl Renderable for String {
+    fn render(&self, window: &mut Window) {
+        self.as_str().render(window);
+    }
+}
+
+impl Renderable for &str {
+    fn render(&self, window: &mut Window) {
+        window.draw(self)
+    }
+}
+
+pub struct Colored<T: Renderable> {
+    value: T,
+    text_color: i16,
+    background_color: i16
+}
+
+impl<T: Renderable> Colored<T> {
+    pub fn new(value: T, text_color: i16, background_color: i16) -> Colored<T> {
+        ncurses::init_pair(0, text_color, background_color); // TODO: some sort of instance id?
+
+        Colored { value, text_color, background_color }
+    }
+}
+
+impl <T: Renderable> Renderable for Colored<T> {
+    fn render(&self, window: &mut Window) {
+        ncurses::wattron(
+            window.curses_window,
+            ncurses::COLOR_PAIR(0)
+        );
+
+        self.value.render(window);
+
+        ncurses::wattroff(
+            window.curses_window,
+            ncurses::COLOR_PAIR(0)
+        );
     }
 }
