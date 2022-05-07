@@ -235,15 +235,6 @@ impl Component<MainWindow> for MainWindow {
             "".to_owned()
         ];
 
-        /*
-        status.push("Head:  ".to_owned() + &head);
-        status.push("".to_owned());
-        */
-
-        if staged.is_empty() && unstaged.is_empty() && added.is_empty() && deleted.is_empty() {
-            status.push("No changes found".to_string());
-        }
-
         if !added.is_empty() {
             status.push(format!("Untracked files: ({})", added.len()));
             status.append(&mut added);
