@@ -6,7 +6,7 @@ use crate::{max_width, max_height};
 use crate::git;
 use crate::git::{parse_file_state, FileState};
 use crate::ascii_table::*;
-use crate::render::{Renderer, KeyHandlers, Component, ScreenSize, Window, Position};
+use crate::render::{Bold, Colored, Line, Renderer, KeyHandlers, Component, ScreenSize, Underlined, Window, Position};
 use crate::gitko::log_window::LogWindow;
 use crate::gitko::diff_window::DiffWindow;
 use crate::gitko::branch_window::BranchWindow;
@@ -183,15 +183,13 @@ impl Component<MainWindow> for MainWindow {
     fn on_start(&mut self, window: &mut Window) {
         let git_status: Vec<String> = git::status();
 
-        let head = git::log(Some(1)).first().unwrap().to_owned();
-
         let untracked: Vec<String> = git_status
             .iter()
             .filter(|c| c.starts_with("??"))
             .cloned()
             .collect();
 
-        let mut added: Vec<String> = vec![];
+        let mut added: Vec<Line> = vec![];
 
         for u in &untracked {
             let untracked_path = u.trim_start_matches("?? ");
@@ -203,71 +201,107 @@ impl Component<MainWindow> for MainWindow {
 
                     if let Ok(paths) = paths_result {
                         for path in paths.flatten() {
-                            added.push(format!("?? {}", path.path().display()));
+                            added.push(
+                                Line::from_string(
+                                    format!("?? {}", path.path().display())
+                                )
+                            );
                         }
                     }
                 } else if metadata.is_file() {
-                    added.push(u.to_owned());
+                    added.push(Line::from_string(u.to_owned()));
                 }
             }
         }
 
-        let mut deleted: Vec<String> = git_status
+        let mut deleted: Vec<Line> = git_status
             .iter()
             .filter(|c| c.starts_with(" D"))
-            .cloned()
+            .map(|c| Line::from_string(c.to_owned()))
             .collect();
 
-        let mut unstaged: Vec<String> = git_status
+        let mut unstaged: Vec<Line> = git_status
             .iter()
             .filter(|c| c.starts_with(" M") || c.starts_with("MM"))
-            .cloned()
+            .map(|c| Line::from_string(c.to_owned()))
             .collect();
 
-        let mut staged: Vec<String> = git_status
+        let mut staged: Vec<Line> = git_status
             .iter()
             .filter(|c| c.starts_with('M') || c.starts_with('A') || c.starts_with('D'))
-            .cloned()
+            .map(|c| Line::from_string(c.to_owned()))
             .collect();
 
-        let mut status: Vec<String> = vec![
-            format!("Head:  {}", head),
-            "".to_owned()
+        let mut status: Vec<Line> = vec![
+            Line::new(vec![
+                Box::new(
+                    Bold::new(Underlined::new("Head:"))
+                ),
+                Box::new(
+                    Colored::new(
+                        git::head_branch(),
+                        ncurses::COLOR_CYAN,
+                        ncurses::COLOR_BLACK
+                    )
+                ),
+                Box::new(" ".to_owned()),
+                Box::new(git::last_commit())
+            ]),
+            Line::empty()
         ];
 
         if !added.is_empty() {
-            status.push(format!("Untracked files: ({})", added.len()));
+            status.push(
+                Line::new(vec![
+                        Box::new(
+                            Bold::new(Underlined::new(format!("Untracked files: ({})", added.len())))
+                        )
+                    ]
+                )
+            );
             status.append(&mut added);
 
-            status.push("".to_string());
+            status.push(Line::empty());
         }
 
         if !deleted.is_empty() {
-            status.push("Deleted files:".to_string());
+            status.push(Line::from_string("Deleted files:".to_owned()));
             status.append(&mut deleted);
 
-            status.push("".to_string());
+            status.push(Line::from_string("".to_owned()));
         }
 
-        status.push(format!("Modified files: ({})", unstaged.len()));
+        status.push(
+            Line::new(vec![
+                Box::new(
+                    Bold::new(
+                        Underlined::new(format!("Modified files: ({})", unstaged.len()))
+                    )
+                )
+            ])
+        );
         if !unstaged.is_empty() {
             status.append(&mut unstaged);
 
-            status.push("".to_string());
+            status.push(Line::from_string("".to_owned()));
         }
 
-        status.push("".to_string());
+        status.push(Line::empty());
 
         if !staged.is_empty() {
-            status.push("Staged files:".to_string());
+            status.push(
+                Line::new(vec![
+                    Box::new(Bold::new(Underlined::new("Staged files:".to_owned())))
+                ])
+            );
             status.append(&mut staged);
         }
 
         if status.is_empty() {
-            status.push("No changes found.".to_string());
+            status.push(Line::from_string("No changes found.".to_owned()));
         }
 
-        window.data = status.clone();
+        window.lines = status;
         window.resize(ScreenSize {
             lines: max_height(),
             cols: (max_width() as f32 * 0.8) as i32 // #horribleways

@@ -1,5 +1,5 @@
 use crate::ascii_table::*;
-use crate::render::{Component, KeyHandlers, Window, WriteableWindow};
+use crate::render::{Component, KeyHandlers, Line, Window, WriteableWindow};
 
 pub struct CommandWindow {}
 
@@ -26,8 +26,12 @@ impl Component<CommandWindow> for CommandWindow {
             output.stderr
         };
 
-        window.data.push(String::from_utf8(raw_output)
-                         .expect("invalid string encoding"));
+        window.lines.push(
+            Line::from_string(
+                String::from_utf8(raw_output)
+                         .expect("invalid string encoding")
+            )
+        );
 
         true
     }

@@ -4,7 +4,7 @@ use std::{fs::File, io::{BufReader, BufRead}};
 use crate::git;
 use crate::git::{FileState};
 use crate::ascii_table::*;
-use crate::render::{Component, Window};
+use crate::render::{Colored, Component, Line, Window};
 
 pub struct DiffWindow {
     path: String,
@@ -43,6 +43,42 @@ impl DiffWindow {
     }
 }
 
+fn map_line(line: String) -> Line {
+    if line.starts_with('+') {
+        Line::new(vec![
+            Box::new(
+                Colored::new(
+                    line,
+                    ncurses::COLOR_GREEN,
+                    ncurses::COLOR_BLACK
+                )
+            )
+        ])
+    } else if line.starts_with('-') {
+        Line::new(vec![
+            Box::new(
+                Colored::new(
+                    line,
+                    ncurses::COLOR_RED,
+                    ncurses::COLOR_BLACK
+                )
+            )
+        ])
+    } else if line.starts_with("@@") {
+        Line::new(vec![
+            Box::new(
+                Colored::new(
+                    line,
+                    ncurses::COLOR_CYAN,
+                    ncurses::COLOR_BLACK
+                )
+            )
+        ])
+    } else {
+        Line::from_string(line)
+    }
+}
+
 impl Component<DiffWindow> for DiffWindow {
     fn on_start(&mut self, window: &mut Window) {
         if matches!(self.file_state, FileState::Untracked) {
@@ -50,15 +86,20 @@ impl Component<DiffWindow> for DiffWindow {
             // Component above should parse directories into file paths.
 
             let file = File::open(&self.path).expect("Could not find file");
-            let lines = BufReader::new(file)
+            let lines: Vec<String> = BufReader::new(file)
                 .lines()
                 .map(|l| l.expect("Could not parse line"))
                 .collect();
 
-            window.data = lines;
-
+            window.lines = lines
+                .iter()
+                .map(|l| map_line(l.to_owned()))
+                .collect();
         } else {
-            window.data = git::diff_file(&self.path);
+            window.lines = git::diff_file(&self.path)
+                .iter()
+                .map(|l| map_line(l.to_owned()))
+                .collect();
         }
     }
 

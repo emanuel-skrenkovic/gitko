@@ -1,5 +1,5 @@
 use crate::ascii_table::*;
-use crate::render::{Component, KeyHandlers, Window};
+use crate::render::{Component, KeyHandlers, Line, Window};
 
 pub struct PromptWindow<TYes: Fn(), TNo: Fn()> {
     message: String,
@@ -29,7 +29,7 @@ impl<TYes: Fn(), TNo: Fn()> PromptWindow<TYes, TNo> {
 
 impl<TYes: Fn(), TNo: Fn()> Component<PromptWindow<TYes, TNo>> for PromptWindow<TYes, TNo> {
     fn on_start(&mut self, window: &mut Window) {
-        window.data = vec![self.message.clone()];
+        window.lines = vec![Line::from_string(self.message.clone())];
     }
 
     fn register_handlers(&self, handlers: &mut KeyHandlers<PromptWindow<TYes, TNo>>) {

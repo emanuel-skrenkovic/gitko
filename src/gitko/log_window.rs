@@ -1,6 +1,6 @@
 use crate::git;
 use crate::ascii_table::*;
-use crate::render::{Component, KeyHandlers, Renderer, ScreenSize, Window, Position, WriteableWindow};
+use crate::render::{Component, KeyHandlers, Line, Renderer, ScreenSize, Window, Position, WriteableWindow};
 use crate::gitko::commit_diff_window::CommitDiffWindow;
 
 pub struct LogWindow {
@@ -74,8 +74,8 @@ impl LogWindow {
         } else {
             0
         };
-        let end = window.data.len();
-        let search_data = window.data.clone()[start..end].to_vec();
+        let end = window.lines.len();
+        let search_data = window.data()[start..end].to_vec();
 
         self.found_at = match search_data.iter().position(|l| l.contains(&self.term)) {
             Some(position) => {
@@ -94,7 +94,7 @@ impl LogWindow {
             return
         }
 
-        let data = window.data.clone();
+        let data = window.data();
 
         let end = if let Some(last_found_at) = self.found_at {
             last_found_at
@@ -116,7 +116,10 @@ impl LogWindow {
 
 impl Component<LogWindow> for LogWindow {
     fn on_start(&mut self, window: &mut Window) {
-        window.data = git::log(None);
+        window.lines = git::log(None)
+            .iter()
+            .map(|l| Line::from_string(l.to_owned()))
+            .collect();
     }
 
     fn register_handlers(&self, handlers: &mut KeyHandlers<LogWindow>) {

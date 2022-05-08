@@ -1,6 +1,6 @@
 use crate::git;
 use crate::ascii_table::*;
-use crate::render::{KeyHandlers, Component, Window};
+use crate::render::{Component, KeyHandlers, Line, Window};
 
 pub struct CommitOptionsWindow {
 
@@ -23,9 +23,9 @@ impl CommitOptionsWindow {
 
 impl Component<CommitOptionsWindow> for CommitOptionsWindow {
     fn on_start(&mut self, window: &mut Window) {
-        window.data = vec!["", "--amend"]
+        window.lines = vec!["", "--amend"]
             .iter()
-            .map(|s| s.to_string())
+            .map(|s| Line::from_string(s.to_string()))
             .collect();
     }
 

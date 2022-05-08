@@ -114,12 +114,13 @@ const BLUE_TEXT: i16  = 3;
 
 // TODO: think about removing and adding functionality to Component trait
 pub struct Window {
-    pub data: Vec<String>,
+    pub lines: Vec<Line>,
     screen_start: usize,
 
     height: i32,
     width: i32,
 
+    position: Position,
     cursor_position: Position,
     curses_window: ncurses::WINDOW
 }
@@ -139,12 +140,13 @@ impl Window {
         ncurses::wrefresh(curses_window);
 
         Window {
-            data: vec![],
+            lines: vec![],
             screen_start: 0,
 
             height: y,
             width: x,
 
+            position: Position::default(),
             cursor_position: Position::default(),
             curses_window
         }
@@ -157,14 +159,16 @@ impl Window {
         ncurses::doupdate();
     }
 
-    pub fn queue_update(&self) {
+    pub fn queue_update(&mut self) {
         ncurses::werase(self.curses_window);
 
-        for (i, line) in self.data[self.screen_start..].iter().enumerate() {
-            self.write_line(
-                line,
-                Position { x: 0, y: i as i32 }
-            );
+        for (i, line) in self.lines[self.screen_start..].iter().enumerate() {
+            self.position.x = 0;
+            self.position.y = i as i32;
+
+            for part in &line.parts {
+                self.position.x += (*part).render(self);
+            }
         }
 
         ncurses::wnoutrefresh(self.curses_window);
@@ -179,6 +183,10 @@ impl Window {
         ncurses::wresize(self.curses_window, new_size.lines, new_size.cols);
         self.height = new_size.lines;
         self.width = new_size.cols;
+    }
+
+    pub fn data(&self) -> Vec<String> {
+        self.lines.iter().map(|l| l.value()).collect()
     }
 
     pub fn get_cursor_line(&self) -> String {
@@ -235,7 +243,7 @@ impl Window {
         let next_position = self.screen_start + delta as usize;
         let next_end = next_position + self.height as usize;
 
-        if delta > 0 && next_end < self.data.len() {
+        if delta > 0 && next_end < self.lines.len() {
             self.move_screen_down(delta as usize);
         }
     }
@@ -250,7 +258,7 @@ impl Window {
     }
 
     pub fn move_screen_down(&mut self, delta: usize) {
-        if self.screen_start + delta >= self.data.len() { return; }
+        if self.screen_start + delta >= self.lines.len() { return; }
 
         self.screen_start += delta;
         self.queue_update();
@@ -271,49 +279,15 @@ impl Window {
         self.width
     }
 
-    fn write_line(&self, line: &str, position: Position) {
-        // Ugly, but more control.
-        let color: Option<i16> =
-            if line.starts_with("+++") || line.starts_with("---") {
-                None
-            } else if line.starts_with('+') {
-                Some(GREEN_TEXT)
-            } else if line.starts_with('-') {
-                Some(RED_TEXT)
-            } else if line.starts_with("@@") {
-                Some(BLUE_TEXT)
-            } else {
-                None
-            };
-
-        let color_on = color.is_some();
-        if color_on {
-            ncurses::wattron(
-                self.curses_window,
-                ncurses::COLOR_PAIR(color.unwrap()));
-        }
-
-        // https://linux.die.net/man/3/waddstr
+    fn write(&self, line: &str) -> i32 {
         ncurses::mvwaddstr(
             self.curses_window,
-            position.y,
-            position.x,
-            line);
-
-        if color_on {
-            ncurses::wattroff(
-                self.curses_window,
-                ncurses::COLOR_PAIR(color.unwrap()));
-        }
-    }
-
-    fn draw(&self, line: &str) {
-        ncurses::mvwaddstr(
-            self.curses_window,
-            self.cursor_position.y,
-            self.cursor_position.x,
+            self.position.y,
+            self.position.x,
             line
         );
+
+        line.len() as i32
     }
 
     fn try_move_cursor_down(&mut self) -> i32 {
@@ -406,48 +380,160 @@ impl WriteableWindow for Window {
     }
 }
 
-pub trait Renderable {
-    fn render(&self, window: &mut Window);
+pub trait Widget {
+    fn render(&self, window: &Window) -> i32;
+    fn value(&self) -> String;
 }
 
-impl Renderable for String {
-    fn render(&self, window: &mut Window) {
-        self.as_str().render(window);
+impl Widget for String {
+    fn render(&self, window: &Window) -> i32 {
+        self.as_str().render(window)
+    }
+
+    fn value(&self) -> String {
+        self.to_owned()
     }
 }
 
-impl Renderable for &str {
-    fn render(&self, window: &mut Window) {
-        window.draw(self)
+impl Widget for &str {
+    fn render(&self, window: &Window) -> i32{
+        window.write(self)
+    }
+
+    fn value(&self) -> String {
+        self.to_string()
     }
 }
 
-pub struct Colored<T: Renderable> {
+pub struct Colored<T: Widget> {
     value: T,
     text_color: i16,
-    background_color: i16
+    background_color: i16,
+    pair_number: i16
 }
 
-impl<T: Renderable> Colored<T> {
+impl<T: Widget> Colored<T> {
     pub fn new(value: T, text_color: i16, background_color: i16) -> Colored<T> {
-        ncurses::init_pair(0, text_color, background_color); // TODO: some sort of instance id?
 
-        Colored { value, text_color, background_color }
+        // http://szudzik.com/ElegantPairing.pdf
+        // a >= b ? a * a + a + b : a + b * b;
+        let pair_number: i16 = if text_color >= background_color {
+            text_color * text_color + text_color + background_color
+        } else {
+            text_color + background_color * background_color
+        };
+
+        ncurses::init_pair(pair_number, text_color, background_color); // TODO: some sort of instance id?
+        Colored { value, text_color, background_color, pair_number }
     }
 }
 
-impl <T: Renderable> Renderable for Colored<T> {
-    fn render(&self, window: &mut Window) {
+impl <T: Widget> Widget for Colored<T> {
+    fn render(&self, window: &Window) -> i32 {
         ncurses::wattron(
             window.curses_window,
-            ncurses::COLOR_PAIR(0)
+            ncurses::COLOR_PAIR(self.pair_number)
         );
 
-        self.value.render(window);
+        let len = self.value.render(window);
 
         ncurses::wattroff(
             window.curses_window,
-            ncurses::COLOR_PAIR(0)
+            ncurses::COLOR_PAIR(self.pair_number)
         );
+
+        len
+    }
+
+    fn value(&self) -> String {
+        self.value.value() // lol
+    }
+}
+
+pub struct Underlined<T: Widget> {
+    value: T
+}
+
+impl<T: Widget> Underlined<T> {
+    pub fn new(value: T) -> Underlined<T> {
+        Underlined { value }
+    }
+}
+
+impl <T: Widget> Widget for Underlined<T> {
+    fn render(&self, window: &Window) -> i32 {
+        ncurses::wattron(
+            window.curses_window,
+            ncurses::A_UNDERLINE()
+        );
+
+        let len = self.value.render(window);
+
+        ncurses::wattroff(
+            window.curses_window,
+            ncurses::A_UNDERLINE()
+        );
+
+        len
+    }
+
+    fn value(&self) -> String {
+        self.value.value()
+    }
+}
+
+pub struct Bold<T: Widget> {
+    value: T
+}
+
+impl<T: Widget> Bold<T> {
+    pub fn new(value: T) -> Bold<T> {
+        Bold { value }
+    }
+}
+
+impl <T: Widget> Widget for Bold<T> {
+    fn render(&self, window: &Window) -> i32 {
+        ncurses::wattron(
+            window.curses_window,
+            ncurses::A_BOLD()
+        );
+
+        let len = self.value.render(window);
+
+        ncurses::wattroff(
+            window.curses_window,
+            ncurses::A_BOLD()
+        );
+
+        len
+    }
+
+    fn value(&self) -> String {
+        self.value.value()
+    }
+}
+
+pub struct Line {
+    pub parts: Vec<Box<dyn Widget>>
+}
+
+impl Line {
+    pub fn new(parts: Vec<Box<dyn Widget>>) -> Line {
+        Line { parts }
+    }
+
+    pub fn empty() -> Line {
+        Line::from_string("".to_owned())
+    }
+
+    pub fn from_string(from: String) -> Line {
+        Line::new(vec![Box::new(from)])
+    }
+
+    pub fn value(&self) -> String {
+        self.parts
+            .iter()
+            .fold(String::new(), |_, p| (*p).value())
     }
 }

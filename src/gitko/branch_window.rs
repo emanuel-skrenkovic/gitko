@@ -1,6 +1,6 @@
 use crate::git;
 use crate::ascii_table::*;
-use crate::render::{Component, KeyHandlers, Renderer, ScreenSize, Window, Position};
+use crate::render::{Component, KeyHandlers, Line, Renderer, ScreenSize, Window, Position};
 
 use crate::gitko::prompt_window::PromptWindow;
 
@@ -45,7 +45,10 @@ impl BranchWindow {
 
 impl Component<BranchWindow> for BranchWindow {
     fn on_start(&mut self, window: &mut Window) {
-        window.data = git::branch();
+        window.lines = git::branch()
+            .iter()
+            .map(|l| Line::from_string(l.to_owned()))
+            .collect();
     }
 
     fn register_handlers(&self, handlers: &mut KeyHandlers<BranchWindow>) {

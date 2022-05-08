@@ -30,6 +30,20 @@ pub fn parse_file_state(path: &str) -> FileState {
     }
 }
 
+pub fn last_commit() -> String {
+    run(vec!["log", "-1", "--oneline", "--no-decorate"])
+        .first()
+        .unwrap()
+        .to_owned()
+}
+
+pub fn head_branch() -> String {
+    run(vec!["show", "-s", "--pretty=%d", "HEAD"])
+        .first()
+        .unwrap()
+        .to_owned()
+}
+
 pub fn status() -> Vec<String> {
     run(vec!["status", "-s"])
 }
