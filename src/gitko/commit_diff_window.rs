@@ -76,6 +76,8 @@ fn map_line(line: String) -> Line {
 
 impl Component<CommitDiffWindow> for CommitDiffWindow {
     fn on_start(&mut self, window: &mut Window) {
+        ncurses::curs_set(ncurses::CURSOR_VISIBILITY::CURSOR_INVISIBLE);
+
         window.lines = git::diff_commit(&self.commit_hash)
             .iter()
             .map(|l| map_line(l.to_owned()))
@@ -87,5 +89,11 @@ impl Component<CommitDiffWindow> for CommitDiffWindow {
         handlers.insert(KEY_K_LOWER, CommitDiffWindow::move_screen_up);
         handlers.insert(4, CommitDiffWindow::jump_screen_down);
         handlers.insert(21, CommitDiffWindow::jump_screen_up);
+    }
+}
+
+impl std::ops::Drop for CommitDiffWindow {
+    fn drop(&mut self) {
+        ncurses::curs_set(ncurses::CURSOR_VISIBILITY::CURSOR_VISIBLE);
     }
 }

@@ -81,6 +81,8 @@ fn map_line(line: String) -> Line {
 
 impl Component<DiffWindow> for DiffWindow {
     fn on_start(&mut self, window: &mut Window) {
+        ncurses::curs_set(ncurses::CURSOR_VISIBILITY::CURSOR_INVISIBLE);
+
         if matches!(self.file_state, FileState::Untracked) {
             // Assume the path is a file path
             // Component above should parse directories into file paths.
@@ -108,5 +110,11 @@ impl Component<DiffWindow> for DiffWindow {
         handlers.insert(KEY_K_LOWER, DiffWindow::move_screen_up);
         handlers.insert(4, DiffWindow::jump_screen_down);
         handlers.insert(21, DiffWindow::jump_screen_up);
+    }
+}
+
+impl std::ops::Drop for DiffWindow {
+    fn drop(&mut self) {
+        ncurses::curs_set(ncurses::CURSOR_VISIBILITY::CURSOR_VISIBLE);
     }
 }
