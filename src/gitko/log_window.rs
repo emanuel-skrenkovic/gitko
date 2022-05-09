@@ -1,6 +1,7 @@
 use crate::git;
 use crate::ascii_table::*;
-use crate::render::{Component, KeyHandlers, Line, Renderer, ScreenSize, Window, Position, WriteableWindow};
+use crate::render::{Colored, Component, KeyHandlers, Line,Renderer, ScreenSize, Window, Position,
+                    Widget, WriteableWindow};
 use crate::gitko::commit_diff_window::CommitDiffWindow;
 
 pub struct LogWindow {
@@ -114,11 +115,46 @@ impl LogWindow {
     }
 }
 
+fn map_line(line: &String) -> Line {
+    let mut parts: Vec<Box<dyn Widget>> = vec![];
+
+    let mut chars = line.chars();
+    let star = chars.position(|c| c == '*');
+    if let Some(star_position) = star {
+        let start = chars.position(|c| c != ' ');
+
+        if let Some(start_position) = start {
+            let hash_start = star_position + start_position + 1;
+
+            parts.push(Box::new(
+                line[0..hash_start].to_owned()
+            ));
+
+            let hash_length = 7;
+            parts.push(Box::new(
+                Colored::new(
+                    line[hash_start..hash_start + hash_length].to_owned(),
+                    ncurses::COLOR_YELLOW,
+                    ncurses::COLOR_BLACK
+                )
+            ));
+
+            parts.push(Box::new(
+                line[hash_start + hash_length..].to_owned()
+            ))
+        }
+    } else {
+        parts.push(Box::new(line.to_owned()))
+    }
+
+    Line::new(parts)
+}
+
 impl Component<LogWindow> for LogWindow {
     fn on_start(&mut self, window: &mut Window) {
         window.lines = git::log(None)
             .iter()
-            .map(|l| Line::from_string(l.to_owned()))
+            .map(map_line)
             .collect();
     }
 
