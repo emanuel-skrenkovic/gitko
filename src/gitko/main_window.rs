@@ -2,7 +2,6 @@ use std::fs::{metadata,read_dir,remove_file};
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-use crate::{max_width, max_height};
 use crate::git;
 use crate::git::{parse_file_state, FileState};
 use crate::ascii_table::*;
@@ -302,10 +301,6 @@ impl Component<MainWindow> for MainWindow {
         }
 
         window.lines = status;
-        window.resize(ScreenSize {
-            lines: max_height(),
-            cols: (max_width() as f32 * 0.8) as i32 // #horribleways
-        });
     }
 
     fn register_handlers(&self, handlers: &mut KeyHandlers<MainWindow>) {
