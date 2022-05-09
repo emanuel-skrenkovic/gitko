@@ -290,7 +290,11 @@ impl Component<MainWindow> for MainWindow {
         if !staged.is_empty() {
             status.push(
                 Line::new(vec![
-                    Box::new(Bold::new(Underlined::new("Staged files:".to_owned())))
+                    Box::new(
+                        Bold::new(
+                            Underlined::new(format!("Staged files: ({})", staged.len()))
+                        )
+                    )
                 ])
             );
             status.append(&mut staged);
