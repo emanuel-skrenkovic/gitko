@@ -245,9 +245,32 @@ impl Component<MainWindow> for MainWindow {
                 ),
                 Box::new(" ".to_owned()),
                 Box::new(git::last_commit())
-            ]),
-            Line::empty()
+            ])
         ];
+
+        let origin_hash = git::last_origin_commit_hash();
+        let local_hash = git::last_commit_hash();
+
+        if origin_hash != local_hash { // if HEAD different from origin HEAD
+            status.push(
+                Line::new(vec![
+                    Box::new(
+                        Bold::new(Underlined::new("Origin:"))
+                    ),
+                    Box::new(
+                        Colored::new(
+                            git::origin_head_branch(),
+                            ncurses::COLOR_RED,
+                            ncurses::COLOR_BLACK
+                        )
+                    ),
+                    Box::new(" ".to_owned()),
+                    Box::new(git::last_origin_commit())
+                ])
+            );
+        }
+
+        status.push(Line::empty());
 
         if !added.is_empty() {
             status.push(
