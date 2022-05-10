@@ -12,6 +12,7 @@ use crate::gitko::branch_window::BranchWindow;
 use crate::gitko::command_window::CommandWindow;
 use crate::gitko::prompt_window::PromptWindow;
 use crate::gitko::commit_options_window::CommitOptionsWindow;
+use crate::gitko::push_options_window::PushOptionsWindow;
 
 pub struct MainWindow { }
 
@@ -173,7 +174,17 @@ impl MainWindow {
         ).render();
 
         self.on_start(window);
+        true
+    }
 
+    fn git_push_options(&mut self, window: &mut Window) -> bool {
+        Renderer::new(
+            &mut PushOptionsWindow{},
+            ScreenSize { lines: 2, cols: window.width() },
+            Position { x: 0, y: window.height() - 2 }
+        ).render();
+
+        self.on_start(window);
         true
     }
 }
@@ -336,10 +347,11 @@ impl Component<MainWindow> for MainWindow {
         handlers.insert(KEY_C_LOWER, MainWindow::git_checkout_file);
         handlers.insert(KEY_D_LOWER, MainWindow::delete_untracked_file);
         handlers.insert(KEY_L_LOWER, MainWindow::open_log_window);
-        handlers.insert(KEY_P_UPPER, MainWindow::open_in_file_manager);
+        handlers.insert(KEY_O_UPPER, MainWindow::open_in_file_manager);
         handlers.insert(KEY_T_LOWER, MainWindow::git_add_file);
         handlers.insert(KEY_U_LOWER, MainWindow::git_unstage_file);
         handlers.insert(KEY_COLON, MainWindow::open_command_window);
         handlers.insert(KEY_C_UPPER, MainWindow::git_commit_options);
+        handlers.insert(KEY_P_UPPER, MainWindow::git_push_options);
     }
 }

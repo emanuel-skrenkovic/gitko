@@ -100,12 +100,28 @@ pub fn unstage_file(path: &str) {
     run(vec!["reset", path]);
 }
 
+pub fn push(push_args: Option<Vec<&str>>) {
+    let mut args = vec!["push"];
+
+    if let Some(process_args) = push_args {
+        args.extend(process_args);
+    }
+
+    // TODO: what if it's not origin?
+    // TODO: what if I want to choose branch?
+    let current_branch = current_branch();
+    args.extend(vec!["origin", &current_branch]);
+
+    run(args);
+}
+
 pub fn commit(commit_args: Option<Vec<&str>>) {
     let mut args = vec!["commit"];
 
     if let Some(process_args) = commit_args {
         args.extend(process_args);
     }
+
 
     let _result = std::process::Command::new("git")
         .args(args)

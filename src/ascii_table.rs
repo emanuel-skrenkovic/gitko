@@ -11,6 +11,7 @@ pub const KEY_FORWARD_SLASH: i32 = 47;
 pub const KEY_COLON: i32 = 58;
 pub const KEY_C_UPPER: i32 = 67;
 pub const KEY_N_UPPER: i32 = 78;
+pub const KEY_O_UPPER: i32 = 79;
 pub const KEY_P_UPPER: i32 = 80;
 pub const KEY_B_LOWER: i32 = 98;
 pub const KEY_C_LOWER: i32 = 99;
