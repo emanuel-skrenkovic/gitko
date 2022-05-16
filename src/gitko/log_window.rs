@@ -6,12 +6,11 @@ use crate::gitko::commit_diff_window::CommitDiffWindow;
 
 pub struct LogWindow {
     term: String,
-    found_at: Option<usize>
 }
 
 impl LogWindow {
     pub fn new() -> LogWindow {
-        LogWindow { term: "".to_owned(), found_at: None }
+        LogWindow { term: "".to_owned() }
     }
 
     fn get_commit_log(&mut self, window: &mut Window) -> bool {
@@ -45,73 +44,23 @@ impl LogWindow {
         ).render();
 
         self.term = search_window.text;
-        self.jump_to_term_forward(window);
+        window.move_next(&self.term);
 
         true
     }
 
     fn next_search_result(&mut self, window: &mut Window) -> bool {
-        self.jump_to_term_forward(window);
+        window.move_next(&self.term);
         true
     }
 
     fn prev_search_result(&mut self, window: &mut Window) -> bool {
-        self.jump_to_term_backward(window);
+        window.move_prev(&self.term);
         true
     }
 
     fn clear_search(&mut self) {
-        self.term     = "".to_owned();
-        self.found_at = None;
-    }
-
-    fn jump_to_term_forward(&mut self, window: &mut Window) {
-        if self.term.is_empty() {
-            return
-        }
-
-        let start = if let Some(last_found_at) = self.found_at {
-            last_found_at + 1
-        } else {
-            0
-        };
-        let end = window.lines.len();
-        let search_data = window.data()[start..end].to_vec();
-
-        self.found_at = match search_data.iter().position(|l| l.contains(&self.term)) {
-            Some(position) => {
-                let new_position = start + position;
-
-                window.set_cursor(Position{ x: 0, y: new_position as i32 });
-                Some(new_position)
-            },
-            None => None
-
-        };
-    }
-
-    fn jump_to_term_backward(&mut self, window: &mut Window) {
-        if self.term.is_empty() {
-            return
-        }
-
-        let data = window.data();
-
-        let end = if let Some(last_found_at) = self.found_at {
-            last_found_at
-        } else {
-            data.len()
-        };
-
-        let search_data = data[0..end].to_vec();
-
-        self.found_at = match search_data.iter().rposition(|l| l.contains(&self.term)) {
-            Some(position) => {
-                window.set_cursor(Position{ x: 0, y: position as i32 });
-                Some(position)
-            },
-            None => None
-        };
+        self.term = "".to_owned();
     }
 }
 

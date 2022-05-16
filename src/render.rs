@@ -176,7 +176,6 @@ impl Window {
 
     pub fn listen_input(&self) -> i32 {
         ncurses::wgetch(self.curses_window)
-
     }
 
     pub fn resize(&mut self, new_size: ScreenSize) {
@@ -233,7 +232,9 @@ impl Window {
                     self.move_cursor_down();
                 }
             }
-            _ => {}
+            _ => {
+                self.move_cursor_down();
+            }
         }
     }
 
@@ -269,6 +270,42 @@ impl Window {
 
         self.screen_start -= delta;
         self.queue_update();
+    }
+
+    pub fn move_next(&mut self, term: &str) {
+        if term.is_empty() { return }
+
+        let start = self.cursor_position.y as usize + self.screen_start + 1;
+
+        let next = self.lines
+                       .iter()
+                       .skip(start)
+                       .map(|l| l.value())
+                       .position(|l| l.contains(term));
+
+        if let Some(position) = next {
+            self.set_cursor(
+                Position { x: 0, y: (start + position) as i32 }
+            );
+        }
+    }
+
+    pub fn move_prev(&mut self, term: &str) {
+        if term.is_empty() { return }
+
+        let end = self.cursor_position.y as usize;
+
+        let prev = self.lines
+                       .iter()
+                       .take(self.screen_start + end)
+                       .map(|l| l.value())
+                       .rposition(|l| l.contains(term));
+
+        if let Some(position) = prev {
+            self.set_cursor(
+                Position { x: 0, y: position as i32 }
+            );
+        }
     }
 
     pub fn height(&self) -> i32 {
