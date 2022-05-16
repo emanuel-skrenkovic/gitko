@@ -1,6 +1,8 @@
 use crate::git;
+use crate::max_height;
 use crate::ascii_table::*;
-use crate::render::{Line, KeyHandlers, Component, Window};
+use crate::gitko::output_window::OutputWindow;
+use crate::render::{Renderer, Line, KeyHandlers, Component, Window, ScreenSize, Position};
 
 pub struct PushOptionsWindow { }
 
@@ -14,7 +16,16 @@ impl PushOptionsWindow {
             None
         };
 
-        git::push(args);
+        let output = git::push(args);
+        let output_window_height = output.len() as i32 + 1;
+
+        if output.is_empty() { return false }
+
+        Renderer::new(
+            &mut OutputWindow { output },
+            ScreenSize { lines: output_window_height , cols: window.width() },
+            Position { x: 0, y: max_height() - output_window_height }
+        ).render();
 
         false
     }

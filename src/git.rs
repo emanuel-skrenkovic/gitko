@@ -100,7 +100,7 @@ pub fn unstage_file(path: &str) {
     run(vec!["reset", path]);
 }
 
-pub fn push(push_args: Option<Vec<&str>>) {
+pub fn push(push_args: Option<Vec<&str>>) -> Vec<String> {
     let mut args = vec!["push"];
 
     if let Some(process_args) = push_args {
@@ -112,34 +112,36 @@ pub fn push(push_args: Option<Vec<&str>>) {
     let current_branch = current_branch();
     args.extend(vec!["origin", &current_branch]);
 
-    run(args);
+    run(args)
 }
 
-pub fn commit(commit_args: Option<Vec<&str>>) {
+pub fn commit(commit_args: Option<Vec<&str>>) -> Vec<String> {
     let mut args = vec!["commit"];
 
     if let Some(process_args) = commit_args {
         args.extend(process_args);
     }
 
-
-    let _result = std::process::Command::new("git")
+    let output = std::process::Command::new("git")
         .args(args)
         .spawn()
         .unwrap()
-        .wait();
+        .wait_with_output()
+        .expect("failed to execute process");
+
+    output_lines(output)
 }
 
 pub fn branch() -> Vec<String> {
-    run (vec!["--no-pager", "branch"])
+    run(vec!["--no-pager", "branch"])
 }
 
 pub fn checkout_branch(branch_name: &str) -> Vec<String> {
-    run (vec!["checkout", branch_name])
+    run(vec!["checkout", branch_name])
 }
 
 pub fn checkout_file(file_path: &str) -> Vec<String> {
-    run (vec!["checkout", file_path])
+    run(vec!["checkout", file_path])
 }
 
 pub fn delete_branch(branch_name: &str) -> Vec<String> {
@@ -165,7 +167,16 @@ pub fn run(args: Vec<&str>) -> Vec<String> {
         .output()
         .expect("failed to execute process");
 
-    let output_str = String::from_utf8(output.stdout).expect("invalid string encoding");
+    output_lines(output)
+}
 
-    output_str.split('\n').map(str::to_string).collect()
+fn output_lines(output: std::process::Output) -> Vec<String> {
+    let descriptor = if output.stdout.is_empty() { output.stderr } else { output.stdout };
+    let output_str = String::from_utf8(descriptor).expect("invalid string encoding");
+
+    if output_str.is_empty() {
+        vec![]
+    } else {
+        output_str.split('\n').map(str::to_owned).collect()
+    }
 }
