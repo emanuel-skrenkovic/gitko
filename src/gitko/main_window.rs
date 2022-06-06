@@ -142,9 +142,8 @@ impl MainWindow {
         // TODO: add parse git status that returns file state
         // and file path?
         let line = window.get_cursor_line();
-        let file_state = parse_file_state(&line);
 
-        if !matches!(file_state, FileState::Staged) {
+        if git::is_file_modified(&line) {
             git::add_file(line[3..].trim());
         }
 
@@ -155,9 +154,8 @@ impl MainWindow {
 
     fn git_unstage_file(&mut self, window: &mut Window) -> bool {
         let line = window.get_cursor_line();
-        let file_state = parse_file_state(&line);
 
-        if matches!(file_state, FileState::Staged) {
+        if git::is_in_worktree(&line) {
             git::unstage_file(line[3..].trim());
         }
 
@@ -195,15 +193,18 @@ impl Component<MainWindow> for MainWindow {
 
         let untracked: Vec<String> = git_status
             .iter()
-            .filter(|c| c.starts_with("??"))
+            .filter(|c| c.starts_with("??") || c.starts_with("AM"))
             .cloned()
             .collect();
 
         let mut added: Vec<Line> = vec![];
+        let mut added_modified: Vec<Line> = vec![];
 
         for u in &untracked {
-            let untracked_path = u.trim_start_matches("?? ");
+            let untracked_path = &u[3..];
             let path_metadata = metadata(untracked_path);
+
+            let modified = u.chars().nth(1).unwrap() == 'M';
 
             if let Ok(metadata) = path_metadata {
                 if metadata.is_dir() {
@@ -211,15 +212,25 @@ impl Component<MainWindow> for MainWindow {
 
                     if let Ok(paths) = paths_result {
                         for path in paths.flatten() {
-                            added.push(
-                                Line::from_string(
-                                    format!("?? {}", path.path().display())
-                                )
+                            let line = Line::from_string(
+                                format!("?? {}", path.path().display())
                             );
+
+                            if modified {
+                                added_modified.push(line);
+                            } else {
+                                added.push(line);
+                            }
                         }
                     }
                 } else if metadata.is_file() {
-                    added.push(Line::from_string(u.to_owned()));
+                    let line = Line::from_string(u.to_owned());
+
+                    if modified {
+                        added_modified.push(line);
+                    } else {
+                        added.push(line);
+                    }
                 }
             }
         }
@@ -283,16 +294,39 @@ impl Component<MainWindow> for MainWindow {
 
         status.push(Line::empty());
 
+
         if !added.is_empty() {
             status.push(
                 Line::new(vec![
                         Box::new(
-                            Bold::new(Underlined::new(format!("Untracked files: ({})", added.len())))
+                            Bold::new(
+                                Underlined::new(
+                                    format!("Untracked files: ({})", added.len())
+                                )
+                            )
                         )
                     ]
                 )
             );
             status.append(&mut added);
+
+            status.push(Line::empty());
+        }
+
+        if !added_modified.is_empty() {
+            status.push(
+                Line::new(vec![
+                        Box::new(
+                            Bold::new(
+                                Underlined::new(
+                                    format!("Untracked (modified) files: ({})", added_modified.len())
+                                )
+                            )
+                        )
+                    ]
+                )
+            );
+            status.append(&mut added_modified);
 
             status.push(Line::empty());
         }

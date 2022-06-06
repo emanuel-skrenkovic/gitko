@@ -8,16 +8,33 @@ pub enum FileState {
     Untracked
 }
 
-pub fn parse_file_state(path: &str) -> FileState {
-    // https://git-scm.com/docs/git-status
-
+fn parse_status(path: &str) -> (char, char) {
     let state = &path[..3];
 
     let first  = state.chars().next().unwrap();
     let second = state.chars().nth(1).unwrap();
 
+    (first, second)
+}
 
-    if second == 'M' {
+pub fn is_in_worktree(path: &str) -> bool {
+    let (first, _) = parse_status(path);
+
+    first != ' ' && first != '?'
+}
+
+pub fn is_file_modified(path: &str) -> bool {
+    let (first, second) = parse_status(path);
+
+    first == 'M' || second == 'M' || first == '?'
+}
+
+pub fn parse_file_state(path: &str) -> FileState {
+    // https://git-scm.com/docs/git-status
+    let state = &path[..3];
+    let (first, second) = parse_status(path);
+
+    if second == 'M' || first == 'A' {
         FileState::Modified
     } else if first == 'M' || first == 'A' {
         FileState::Staged
