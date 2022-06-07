@@ -26,7 +26,14 @@ pub fn is_in_worktree(path: &str) -> bool {
 pub fn is_file_modified(path: &str) -> bool {
     let (first, second) = parse_status(path);
 
-    first == 'M' || second == 'M' || first == '?'
+    first == 'M'
+        || second == 'M'
+        || first  == '?'
+        || second == 'D'
+        || second == 'T'
+        || second == 'R'
+        || second == 'C'
+
 }
 
 pub fn parse_file_state(path: &str) -> FileState {
