@@ -1,8 +1,9 @@
 use crate::git;
 use crate::ascii_table::*;
-use crate::render::{Colored, Component, KeyHandlers, Line,Renderer, ScreenSize, Window, Position,
-                    Widget, WriteableWindow};
+use crate::gitko::input_window::InputWindow;
 use crate::gitko::commit_diff_window::CommitDiffWindow;
+use crate::render::{Colored, Component, KeyHandlers, Line,Renderer, ScreenSize, Window, Position,
+                    Widget};
 
 pub struct LogWindow {
     term: String,
@@ -35,7 +36,7 @@ impl LogWindow {
 
     fn search_logs(&mut self, window: &mut Window) -> bool {
         self.clear_search();
-        let mut search_window = SearchWindow::new();
+        let mut search_window = InputWindow::new();
 
         Renderer::new(
             &mut search_window,
@@ -112,26 +113,5 @@ impl Component<LogWindow> for LogWindow {
         handlers.insert(KEY_N_LOWER, LogWindow::next_search_result);
         handlers.insert(KEY_N_UPPER, LogWindow::prev_search_result);
         handlers.insert(KEY_FORWARD_SLASH, LogWindow::search_logs);
-    }
-}
-
-#[derive(Clone)]
-struct SearchWindow {
-    text: String
-}
-
-impl SearchWindow {
-    pub fn new() -> SearchWindow {
-        SearchWindow { text: "".to_owned() }
-    }
-}
-
-impl Component<SearchWindow> for SearchWindow {
-    fn on_render(&mut self, window: &mut Window) -> bool {
-        window.as_writeable_mut().listen();
-
-        self.text = window.get_cursor_line().trim().to_owned();
-
-        false
     }
 }
