@@ -16,11 +16,12 @@ impl PushOptionsWindow {
             None
         };
 
-        let output = git::push(args);
-        let output_window_height = output.len() as i32 + 1;
+        window.clear();
 
+        let output = git::push(args);
         if output.is_empty() { return false }
 
+        let output_window_height = output.len() as i32 + 1;
         Renderer::new(
             &mut OutputWindow { output },
             ScreenSize { lines: output_window_height , cols: window.width() },

@@ -48,6 +48,8 @@ impl<'a, T: Component<T>> Renderer<'a, T> {
     }
 
     pub fn render(&mut self) {
+        self.window.clear();
+
         let component = &mut self.component;
         component.register_handlers(&mut self.key_handlers);
         component.on_start(&mut self.window);
@@ -121,7 +123,7 @@ pub struct Window {
     width: i32,
 
     position: Position,
-    cursor_position: Position,
+    pub cursor_position: Position,
     curses_window: ncurses::WINDOW
 }
 
@@ -361,8 +363,10 @@ impl Window {
     }
 
     pub fn clear(&self) {
-        ncurses::werase(self.curses_window);
+        ncurses::wmove(self.curses_window, 0, 0);
+        ncurses::wclear(self.curses_window);
         ncurses::doupdate();
+        ncurses::wrefresh(self.curses_window);
     }
 }
 
