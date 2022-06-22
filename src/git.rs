@@ -19,7 +19,6 @@ fn parse_status(path: &str) -> (char, char) {
 
 pub fn is_in_worktree(path: &str) -> bool {
     let (first, _) = parse_status(path);
-
     first != ' ' && first != '?'
 }
 
@@ -170,6 +169,10 @@ pub fn checkout_file(file_path: &str) -> Vec<String> {
 
 pub fn delete_branch(branch_name: &str) -> Vec<String> {
     run(vec!["branch", "-D", branch_name])
+}
+
+pub fn reset(commit_hash: &str, mode: &str) -> Vec<String> {
+    run(vec!["reset", mode, commit_hash])
 }
 
 pub fn log(max_count: Option<u32>) -> Vec<String> {
