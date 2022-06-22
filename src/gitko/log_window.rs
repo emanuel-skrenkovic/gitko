@@ -1,9 +1,8 @@
 use crate::git;
 use crate::ascii_table::*;
-use crate::gitko::input_window::InputWindow;
 use crate::gitko::commit_diff_window::CommitDiffWindow;
-use crate::render::{Colored, Component, KeyHandlers, Line,Renderer, ScreenSize, Window, Position,
-                    Widget};
+use crate::searchable::{SearchableComponent, register_search_handlers};
+use crate::render::{Colored, Component, KeyHandlers, Line,Renderer, ScreenSize, Window, Position, Widget};
 
 pub struct LogWindow {
     term: String,
@@ -32,36 +31,6 @@ impl LogWindow {
         ).render();
 
         true
-    }
-
-    fn search_logs(&mut self, window: &mut Window) -> bool {
-        self.clear_search();
-        let mut search_window = InputWindow::new();
-
-        Renderer::new(
-            &mut search_window,
-            ScreenSize { lines: 2, cols: window.width() },
-            Position { x: 0, y: window.height() - 2 }
-        ).render();
-
-        self.term = search_window.text;
-        window.move_next(&self.term);
-
-        true
-    }
-
-    fn next_search_result(&mut self, window: &mut Window) -> bool {
-        window.move_next(&self.term);
-        true
-    }
-
-    fn prev_search_result(&mut self, window: &mut Window) -> bool {
-        window.move_prev(&self.term);
-        true
-    }
-
-    fn clear_search(&mut self) {
-        self.term = "".to_owned();
     }
 }
 
@@ -112,6 +81,16 @@ impl Component<LogWindow> for LogWindow {
         handlers.insert(KEY_LF, LogWindow::get_commit_log);
         handlers.insert(KEY_N_LOWER, LogWindow::next_search_result);
         handlers.insert(KEY_N_UPPER, LogWindow::prev_search_result);
-        handlers.insert(KEY_FORWARD_SLASH, LogWindow::search_logs);
+        register_search_handlers(handlers);
+    }
+}
+
+impl SearchableComponent<LogWindow> for LogWindow {
+    fn term(&self) -> String {
+        self.term.clone()
+    }
+
+    fn set_term(&mut self, term: String) {
+        self.term = term;
     }
 }

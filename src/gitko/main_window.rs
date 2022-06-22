@@ -5,18 +5,26 @@ use std::process::Command;
 use crate::git;
 use crate::git::{parse_file_state, FileState};
 use crate::ascii_table::*;
-use crate::render::{Bold, Colored, Line, Renderer, KeyHandlers, Component, ScreenSize, Underlined, Window, Position};
 use crate::gitko::log_window::LogWindow;
 use crate::gitko::diff_window::DiffWindow;
 use crate::gitko::branch_window::BranchWindow;
 use crate::gitko::command_window::CommandWindow;
 use crate::gitko::prompt_window::PromptWindow;
-use crate::gitko::commit_options_window::CommitOptionsWindow;
 use crate::gitko::push_options_window::PushOptionsWindow;
+use crate::gitko::commit_options_window::CommitOptionsWindow;
+use crate::searchable::{SearchableComponent, register_search_handlers};
+use crate::render::{Bold, Colored, Line, Renderer, KeyHandlers, Component, ScreenSize, Underlined, Window,
+                    Position};
 
-pub struct MainWindow { }
+pub struct MainWindow {
+    term: String
+}
 
 impl MainWindow {
+    pub fn new() -> MainWindow {
+        MainWindow { term: "".to_owned() }
+    }
+
     fn diff_file(&mut self, window: &mut Window) -> bool {
         let line = window.get_cursor_line();
         let file_state = parse_file_state(&line);
@@ -387,5 +395,17 @@ impl Component<MainWindow> for MainWindow {
         handlers.insert(KEY_COLON, MainWindow::open_command_window);
         handlers.insert(KEY_C_UPPER, MainWindow::git_commit_options);
         handlers.insert(KEY_P_UPPER, MainWindow::git_push_options);
+
+        register_search_handlers(handlers);
+    }
+}
+
+impl SearchableComponent<MainWindow> for MainWindow {
+    fn term(&self) -> String {
+        self.term.clone()
+    }
+
+    fn set_term(&mut self, term: String) {
+        self.term = term;
     }
 }

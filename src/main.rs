@@ -6,6 +6,7 @@ mod num;
 mod render;
 mod ascii_table;
 mod gitko;
+mod searchable;
 
 static mut MAX_WIDTH: i32 = 0;
 static mut MAX_HEIGHT: i32 = 0;
@@ -24,7 +25,7 @@ fn main() {
     init_ncurses();
 
     Renderer::new(
-        &mut MainWindow{},
+        &mut MainWindow::new(),
         ScreenSize::max(),
         Position::default()
     ).render();

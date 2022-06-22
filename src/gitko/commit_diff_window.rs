@@ -1,7 +1,7 @@
 use crate::git;
 use crate::ascii_table::*;
-use crate::gitko::input_window::InputWindow;
-use crate::render::{Renderer, ScreenSize, Position, Colored, Component, KeyHandlers, Line, Window};
+use crate::searchable::{SearchableComponent, register_search_handlers};
+use crate::render::{Colored, Component, KeyHandlers, Line, Window};
 
 pub struct CommitDiffWindow {
     commit_hash: String,
@@ -40,36 +40,6 @@ impl CommitDiffWindow {
         }
 
         true
-    }
-
-    fn search_commits(&mut self, window: &mut Window) -> bool {
-        self.clear_search();
-        let mut search_window = InputWindow::new();
-
-        Renderer::new(
-            &mut search_window,
-            ScreenSize { lines: 2, cols: window.width() },
-            Position { x: 0, y: window.height() - 2 }
-        ).render();
-
-        self.term = search_window.text;
-        window.move_next(&self.term);
-
-        true
-    }
-
-    fn next_search_result(&mut self, window: &mut Window) -> bool {
-        window.move_next(&self.term);
-        true
-    }
-
-    fn prev_search_result(&mut self, window: &mut Window) -> bool {
-        window.move_prev(&self.term);
-        true
-    }
-
-    fn clear_search(&mut self) {
-        self.term = "".to_owned();
     }
 }
 
@@ -126,10 +96,19 @@ impl Component<CommitDiffWindow> for CommitDiffWindow {
         handlers.insert(4, CommitDiffWindow::jump_screen_down);
         handlers.insert(21, CommitDiffWindow::jump_screen_up);
 
-        handlers.insert(KEY_N_LOWER, CommitDiffWindow::next_search_result);
-        handlers.insert(KEY_N_UPPER, CommitDiffWindow::prev_search_result);
-        handlers.insert(KEY_FORWARD_SLASH, CommitDiffWindow::search_commits);
+        register_search_handlers(handlers);
     }
+}
+
+impl SearchableComponent<CommitDiffWindow> for CommitDiffWindow {
+    fn term(&self) -> String {
+        self.term.clone()
+    }
+
+    fn set_term(&mut self, term: String) {
+        self.term = term;
+    }
+
 }
 
 impl std::ops::Drop for CommitDiffWindow {
