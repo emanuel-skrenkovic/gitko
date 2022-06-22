@@ -13,6 +13,7 @@ pub const KEY_C_UPPER: i32 = 67;
 pub const KEY_N_UPPER: i32 = 78;
 pub const KEY_O_UPPER: i32 = 79;
 pub const KEY_P_UPPER: i32 = 80;
+pub const KEY_R_UPPER: i32 = 82;
 pub const KEY_B_LOWER: i32 = 98;
 pub const KEY_C_LOWER: i32 = 99;
 pub const KEY_D_LOWER: i32 = 100;
