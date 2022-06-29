@@ -193,6 +193,11 @@ impl MainWindow {
         self.on_start(window);
         true
     }
+
+    fn refresh(&mut self, window: &mut Window) -> bool {
+        self.on_start(window);
+        true
+    }
 }
 
 impl Component<MainWindow> for MainWindow {
@@ -395,6 +400,7 @@ impl Component<MainWindow> for MainWindow {
         handlers.insert(KEY_COLON, MainWindow::open_command_window);
         handlers.insert(KEY_C_UPPER, MainWindow::git_commit_options);
         handlers.insert(KEY_P_UPPER, MainWindow::git_push_options);
+        handlers.insert(KEY_R_UPPER, MainWindow::refresh);
 
         register_search_handlers(handlers);
     }
