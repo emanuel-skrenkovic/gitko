@@ -88,25 +88,27 @@ impl Component<DiffWindow> for DiffWindow {
     fn on_start(&mut self, window: &mut Window) {
         window.show_cursor(false);
 
-        if matches!(self.file_state, FileState::Untracked) {
-            // Assume the path is a file path
-            // Component above should parse directories into file paths.
+        match self.file_state {
+            FileState::Untracked => {
+                // Assume the path is a file path
+                // Component above should parse directories into file paths.
+                let file = File::open(&self.path).expect("Could not find file");
+                let lines: Vec<String> = BufReader::new(file)
+                    .lines()
+                    .map(|l| l.expect("Could not parse line"))
+                    .collect();
 
-            let file = File::open(&self.path).expect("Could not find file");
-            let lines: Vec<String> = BufReader::new(file)
-                .lines()
-                .map(|l| l.expect("Could not parse line"))
-                .collect();
-
-            window.lines = lines
-                .iter()
-                .map(|l| map_line(l.to_owned()))
-                .collect();
-        } else {
-            window.lines = git::diff_file(&self.path)
-                .iter()
-                .map(|l| map_line(l.to_owned()))
-                .collect();
+                window.lines = lines
+                    .iter()
+                    .map(|l| map_line(l.to_owned()))
+                    .collect();
+            },
+            _ => {
+                window.lines = git::diff_file(&self.path)
+                    .iter()
+                    .map(|l| map_line(l.to_owned()))
+                    .collect();
+            }
         }
     }
 
