@@ -66,6 +66,8 @@ impl<'a, T: Component<T>> Renderer<'a, T> {
 
             c = self.window.listen_input();
         }
+
+        self.component.on_exit(&mut self.window);
     }
 
     pub fn draw(&mut self) {
@@ -107,6 +109,7 @@ impl<'a, T: Component<T>> Renderer<'a, T> {
 pub trait Component<T: Component<T>> {
     fn on_start(&mut self, _window: &mut Window) { }
     fn on_render(&mut self, _window: &mut Window) -> bool { true }
+    fn on_exit(&mut self, _window: &mut Window) { }
 
     fn register_handlers(&self, _handlers: &mut KeyHandlers<T>) { }
 }
@@ -125,6 +128,7 @@ pub struct Window {
 
     position: Position,
     pub cursor_position: Position,
+    cursor_hidden: bool,
     curses_window: ncurses::WINDOW
 }
 
@@ -151,6 +155,7 @@ impl Window {
 
             position: Position::default(),
             cursor_position: Position::default(),
+            cursor_hidden: false,
             curses_window
         }
     }
@@ -161,7 +166,7 @@ impl Window {
                        self.cursor_position.x);
 
         for i in 0..self.height {
-            if self.cursor_position.y == i as i32 {
+            if !self.cursor_hidden && self.cursor_position.y == i as i32 {
                 ncurses::wchgat(
                     self.curses_window,
                     -1,
@@ -202,6 +207,16 @@ impl Window {
 
     pub fn data(&self) -> Vec<String> {
         self.lines.iter().map(|l| l.value()).collect()
+    }
+
+    pub fn show_cursor(&mut self, show: bool) {
+        if show {
+            ncurses::curs_set(ncurses::CURSOR_VISIBILITY::CURSOR_VISIBLE);
+            self.cursor_hidden = false;
+        } else {
+            ncurses::curs_set(ncurses::CURSOR_VISIBILITY::CURSOR_INVISIBLE);
+            self.cursor_hidden = true;
+        }
     }
 
     pub fn get_cursor_line(&self) -> String {

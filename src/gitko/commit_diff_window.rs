@@ -81,12 +81,16 @@ fn map_line(line: String) -> Line {
 
 impl Component<CommitDiffWindow> for CommitDiffWindow {
     fn on_start(&mut self, window: &mut Window) {
-        ncurses::curs_set(ncurses::CURSOR_VISIBILITY::CURSOR_INVISIBLE);
+        window.show_cursor(false);
 
         window.lines = git::diff_commit(&self.commit_hash)
             .iter()
             .map(|l| map_line(l.to_owned()))
             .collect();
+    }
+
+    fn on_exit(&mut self, window: &mut Window) {
+        window.show_cursor(true);
     }
 
     fn register_handlers(&self, handlers: &mut KeyHandlers<CommitDiffWindow>) {
@@ -107,12 +111,5 @@ impl SearchableComponent<CommitDiffWindow> for CommitDiffWindow {
 
     fn set_term(&mut self, term: String) {
         self.term = term;
-    }
-
-}
-
-impl std::ops::Drop for CommitDiffWindow {
-    fn drop(&mut self) {
-        ncurses::curs_set(ncurses::CURSOR_VISIBILITY::CURSOR_VISIBLE);
     }
 }

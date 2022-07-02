@@ -86,7 +86,7 @@ fn map_line(line: String) -> Line {
 
 impl Component<DiffWindow> for DiffWindow {
     fn on_start(&mut self, window: &mut Window) {
-        ncurses::curs_set(ncurses::CURSOR_VISIBILITY::CURSOR_INVISIBLE);
+        window.show_cursor(false);
 
         if matches!(self.file_state, FileState::Untracked) {
             // Assume the path is a file path
@@ -110,6 +110,10 @@ impl Component<DiffWindow> for DiffWindow {
         }
     }
 
+    fn on_exit(&mut self, window: &mut Window) {
+        window.show_cursor(true);
+    }
+
     fn register_handlers(&self, handlers: &mut KeyHandlers<DiffWindow>) {
         handlers.insert(KEY_J_LOWER, DiffWindow::move_screen_down);
         handlers.insert(KEY_K_LOWER, DiffWindow::move_screen_up);
@@ -128,11 +132,5 @@ impl SearchableComponent<DiffWindow> for DiffWindow {
 
     fn set_term(&mut self, term: String) {
         self.term = term;
-    }
-}
-
-impl std::ops::Drop for DiffWindow {
-    fn drop(&mut self) {
-        ncurses::curs_set(ncurses::CURSOR_VISIBILITY::CURSOR_VISIBLE);
     }
 }

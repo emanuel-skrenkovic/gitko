@@ -25,8 +25,7 @@ fn max_height() -> i32 {
 fn main() {
     init_ncurses();
 
-    Renderer::new(&mut MainWindow::new(), ScreenSize::max(), Position::default())
-        .render();
+    Renderer::new(&mut MainWindow::new(), ScreenSize::max(), Position::default()).render();
 }
 
 fn init_ncurses() {
@@ -46,6 +45,6 @@ fn init_ncurses() {
     ncurses::init_pair(2, ncurses::COLOR_RED, ncurses::COLOR_BLACK);
     ncurses::init_pair(3, ncurses::COLOR_CYAN, ncurses::COLOR_BLACK);
 
-    ncurses::init_color(69, 400, 400, 400);
-    ncurses::init_pair(69, ncurses::COLOR_WHITE, 69);
+    ncurses::init_color(HIGHLIGHT_COLOR, 150, 150, 150);
+    ncurses::init_pair(HIGHLIGHT_COLOR, ncurses::COLOR_WHITE, HIGHLIGHT_COLOR);
 }
