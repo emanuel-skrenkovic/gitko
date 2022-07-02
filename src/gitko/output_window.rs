@@ -14,7 +14,8 @@ impl OutputWindow {
 impl Component<OutputWindow> for OutputWindow {
     fn on_start(&mut self, window: &mut Window) {
         // TODO: should not see ncurses here
-        ncurses::curs_set(ncurses::CURSOR_VISIBILITY::CURSOR_INVISIBLE);
+        // ncurses::curs_set(ncurses::CURSOR_VISIBILITY::CURSOR_INVISIBLE);
+        window.show_cursor(false);
 
         let mut lines: Vec<Line> = vec![
             Line::new(vec![
@@ -32,14 +33,12 @@ impl Component<OutputWindow> for OutputWindow {
         window.lines = lines;
     }
 
+    fn on_exit(&mut self, window: &mut Window) {
+        window.show_cursor(true);
+    }
+
     fn register_handlers(&self, handlers: &mut KeyHandlers<OutputWindow>) {
         handlers.insert(KEY_LF, OutputWindow::close);
         handlers.insert(KEY_ETB, OutputWindow::close);
-    }
-}
-
-impl std::ops::Drop for OutputWindow {
-    fn drop(&mut self) {
-        ncurses::curs_set(ncurses::CURSOR_VISIBILITY::CURSOR_VISIBLE);
     }
 }
