@@ -6,6 +6,7 @@ use std::collections::HashMap;
 
 use crate::num;
 use crate::ascii_table::*;
+use crate::HIGHLIGHT_COLOR;
 
 #[derive(Clone, Copy)]
 pub struct Position {
@@ -158,6 +159,19 @@ impl Window {
         ncurses::wmove(self.curses_window,
                        self.cursor_position.y,
                        self.cursor_position.x);
+
+        for i in 0..self.height {
+            if self.cursor_position.y == i as i32 {
+                ncurses::wchgat(
+                    self.curses_window,
+                    -1,
+                    ncurses::COLOR_PAIR(HIGHLIGHT_COLOR),
+                    HIGHLIGHT_COLOR
+                );
+            }
+        }
+
+
         ncurses::doupdate();
     }
 
