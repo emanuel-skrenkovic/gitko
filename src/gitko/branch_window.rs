@@ -49,7 +49,7 @@ impl BranchWindow {
     fn create_branch(&mut self, window: &mut Window) -> bool {
         Renderer::new(
             &mut TextWindow {
-                lines: vec!["Enter new lbranch name:"]
+                lines: vec!["Enter new branch name:"]
             },
             ScreenSize { lines: 1, cols: 0 }, // TODO
             Position { x: 0, y: window.height() - 2 }
