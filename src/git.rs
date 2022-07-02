@@ -171,6 +171,12 @@ pub fn delete_branch(branch_name: &str) -> Vec<String> {
     run(vec!["branch", "-D", branch_name])
 }
 
+// This func should actually be called branch,
+// as in, the verb.
+pub fn create_branch(branch_name: &str) -> Vec<String> {
+    run(vec!["branch", branch_name])
+}
+
 pub fn reset(commit_hash: &str, mode: &str) -> Vec<String> {
     run(vec!["reset", mode, commit_hash])
 }

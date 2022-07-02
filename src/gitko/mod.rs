@@ -1,6 +1,7 @@
 pub mod log_window;
 pub mod diff_window;
 pub mod main_window;
+pub mod text_window;
 pub mod input_window;
 pub mod output_window;
 pub mod branch_window;
