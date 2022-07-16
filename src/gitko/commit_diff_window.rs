@@ -1,7 +1,8 @@
 use crate::git;
-use crate::ascii_table::*;
 use crate::searchable::{SearchableComponent, register_search_handlers};
-use crate::render::{Colored, Component, KeyHandlers, Line, Window};
+use gitko_render::{Component, KeyHandlers, Line, Window, Part};
+
+use gitko_common::ascii_table::*;
 
 pub struct CommitDiffWindow {
     commit_hash: String,
@@ -46,36 +47,36 @@ impl CommitDiffWindow {
 fn map_line(line: String) -> Line {
     if line.starts_with('+') {
         Line::new(vec![
-            Box::new(
-                Colored::new(
-                    line,
-                    ncurses::COLOR_GREEN,
-                    ncurses::COLOR_BLACK
-                )
+            Part::painted(
+                &line,
+                (0, 255, 0),
+                (0, 0, 0)
+            //     ncurses::COLOR_GREEN,
+            //     ncurses::COLOR_BLACK
             )
         ])
     } else if line.starts_with('-') {
         Line::new(vec![
-            Box::new(
-                Colored::new(
-                    line,
-                    ncurses::COLOR_RED,
-                    ncurses::COLOR_BLACK
-                )
+            Part::painted(
+                &line,
+                (255, 0, 0),
+                (0, 0, 0)
+                // ncurses::COLOR_RED,
+                // ncurses::COLOR_BLACK
             )
         ])
     } else if line.starts_with("@@") {
         Line::new(vec![
-            Box::new(
-                Colored::new(
-                    line,
-                    ncurses::COLOR_CYAN,
-                    ncurses::COLOR_BLACK
-                )
+            Part::painted(
+                &line,
+                (0, 255, 255),
+                (0, 0, 0)
+                // ncurses::COLOR_CYAN,
+                // ncurses::COLOR_BLACK
             )
         ])
     } else {
-        Line::from_string(line)
+        Line::from_string(line, None)
     }
 }
 
@@ -83,10 +84,12 @@ impl Component<CommitDiffWindow> for CommitDiffWindow {
     fn on_start(&mut self, window: &mut Window) {
         window.show_cursor(false);
 
-        window.lines = git::diff_commit(&self.commit_hash)
-            .iter()
-            .map(|l| map_line(l.to_owned()))
-            .collect();
+        window.set_lines(
+            git::diff_commit(&self.commit_hash)
+                .iter()
+                .map(|l| map_line(l.to_owned()))
+                .collect()
+        );
     }
 
     fn on_exit(&mut self, window: &mut Window) {

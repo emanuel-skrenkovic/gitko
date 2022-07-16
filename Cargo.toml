@@ -8,3 +8,6 @@ edition = "2018"
 
 [dependencies]
 ncurses = "5.101.0"
+gitko_common = { path = "./common" }
+gitko_render = { path = "./render" }
+gitko_ncurses_render = { path = "./ncurses_render" }

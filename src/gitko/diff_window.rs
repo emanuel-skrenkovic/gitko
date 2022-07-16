@@ -3,8 +3,9 @@ use std::{fs::File, io::{BufReader, BufRead}};
 use crate::git;
 use crate::git::{FileState};
 use crate::searchable::{SearchableComponent, register_search_handlers};
-use crate::ascii_table::*;
-use crate::render::{KeyHandlers, Colored, Component, Line, Window};
+use gitko_render::{KeyHandlers, Component, Line, Window, Part};
+
+use gitko_common::ascii_table::*;
 
 pub struct DiffWindow {
     path: String,
@@ -51,36 +52,36 @@ impl DiffWindow {
 fn map_line(line: String) -> Line {
     if line.starts_with('+') {
         Line::new(vec![
-            Box::new(
-                Colored::new(
-                    line,
-                    ncurses::COLOR_GREEN,
-                    ncurses::COLOR_BLACK
-                )
+            Part::painted(
+                &line,
+                (0, 255, 0),
+                (0, 0, 0)
+            //     ncurses::COLOR_GREEN,
+            //     ncurses::COLOR_BLACK
             )
         ])
     } else if line.starts_with('-') {
         Line::new(vec![
-            Box::new(
-                Colored::new(
-                    line,
-                    ncurses::COLOR_RED,
-                    ncurses::COLOR_BLACK
-                )
+            Part::painted(
+                &line,
+                (255, 0, 0),
+                (0, 0, 0)
+                // ncurses::COLOR_RED,
+                // ncurses::COLOR_BLACK
             )
         ])
     } else if line.starts_with("@@") {
         Line::new(vec![
-            Box::new(
-                Colored::new(
-                    line,
-                    ncurses::COLOR_CYAN,
-                    ncurses::COLOR_BLACK
-                )
+            Part::painted(
+                &line,
+                (0, 255, 255),
+                (0, 0, 0)
+                // ncurses::COLOR_CYAN,
+                // ncurses::COLOR_BLACK
             )
         ])
     } else {
-        Line::from_string(line)
+        Line::from_string(line, None)
     }
 }
 
@@ -98,16 +99,20 @@ impl Component<DiffWindow> for DiffWindow {
                     .map(|l| l.expect("Could not parse line"))
                     .collect();
 
-                window.lines = lines
-                    .iter()
-                    .map(|l| map_line(l.to_owned()))
-                    .collect();
+                window.set_lines(
+                    lines
+                        .iter()
+                        .map(|l| map_line(l.to_owned()))
+                        .collect()
+                );
             },
             _ => {
-                window.lines = git::diff_file(&self.path)
-                    .iter()
-                    .map(|l| map_line(l.to_owned()))
-                    .collect();
+                window.set_lines(
+                    git::diff_file(&self.path)
+                        .iter()
+                        .map(|l| map_line(l.to_owned()))
+                        .collect()
+                );
             }
         }
     }

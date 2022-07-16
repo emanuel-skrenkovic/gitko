@@ -1,8 +1,10 @@
+use crate::screen;
 use crate::git;
 use crate::max_height;
-use crate::ascii_table::*;
 use crate::gitko::output_window::OutputWindow;
-use crate::render::{Renderer, Line, KeyHandlers, Component, Window, ScreenSize, Position};
+use gitko_render::{Renderer, Line, KeyHandlers, Component, Window, ScreenSize, Position};
+
+use gitko_common::ascii_table::*;
 
 pub struct PushOptionsWindow { }
 
@@ -25,7 +27,8 @@ impl PushOptionsWindow {
         Renderer::new(
             &mut OutputWindow { output },
             ScreenSize { lines: output_window_height , cols: window.width() },
-            Position { x: 0, y: max_height() - output_window_height }
+            Position { x: 0, y: max_height() - output_window_height },
+            screen()
         ).render();
 
         false
@@ -34,10 +37,12 @@ impl PushOptionsWindow {
 
 impl Component<PushOptionsWindow> for PushOptionsWindow {
     fn on_start(&mut self, window: &mut Window) {
-        window.lines = vec!["", "--force-with-lease"]
-            .iter()
-            .map(|s| Line::from_string(s.to_string()))
-            .collect();
+        window.set_lines(
+            vec!["", "--force-with-lease"]
+                .iter()
+                .map(|s| Line::from_string(s.to_string(), None))
+                .collect()
+        );
     }
 
     fn register_handlers(&self, handlers: &mut KeyHandlers<PushOptionsWindow>) {

@@ -1,5 +1,4 @@
 #![allow(dead_code)]
-
 pub const KEY_NULL: i32 = 0;
 pub const KEY_EOT: i32 = 4;
 pub const KEY_BS: i32 = 8;

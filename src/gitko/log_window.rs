@@ -1,10 +1,12 @@
 use crate::git;
+use crate::screen;
 use crate::{max_height};
-use crate::ascii_table::*;
 use crate::gitko::output_window::OutputWindow;
 use crate::gitko::commit_diff_window::CommitDiffWindow;
 use crate::searchable::{SearchableComponent, register_search_handlers};
-use crate::render::{Colored, Component, KeyHandlers, Line,Renderer, ScreenSize, Window, Position, Widget};
+use gitko_render::{Component, KeyHandlers, Line,Renderer, ScreenSize, Window, Position, Part};
+
+use gitko_common::ascii_table::*;
 
 pub struct LogWindow {
     term: String,
@@ -29,7 +31,8 @@ impl LogWindow {
         Renderer::new(
             &mut CommitDiffWindow::new(commit_hash),
             ScreenSize::max(),
-            Position::default()
+            Position::default(),
+            screen()
         ).render();
 
         true
@@ -42,7 +45,8 @@ impl LogWindow {
             Renderer::new(
                 &mut ResetOptionsWindow { commit_hash: commit_hash.to_owned() },
                 ScreenSize { lines: 5, cols: window.width() },
-                Position { x: 0, y: window.height() - 5 }
+                Position { x: 0, y: window.height() - 5 },
+                screen()
             ).render();
         }
 
@@ -53,7 +57,7 @@ impl LogWindow {
 }
 
 fn map_line(line: &String) -> Line {
-    let mut parts: Vec<Box<dyn Widget>> = vec![];
+    let mut parts: Vec<Part> = vec![];
 
     let mut chars = line.chars();
     let star = chars.position(|c| c == '*');
@@ -63,25 +67,21 @@ fn map_line(line: &String) -> Line {
         if let Some(start_position) = start {
             let hash_start = star_position + start_position + 1;
 
-            parts.push(Box::new(
-                line[0..hash_start].to_owned()
-            ));
+            parts.push(Part::plain(&line[0..hash_start]));
 
             let hash_length = 7;
-            parts.push(Box::new(
-                Colored::new(
-                    line[hash_start..hash_start + hash_length].to_owned(),
-                    ncurses::COLOR_YELLOW,
-                    ncurses::COLOR_BLACK
+            parts.push(
+                Part::painted(
+                    &line[hash_start..hash_start + hash_length],
+                    (255, 255, 0),
+                    (0, 0, 0)
                 )
-            ));
+            );
 
-            parts.push(Box::new(
-                line[hash_start + hash_length..].to_owned()
-            ))
+            parts.push(Part::plain(&line[hash_start + hash_length..]))
         }
     } else {
-        parts.push(Box::new(line.to_owned()))
+        parts.push(Part::plain(line))
     }
 
     Line::new(parts)
@@ -89,10 +89,12 @@ fn map_line(line: &String) -> Line {
 
 impl Component<LogWindow> for LogWindow {
     fn on_start(&mut self, window: &mut Window) {
-        window.lines = git::log(None)
-            .iter()
-            .map(map_line)
-            .collect();
+        window.set_lines(
+            git::log(None)
+                .iter()
+                .map(map_line)
+                .collect()
+        );
     }
 
     fn register_handlers(&self, handlers: &mut KeyHandlers<LogWindow>) {
@@ -133,7 +135,8 @@ impl ResetOptionsWindow {
         Renderer::new(
             &mut OutputWindow { output },
             ScreenSize { lines: output_window_height , cols: window.width() },
-            Position { x: 0, y: max_height() - output_window_height }
+            Position { x: 0, y: max_height() - output_window_height },
+            screen()
         ).render();
 
         false
@@ -142,10 +145,12 @@ impl ResetOptionsWindow {
 
 impl Component<ResetOptionsWindow> for ResetOptionsWindow {
     fn on_start(&mut self, window: &mut Window) {
-        window.lines = vec!["Git reset modes:", "--soft", "--mixed", "--hard", "--merge", "--keep"]
-            .iter()
-            .map(|s| Line::from_string(s.to_string()))
-            .collect();
+        window.set_lines(
+            vec!["Git reset modes:", "--soft", "--mixed", "--hard", "--merge", "--keep"]
+                .iter()
+                .map(|s| Line::from_string(s.to_string(), None))
+                .collect()
+        );
     }
 
     fn register_handlers(&self, handlers: &mut KeyHandlers<ResetOptionsWindow>) {

@@ -1,6 +1,8 @@
 use crate::git;
-use crate::ascii_table::*;
-use crate::render::{Component, KeyHandlers, Line, Renderer, ScreenSize, Window, Position};
+use crate::screen;
+use gitko_render::{Component, KeyHandlers, Line, Renderer, ScreenSize, Window, Position};
+
+use gitko_common::ascii_table::*;
 
 use crate::gitko::text_window::TextWindow;
 use crate::gitko::input_window::InputWindow;
@@ -26,7 +28,8 @@ impl BranchWindow {
             Renderer::new(
                 &mut prompt,
                 ScreenSize { lines: 1, cols: 0 }, // TODO
-                Position { x: 0, y: window.height() - 1 }
+                Position { x: 0, y: window.height() - 1 },
+                screen()
             ).render();
 
             self.on_start(window);
@@ -52,14 +55,16 @@ impl BranchWindow {
                 lines: vec!["Enter new branch name:"]
             },
             ScreenSize { lines: 1, cols: 0 }, // TODO
-            Position { x: 0, y: window.height() - 2 }
+            Position { x: 0, y: window.height() - 2 },
+            screen()
         ).draw();
 
         let mut input_window = InputWindow::new();
         Renderer::new(
             &mut input_window,
             ScreenSize { lines: 2, cols: 0 },
-            Position { x: 0, y: window.height() - 1 }
+            Position { x: 0, y: window.height() - 1 },
+            screen()
         ).render();
 
         git::create_branch(&input_window.text);
@@ -71,10 +76,12 @@ impl BranchWindow {
 
 impl Component<BranchWindow> for BranchWindow {
     fn on_start(&mut self, window: &mut Window) {
-        window.lines = git::branch()
-            .iter()
-            .map(|l| Line::from_string(l.to_owned()))
-            .collect();
+        window.set_lines(
+            git::branch()
+                .iter()
+                .map(|l| Line::from_string(l.to_owned(), None))
+                .collect()
+        );
     }
 
     fn register_handlers(&self, handlers: &mut KeyHandlers<BranchWindow>) {

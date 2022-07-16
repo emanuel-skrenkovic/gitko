@@ -1,8 +1,10 @@
+use crate::screen;
 use crate::git;
 use crate::max_height;
-use crate::ascii_table::*;
 use crate::gitko::output_window::OutputWindow;
-use crate::render::{Renderer, ScreenSize, Position, Component, KeyHandlers, Line, Window};
+use gitko_render::{Renderer, ScreenSize, Position, Component, KeyHandlers, Line, Window};
+
+use gitko_common::ascii_table::*;
 
 pub struct CommitOptionsWindow { }
 
@@ -24,7 +26,8 @@ impl CommitOptionsWindow {
         Renderer::new(
             &mut OutputWindow{ output },
             ScreenSize { lines: output_window_height, cols: window.width() },
-            Position { x: 0, y: max_height() - output_window_height }
+            Position { x: 0, y: max_height() - output_window_height },
+            screen()
         ).render();
 
         false
@@ -33,10 +36,12 @@ impl CommitOptionsWindow {
 
 impl Component<CommitOptionsWindow> for CommitOptionsWindow {
     fn on_start(&mut self, window: &mut Window) {
-        window.lines = vec!["", "--amend"]
-            .iter()
-            .map(|s| Line::from_string(s.to_string()))
-            .collect();
+        window.set_lines(
+            vec!["", "--amend"]
+                .iter()
+                .map(|s| Line::from_string(s.to_string(), None))
+                .collect()
+            );
     }
 
     fn register_handlers(&self, handlers: &mut KeyHandlers<CommitOptionsWindow>) {

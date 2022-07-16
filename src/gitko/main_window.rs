@@ -3,8 +3,8 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 
 use crate::git;
+use crate::screen;
 use crate::git::{parse_file_state, FileState};
-use crate::ascii_table::*;
 use crate::gitko::log_window::LogWindow;
 use crate::gitko::diff_window::DiffWindow;
 use crate::gitko::branch_window::BranchWindow;
@@ -13,8 +13,9 @@ use crate::gitko::prompt_window::PromptWindow;
 use crate::gitko::push_options_window::PushOptionsWindow;
 use crate::gitko::commit_options_window::CommitOptionsWindow;
 use crate::searchable::{SearchableComponent, register_search_handlers};
-use crate::render::{Bold, Colored, Line, Renderer, KeyHandlers, Component, ScreenSize, Underlined, Window,
-                    Position};
+use gitko_render::{Line, Renderer, KeyHandlers, Component, ScreenSize, Window, Position, Part, Style};
+
+use gitko_common::ascii_table::*;
 
 pub struct MainWindow {
     term: String
@@ -35,7 +36,8 @@ impl MainWindow {
             Renderer::new(
                 &mut DiffWindow::new(path, file_state),
                 ScreenSize { lines: window.height(), cols: window.width() },
-                Position::default()
+                Position::default(),
+                screen()
             ).render();
         }
 
@@ -46,7 +48,8 @@ impl MainWindow {
         Renderer::new(
             &mut BranchWindow{},
             ScreenSize::max(),
-            Position::default()
+            Position::default(),
+            screen()
         ).render();
 
         self.on_start(window);
@@ -58,7 +61,8 @@ impl MainWindow {
         Renderer::new(
             &mut LogWindow::new(),
             ScreenSize::max(),
-            Position::default()
+            Position::default(),
+            screen()
         ).render();
 
         self.on_start(window);
@@ -70,7 +74,8 @@ impl MainWindow {
         Renderer::new(
             &mut CommandWindow{},
             ScreenSize { lines: 2, cols: window.width() },
-            Position { x: 0, y: window.height() - 2 }
+            Position { x: 0, y: window.height() - 2 },
+            screen()
         ).render();
 
         self.on_start(window);
@@ -117,7 +122,8 @@ impl MainWindow {
                                   || { let _ = remove_file(file); },
                                   || {}),
                 ScreenSize { lines: 1, cols: 0 },
-                Position { x: 0, y: window.height() - 1 }
+                Position { x: 0, y: window.height() - 1 },
+                screen()
             ).render();
         }
 
@@ -137,7 +143,8 @@ impl MainWindow {
                                   || { git::checkout_file(file); },
                                   || {}),
                 ScreenSize { lines: 1, cols: 0 },
-                Position { x: 0, y: window.height() - 1 }
+                Position { x: 0, y: window.height() - 1 },
+                screen()
             ).render();
         }
 
@@ -176,7 +183,8 @@ impl MainWindow {
         Renderer::new(
             &mut CommitOptionsWindow{},
             ScreenSize { lines: 2, cols: window.width() },
-            Position { x: 0, y: window.height() - 2 }
+            Position { x: 0, y: window.height() - 2 },
+            screen()
         ).render();
 
         self.on_start(window);
@@ -187,7 +195,8 @@ impl MainWindow {
         Renderer::new(
             &mut PushOptionsWindow{},
             ScreenSize { lines: 2, cols: window.width() },
-            Position { x: 0, y: window.height() - 2 }
+            Position { x: 0, y: window.height() - 2 },
+            screen()
         ).render();
 
         self.on_start(window);
@@ -226,7 +235,8 @@ impl Component<MainWindow> for MainWindow {
                     if let Ok(paths) = paths_result {
                         for path in paths.flatten() {
                             let line = Line::from_string(
-                                format!("?? {}", path.path().display())
+                                format!("?? {}", path.path().display()),
+                                None
                             );
 
                             if modified {
@@ -237,7 +247,7 @@ impl Component<MainWindow> for MainWindow {
                         }
                     }
                 } else if metadata.is_file() {
-                    let line = Line::from_string(u.to_owned());
+                    let line = Line::from_string(u.to_owned(), None);
 
                     if modified {
                         added_modified.push(line);
@@ -251,35 +261,31 @@ impl Component<MainWindow> for MainWindow {
         let mut deleted: Vec<Line> = git_status
             .iter()
             .filter(|c| c.starts_with(" D"))
-            .map(|c| Line::from_string(c.to_owned()))
+            .map(|c| Line::from_string(c.to_owned(), None))
             .collect();
 
         let mut unstaged: Vec<Line> = git_status
             .iter()
             .filter(|c| c.starts_with(" M") || c.starts_with("MM"))
-            .map(|c| Line::from_string(c.to_owned()))
+            .map(|c| Line::from_string(c.to_owned(), None))
             .collect();
 
         let mut staged: Vec<Line> = git_status
             .iter()
             .filter(|c| c.starts_with('M') || c.starts_with('A') || c.starts_with('D'))
-            .map(|c| Line::from_string(c.to_owned()))
+            .map(|c| Line::from_string(c.to_owned(), None))
             .collect();
 
         let mut status: Vec<Line> = vec![
             Line::new(vec![
-                Box::new(
-                    Bold::new(Underlined::new("Head:"))
+                Part::new("Head:", Some(vec![Style::Bold, Style::Underlined])),
+                Part::painted(
+                    &git::head_branch(),
+                    (0, 255, 255),
+                    (0, 0, 0)
                 ),
-                Box::new(
-                    Colored::new(
-                        git::head_branch(),
-                        ncurses::COLOR_CYAN,
-                        ncurses::COLOR_BLACK
-                    )
-                ),
-                Box::new(" ".to_owned()),
-                Box::new(git::last_commit())
+                Part::plain(" "),
+                Part::plain(&git::last_commit())
             ])
         ];
 
@@ -288,20 +294,16 @@ impl Component<MainWindow> for MainWindow {
 
         if origin_hash != local_hash { // if HEAD different from origin HEAD
             status.push(
-                Line::new(vec![
-                    Box::new(
-                        Bold::new(Underlined::new("Origin:"))
-                    ),
-                    Box::new(
-                        Colored::new(
-                            git::origin_head_branch(),
-                            ncurses::COLOR_RED,
-                            ncurses::COLOR_BLACK
-                        )
-                    ),
-                    Box::new(" ".to_owned()),
-                    Box::new(git::last_origin_commit())
-                ])
+                 Line::new(vec![
+                     Part::new("Origin ", Some(vec![Style::Bold, Style::Underlined])),
+                     Part::painted(
+                         &git::origin_head_branch(),
+                         (255, 0, 0),
+                         (0, 0, 0)
+                     ),
+                     Part::plain(" "),
+                     Part::plain(&git::last_origin_commit())
+                 ])
             );
         }
 
@@ -311,15 +313,11 @@ impl Component<MainWindow> for MainWindow {
         if !added.is_empty() {
             status.push(
                 Line::new(vec![
-                        Box::new(
-                            Bold::new(
-                                Underlined::new(
-                                    format!("Untracked files: ({})", added.len())
-                                )
-                            )
-                        )
-                    ]
-                )
+                    Part::new(
+                        &format!("Untracked files: ({})", added.len()),
+                        Some(vec![Style::Bold, Style::Underlined])
+                    )
+                ])
             );
             status.append(&mut added);
 
@@ -329,14 +327,10 @@ impl Component<MainWindow> for MainWindow {
         if !added_modified.is_empty() {
             status.push(
                 Line::new(vec![
-                        Box::new(
-                            Bold::new(
-                                Underlined::new(
-                                    format!("Untracked (modified) files: ({})", added_modified.len())
-                                )
-                            )
-                        )
-                    ]
+                    Part::new(
+                        &format!("Untracked (modified) files: ({})", added_modified.len()),
+                        Some(vec![Style::Bold, Style::Underlined])
+                    )]
                 )
             );
             status.append(&mut added_modified);
@@ -345,25 +339,26 @@ impl Component<MainWindow> for MainWindow {
         }
 
         if !deleted.is_empty() {
-            status.push(Line::from_string("Deleted files:".to_owned()));
+            status.push(Line::from_string(
+                "Deleted files:".to_owned(),
+                Some(vec![Style::Bold, Style::Underlined]))
+            );
             status.append(&mut deleted);
-
-            status.push(Line::from_string("".to_owned()));
+            status.push(Line::from_string("".to_owned(), None));
         }
 
         status.push(
             Line::new(vec![
-                Box::new(
-                    Bold::new(
-                        Underlined::new(format!("Modified files: ({})", unstaged.len()))
-                    )
+                Part::new(
+                    &format!("Modified files: ({})", unstaged.len()),
+                    Some(vec![Style::Bold, Style::Underlined])
                 )
             ])
         );
         if !unstaged.is_empty() {
             status.append(&mut unstaged);
 
-            status.push(Line::from_string("".to_owned()));
+            status.push(Line::from_string("".to_owned(), None));
         }
 
         status.push(Line::empty());
@@ -371,10 +366,9 @@ impl Component<MainWindow> for MainWindow {
         if !staged.is_empty() {
             status.push(
                 Line::new(vec![
-                    Box::new(
-                        Bold::new(
-                            Underlined::new(format!("Staged files: ({})", staged.len()))
-                        )
+                    Part::new(
+                        &format!("Staged files: ({})", staged.len()),
+                        Some(vec![Style::Bold, Style::Underlined])
                     )
                 ])
             );
@@ -382,10 +376,10 @@ impl Component<MainWindow> for MainWindow {
         }
 
         if status.is_empty() {
-            status.push(Line::from_string("No changes found.".to_owned()));
+            status.push(Line::from_string("No changes found.".to_owned(), None));
         }
 
-        window.lines = status;
+        window.set_lines(status);
     }
 
     fn register_handlers(&self, handlers: &mut KeyHandlers<MainWindow>) {

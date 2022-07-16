@@ -1,10 +1,9 @@
-use crate::render::{Renderer, ScreenSize, Position};
+use gitko_ncurses_render::{CursesScreenFactory};
+use gitko_render::{Renderer, ScreenSize, Position, ScreenFactory};
+
 use crate::gitko::main_window::MainWindow;
 
 mod git;
-mod num;
-mod render;
-mod ascii_table;
 mod gitko;
 mod searchable;
 
@@ -22,10 +21,19 @@ fn max_height() -> i32 {
     unsafe { MAX_HEIGHT }
 }
 
+fn screen() -> Box<dyn ScreenFactory> {
+    Box::new(CursesScreenFactory::new())
+}
+
 fn main() {
     init_ncurses();
 
-    Renderer::new(&mut MainWindow::new(), ScreenSize::max(), Position::default()).render();
+    Renderer::new(
+        &mut MainWindow::new(),
+        ScreenSize::max(),
+        Position::default(),
+        screen()
+    ).render();
 }
 
 fn init_ncurses() {

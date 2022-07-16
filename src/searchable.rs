@@ -1,6 +1,8 @@
-use crate::ascii_table::*;
+use crate::screen;
 use crate::gitko::input_window::InputWindow;
-use crate::render::{Position, ScreenSize, KeyHandlers, Window, Component, Renderer};
+use gitko_render::{Position, ScreenSize, KeyHandlers, Window, Component, Renderer};
+
+use gitko_common::ascii_table::*;
 
 pub trait SearchableComponent<T: SearchableComponent<T> + Component<T>>: Component<T> {
     fn term(&self) -> String;
@@ -15,7 +17,8 @@ pub trait SearchableComponent<T: SearchableComponent<T> + Component<T>>: Compone
         Renderer::new(
             &mut search_window,
             ScreenSize { lines: 2, cols: window.width() },
-            Position { x: 0, y: window.height() - 2 }
+            Position { x: 0, y: window.height() - 2 },
+            screen()
         ).render();
 
         self.set_term(search_window.text);
