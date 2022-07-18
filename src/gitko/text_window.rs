@@ -6,11 +6,12 @@ pub struct TextWindow<'text> {
 
 impl <'text> Component<TextWindow<'text>> for TextWindow<'text> {
     fn on_start(&mut self, window: &mut Window) {
+        window.show_cursor(false);
         window.set_lines(
             self.lines
-            .iter()
-            .map(|s| Line::from_string(s.to_string(), None))
-            .collect()
+                .iter()
+                .map(|s| Line::from_string(s.to_string(), None))
+                .collect()
         );
     }
 }

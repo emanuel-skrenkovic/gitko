@@ -28,6 +28,9 @@ impl MainWindow {
 
     fn diff_file(&mut self, window: &mut Window) -> bool {
         let line = window.get_cursor_line();
+        if line.is_empty() { return true }
+        if line.len() < 3 { return true }
+
         let file_state = parse_file_state(&line);
 
         if !matches!(file_state, FileState::Unknown) {

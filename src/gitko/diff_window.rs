@@ -56,8 +56,6 @@ fn map_line(line: String) -> Line {
                 &line,
                 (0, 255, 0),
                 (0, 0, 0)
-            //     ncurses::COLOR_GREEN,
-            //     ncurses::COLOR_BLACK
             )
         ])
     } else if line.starts_with('-') {
@@ -66,8 +64,6 @@ fn map_line(line: String) -> Line {
                 &line,
                 (255, 0, 0),
                 (0, 0, 0)
-                // ncurses::COLOR_RED,
-                // ncurses::COLOR_BLACK
             )
         ])
     } else if line.starts_with("@@") {
@@ -76,8 +72,6 @@ fn map_line(line: String) -> Line {
                 &line,
                 (0, 255, 255),
                 (0, 0, 0)
-                // ncurses::COLOR_CYAN,
-                // ncurses::COLOR_BLACK
             )
         ])
     } else {

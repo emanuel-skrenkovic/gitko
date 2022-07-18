@@ -56,7 +56,7 @@ impl LogWindow {
     }
 }
 
-fn map_line(line: &String) -> Line {
+fn map_line(line: &str) -> Line {
     let mut parts: Vec<Part> = vec![];
 
     let mut chars = line.chars();
@@ -92,7 +92,7 @@ impl Component<LogWindow> for LogWindow {
         window.set_lines(
             git::log(None)
                 .iter()
-                .map(map_line)
+                .map(|l| map_line(l))
                 .collect()
         );
     }

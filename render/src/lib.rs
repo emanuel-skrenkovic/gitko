@@ -5,29 +5,13 @@ use std::collections::HashMap;
 
 use gitko_common::ascii_table::*;
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Default, PartialEq)]
 pub struct Position {
     pub x: i32,
     pub y: i32
 }
 
-// TODO: move elsewhere
-pub fn clamp(num: i32, min: i32, max: i32) -> i32 {
-    if num < min {
-        return min;
-    } else if num > max {
-        return max;
-    }
-
-    num
-}
-
-impl Position {
-    pub fn default() -> Position {
-        Position { x: 0, y: 0 }
-    }
-}
-
+#[derive(PartialEq)]
 pub struct ScreenSize {
     pub lines: i32,
     pub cols: i32
@@ -84,8 +68,8 @@ impl<'a, T: Component<T>> Renderer<'a, T> {
 
     pub fn draw(&mut self) {
         self.component.on_start(&mut self.window);
-        self.window.queue_update();
-    }
+        self.refresh();
+   }
 
     fn on_keypress(&mut self, c: i32) -> bool {
         if let Some(handler) = self.key_handlers.get(&c) {
@@ -152,9 +136,6 @@ impl Window {
 
     pub fn set_lines(&mut self, lines: Vec<Line>) {
         self.lines = lines;
-        self.screen.set_data(
-            self.lines[self.screen_start..].to_vec()
-        )
     }
 
     pub fn lines(&self) -> Vec<Line> {
@@ -166,9 +147,15 @@ impl Window {
     }
 
     fn queue_update(&mut self) {
-        self.screen.set_data(
-            self.lines[self.screen_start..].to_vec()
-        );
+        let lines  = self.lines.len();
+        let height = self.screen.height() as usize;
+
+        let start = self.screen_start;
+        let end   = height + self.screen_start;
+        let end   = if end < lines { end } else { lines };
+        let data  = self.lines[start..end].to_vec();
+
+        self.screen.set_data(data);
         self.screen.queue_update();
     }
 
@@ -179,29 +166,7 @@ impl Window {
 
     // TODO: think about listening for input outside of rendering methods
     pub fn listen(&mut self) {
-    //     loop {
-    //         let c = ncurses::wgetch(self.curses_window);
-    //         match c {
-    //             KEY_DEL => {
-    //                 let cursor = self.cursor_position;
-    //                 self.move_cursor(Position { x: cursor.x - 1, y: cursor.y });
-
-    //                 ncurses::wdelch(self.curses_window);
-    //             }
-    //             KEY_ETB => {
-    //                 self.clear();
-    //                 break;
-    //             }
-    //             KEY_LF => { break; }
-    //             _ => {
-    //                 ncurses::waddch(self.curses_window, c as u32);
-
-    //                 let cursor = self.cursor_position;
-    //                 self.move_cursor(Position { x: cursor.x + 1, y: cursor.y });
-
-    //             }
-    //         }
-    //     }
+        self.screen.listen()
     }
 
     fn resize(&mut self, new_size: ScreenSize) {
@@ -268,7 +233,7 @@ impl Window {
     }
 
     pub fn move_screen_down(&mut self, delta: usize) {
-        if self.screen_start + delta >= self.lines.len() { return; }
+        if self.screen_start + delta >= self.lines.len() { return }
 
         self.screen_start += delta;
         self.queue_update();
@@ -376,6 +341,7 @@ pub trait DrawScreen {
     fn set_cursor(&mut self, position: Position);
 
     fn listen_input(&self) -> i32;
+    fn listen(&mut self);
 }
 
 pub type RGB = (u8, u8, u8);

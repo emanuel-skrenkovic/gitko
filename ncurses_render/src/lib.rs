@@ -1,24 +1,33 @@
 use std::convert::TryInto;
-
 use gitko_render::{Line, DrawScreen, ScreenSize, Position, Style, ScreenFactory};
+use gitko_common::{num, ascii_table::*};
 
-/*
-const GREEN_TEXT: i16 = 1;
-const RED_TEXT: i16   = 2;
-const BLUE_TEXT: i16  = 3;
-*/
+pub static mut MAX_WIDTH: i32   = 0;
+pub static mut MAX_HEIGHT: i32  = 0;
 static HIGHLIGHT_COLOR: i16 = 69;
 
-// TODO: move elsewhere
-pub fn clamp(num: i32, min: i32, max: i32) -> i32 {
-    if num < min {
-        return min;
-    } else if num > max {
-        return max;
+pub fn init() {
+    let base_window = ncurses::initscr();
+
+    unsafe {
+        ncurses::getmaxyx(base_window, &mut MAX_HEIGHT, &mut MAX_WIDTH);
     }
 
-    num
+    ncurses::cbreak();
+    ncurses::keypad(ncurses::stdscr(), true);
+    ncurses::noecho();
+
+    ncurses::start_color();
+
+    ncurses::init_pair(1, ncurses::COLOR_GREEN, ncurses::COLOR_BLACK);
+    ncurses::init_pair(2, ncurses::COLOR_RED, ncurses::COLOR_BLACK);
+    ncurses::init_pair(3, ncurses::COLOR_CYAN, ncurses::COLOR_BLACK);
+
+    ncurses::init_color(HIGHLIGHT_COLOR, 150, 150, 150);
+    ncurses::init_pair(HIGHLIGHT_COLOR, ncurses::COLOR_WHITE, HIGHLIGHT_COLOR);
 }
+
+pub fn exit () {  }
 
 // TODO: think about removing and adding functionality to Component trait
 pub struct CursesWindow {
@@ -209,8 +218,8 @@ impl DrawScreen for CursesWindow {
     fn move_cursor(&mut self, position: Position) -> (i32, Position) {
         // TODO: optimize by not doing anything when
         // trying to go beyond edges (unless scrolling).
-        let y = clamp(position.y, 0, self.height - 1);
-        let x = clamp(position.x, 0, self.width - 1);
+        let y = num::clamp(position.y, 0, self.height - 1);
+        let x = num::clamp(position.x, 0, self.width - 1);
 
         let delta = position.y - y;
 
@@ -227,6 +236,32 @@ impl DrawScreen for CursesWindow {
 
     fn listen_input(&self) -> i32 {
         ncurses::wgetch(self.curses_window)
+    }
+
+    fn listen(&mut self) {
+        loop {
+            let c = ncurses::wgetch(self.curses_window);
+            match c {
+                KEY_DEL => {
+                    let cursor = self.cursor_position;
+                    self.move_cursor(Position { x: cursor.x - 1, y: cursor.y });
+
+                    ncurses::wdelch(self.curses_window);
+                }
+                KEY_ETB => {
+                    self.clear();
+                    break;
+                }
+                KEY_LF => { break; }
+                _ => {
+                    ncurses::waddch(self.curses_window, c as u32);
+
+                    let cursor = self.cursor_position;
+                    self.move_cursor(Position { x: cursor.x + 1, y: cursor.y });
+
+                }
+            }
+        }
     }
 }
 

@@ -1,11 +1,12 @@
 [package]
-name = "gitko_ncurses_render"
+name = "gitko_crossterm"
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+crossterm = "0.24.0"
+term_size = "0.3.2"
 gitko_render = { path = "../render" }
 gitko_common = { path = "../common" }
-ncurses = "5.101.0"
