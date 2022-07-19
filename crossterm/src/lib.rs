@@ -4,7 +4,8 @@ use crossterm::{
     execute,
     event::{KeyEvent, KeyModifiers, KeyCode, Event, read},
     style::{SetAttribute, Attribute, Print, Color, Color::Rgb, ResetColor, Stylize},
-    cursor, terminal::{self, enable_raw_mode}
+    cursor,
+    terminal::{self, enable_raw_mode, ClearType}
 };
 
 extern crate term_size;
@@ -28,7 +29,7 @@ pub fn init() {
 
 pub fn exit() {
     terminal::disable_raw_mode().unwrap();
-    execute!(stdout(), terminal::Clear(terminal::ClearType::All))
+    execute!(stdout(), terminal::Clear(ClearType::All))
         .unwrap();
 }
 
@@ -132,7 +133,7 @@ impl DrawScreen for CrosstermWindow {
         queue!(
             self.stdout,
             cursor::MoveTo(start_x, start_y),
-            terminal::Clear(terminal::ClearType::FromCursorDown)
+            terminal::Clear(ClearType::FromCursorDown)
         ).unwrap();
 
         for (i, line) in self.lines.iter().enumerate() {
@@ -241,7 +242,7 @@ impl DrawScreen for CrosstermWindow {
     }
 
     fn clear(&mut self) {
-        execute!(self.stdout).unwrap();
+        execute!(self.stdout, terminal::Clear(ClearType::FromCursorDown)).unwrap();
     }
 
     // Returns the delta between the attempted cursor
@@ -325,7 +326,7 @@ impl DrawScreen for CrosstermWindow {
 
                             execute!(
                                 self.stdout,
-                                terminal::Clear(terminal::ClearType::CurrentLine),
+                                terminal::Clear(ClearType::CurrentLine),
                                 cursor::MoveLeft(line.len() as u16 - 1),
                                 Print(line),
                                 cursor::MoveTo(x, y)
@@ -344,7 +345,7 @@ impl DrawScreen for CrosstermWindow {
                             let (x, y) = self.cursor_position();
                             execute!(
                                 self.stdout,
-                                terminal::Clear(terminal::ClearType::CurrentLine),
+                                terminal::Clear(ClearType::CurrentLine),
                                 cursor::MoveLeft(line.len() as u16 + 1),
                                 Print(line),
                                 cursor::MoveTo(x, y)
@@ -363,7 +364,7 @@ impl DrawScreen for CrosstermWindow {
                             let (x, y) = self.cursor_position();
                             execute!(
                                 self.stdout,
-                                terminal::Clear(terminal::ClearType::CurrentLine),
+                                terminal::Clear(ClearType::CurrentLine),
                                 cursor::MoveLeft(line.len() as u16 + 1),
                                 Print(line),
                                 cursor::MoveTo(x, y),

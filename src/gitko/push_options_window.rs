@@ -26,7 +26,7 @@ impl PushOptionsWindow {
         let output_window_height = output.len() as i32 + 1;
         Renderer::new(
             &mut OutputWindow { output },
-            ScreenSize { lines: output_window_height , cols: window.width() },
+            ScreenSize { lines: output_window_height, cols: window.width() },
             Position { x: 0, y: max_height() - output_window_height },
             screen()
         ).render();
