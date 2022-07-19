@@ -5,7 +5,7 @@ use crate::git::{FileState};
 use crate::searchable::{SearchableComponent, register_search_handlers};
 use gitko_render::{KeyHandlers, Component, Line, Window, Part};
 
-use gitko_common::ascii_table::*;
+use gitko_common::ascii_table::{KEY_J_LOWER, KEY_K_LOWER};
 
 pub struct DiffWindow {
     path: String,
@@ -96,7 +96,7 @@ impl Component<DiffWindow> for DiffWindow {
                 window.set_lines(
                     lines
                         .iter()
-                        .map(|l| map_line(l.to_owned()))
+                        .map(|l| map_line(l.clone()))
                         .collect()
                 );
             },
@@ -104,7 +104,7 @@ impl Component<DiffWindow> for DiffWindow {
                 window.set_lines(
                     git::diff_file(&self.path)
                         .iter()
-                        .map(|l| map_line(l.to_owned()))
+                        .map(|l| map_line(l.clone()))
                         .collect()
                 );
             }

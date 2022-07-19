@@ -1,6 +1,6 @@
 use gitko_render::{Component, KeyHandlers, Line, Window};
 
-use gitko_common::ascii_table::*;
+use gitko_common::ascii_table::{KEY_N_LOWER, KEY_Y_LOWER};
 
 pub struct PromptWindow<TYes: Fn(), TNo: Fn()> {
     message: String,

@@ -4,7 +4,7 @@ use crate::max_height;
 use crate::gitko::output_window::OutputWindow;
 use gitko_render::{Renderer, Line, KeyHandlers, Component, Window, ScreenSize, Position};
 
-use gitko_common::ascii_table::*;
+use gitko_common::ascii_table::{KEY_LF};
 
 pub struct PushOptionsWindow { }
 
@@ -12,10 +12,10 @@ impl PushOptionsWindow {
     fn git_push(&mut self, window: &mut Window) -> bool {
         let line = window.get_cursor_line().trim().to_owned();
 
-        let args = if !line.is_empty() {
-            Some(vec![line.as_str()])
-        } else {
+        let args = if line.is_empty() {
             None
+        } else {
+            Some(vec![line.as_str()])
         };
 
         window.clear();
@@ -40,7 +40,7 @@ impl Component<PushOptionsWindow> for PushOptionsWindow {
         window.set_lines(
             vec!["", "--force-with-lease"]
                 .iter()
-                .map(|s| Line::from_string(s.to_string(), None))
+                .map(|s| Line::from_string((*s).to_string(), None))
                 .collect()
         );
     }

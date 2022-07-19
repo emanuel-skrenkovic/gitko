@@ -2,7 +2,7 @@ use crate::screen;
 use crate::gitko::input_window::InputWindow;
 use gitko_render::{Position, ScreenSize, KeyHandlers, Window, Component, Renderer};
 
-use gitko_common::ascii_table::*;
+use gitko_common::ascii_table::{KEY_ETB, KEY_FORWARD_SLASH, KEY_N_LOWER, KEY_N_UPPER};
 
 pub trait SearchableComponent<T: SearchableComponent<T> + Component<T>>: Component<T> {
     fn term(&self) -> String;

@@ -57,42 +57,42 @@ pub fn current_branch() -> String {
     run(vec!["rev-parse", "--abbrev-ref", "HEAD"])
         .first()
         .unwrap()
-        .to_owned()
+        .clone()
 }
 
 pub fn last_origin_commit_hash() -> String {
     run(vec!["rev-parse", &format!("origin/{}", &current_branch())])
         .first()
         .unwrap()
-        .to_owned()
+        .clone()
 }
 
 pub fn last_commit_hash() -> String {
     run(vec!["rev-parse", &current_branch()])
         .first()
         .unwrap()
-        .to_owned()
+        .clone()
 }
 
 pub fn last_origin_commit() -> String {
     run(vec!["log", "-1", "--oneline", "--no-decorate", &format!("origin/{}", &current_branch())])
         .first()
         .unwrap()
-        .to_owned()
+        .clone()
 }
 
 pub fn last_commit() -> String {
     run(vec!["log", "-1", "--oneline", "--no-decorate"])
         .first()
         .unwrap()
-        .to_owned()
+        .clone()
 }
 
 pub fn origin_head_branch() -> String {
     run(vec!["show", "-s", "--pretty=%d", &format!("origin/{}", &current_branch())])
         .first()
         .unwrap()
-        .to_owned()
+        .clone()
 
 }
 
@@ -100,7 +100,7 @@ pub fn head_branch() -> String {
     run(vec!["show", "-s", "--pretty=%d", "HEAD"])
         .first()
         .unwrap()
-        .to_owned()
+        .clone()
 }
 
 pub fn status() -> Vec<String> {

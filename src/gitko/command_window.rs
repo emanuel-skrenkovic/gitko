@@ -1,5 +1,5 @@
 use gitko_render::{Component, KeyHandlers, Line, Window};
-use gitko_common::ascii_table::*;
+use gitko_common::ascii_table::{KEY_J_LOWER, KEY_K_LOWER};
 
 pub struct CommandWindow {}
 

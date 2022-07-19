@@ -15,7 +15,8 @@ use crate::gitko::commit_options_window::CommitOptionsWindow;
 use crate::searchable::{SearchableComponent, register_search_handlers};
 use gitko_render::{Line, Renderer, KeyHandlers, Component, ScreenSize, Window, Position, Part, Style};
 
-use gitko_common::ascii_table::*;
+use gitko_common::ascii_table::{KEY_B_LOWER, KEY_COLON, KEY_C_LOWER, KEY_C_UPPER, KEY_D_LOWER, KEY_LF,
+                                KEY_L_LOWER, KEY_O_UPPER, KEY_P_UPPER, KEY_R_UPPER, KEY_T_LOWER, KEY_U_LOWER};
 
 pub struct MainWindow {
     term: String
@@ -107,9 +108,10 @@ impl MainWindow {
             path.push(".");
         }
 
-        let _ = Command::new(command)
+        Command::new(command)
             .arg(path)
-            .spawn();
+            .spawn()
+            .unwrap();
 
         true
     }
@@ -122,7 +124,7 @@ impl MainWindow {
             let file = line[3..].trim();
             Renderer::new(
                 &mut PromptWindow::new(&format!("Are you sure you want to delete file '{}'? y/n", file),
-                                  || { let _ = remove_file(file); },
+                                  || { remove_file(file).unwrap(); },
                                   || {}),
                 ScreenSize { lines: 1, cols: 0 },
                 Position { x: 0, y: window.height() - 1 },
@@ -250,7 +252,7 @@ impl Component<MainWindow> for MainWindow {
                         }
                     }
                 } else if metadata.is_file() {
-                    let line = Line::from_string(u.to_owned(), None);
+                    let line = Line::from_string(u.clone(), None);
 
                     if modified {
                         added_modified.push(line);
@@ -264,19 +266,19 @@ impl Component<MainWindow> for MainWindow {
         let mut deleted: Vec<Line> = git_status
             .iter()
             .filter(|c| c.starts_with(" D"))
-            .map(|c| Line::from_string(c.to_owned(), None))
+            .map(|c| Line::from_string(c.clone(), None))
             .collect();
 
         let mut unstaged: Vec<Line> = git_status
             .iter()
             .filter(|c| c.starts_with(" M") || c.starts_with("MM"))
-            .map(|c| Line::from_string(c.to_owned(), None))
+            .map(|c| Line::from_string(c.clone(), None))
             .collect();
 
         let mut staged: Vec<Line> = git_status
             .iter()
             .filter(|c| c.starts_with('M') || c.starts_with('A') || c.starts_with('D'))
-            .map(|c| Line::from_string(c.to_owned(), None))
+            .map(|c| Line::from_string(c.clone(), None))
             .collect();
 
         let mut status: Vec<Line> = vec![

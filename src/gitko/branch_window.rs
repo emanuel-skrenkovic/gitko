@@ -2,7 +2,7 @@ use crate::git;
 use crate::{screen, max_width};
 use gitko_render::{Component, KeyHandlers, Line, Renderer, ScreenSize, Window, Position};
 
-use gitko_common::ascii_table::*;
+use gitko_common::ascii_table::{KEY_D_LOWER, KEY_LF, KEY_N_LOWER};
 
 use crate::gitko::text_window::TextWindow;
 use crate::gitko::input_window::InputWindow;
@@ -78,7 +78,7 @@ impl Component<BranchWindow> for BranchWindow {
         window.set_lines(
             git::branch()
                 .iter()
-                .map(|l| Line::from_string(l.to_owned(), None))
+                .map(|l| Line::from_string(l.clone(), None))
                 .collect()
         );
     }

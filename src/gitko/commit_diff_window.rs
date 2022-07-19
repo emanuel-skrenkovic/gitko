@@ -2,7 +2,7 @@ use crate::git;
 use crate::searchable::{SearchableComponent, register_search_handlers};
 use gitko_render::{Component, KeyHandlers, Line, Window, Part};
 
-use gitko_common::ascii_table::*;
+use gitko_common::ascii_table::{KEY_J_LOWER, KEY_K_LOWER};
 
 pub struct CommitDiffWindow {
     commit_hash: String,
@@ -81,7 +81,7 @@ impl Component<CommitDiffWindow> for CommitDiffWindow {
         window.set_lines(
             git::diff_commit(&self.commit_hash)
                 .iter()
-                .map(|l| map_line(l.to_owned()))
+                .map(|l| map_line(l.clone()))
                 .collect()
         );
     }

@@ -1,6 +1,6 @@
 use gitko_render::{Component, KeyHandlers, Line, Window, Part, Style};
 
-use gitko_common::ascii_table::*;
+use gitko_common::ascii_table::{KEY_ETB, KEY_LF};
 
 pub struct OutputWindow {
     pub output: Vec<String>
@@ -26,7 +26,7 @@ impl Component<OutputWindow> for OutputWindow {
 
         lines.append(&mut self.output
                      .iter()
-                     .map(|s| Line::from_string(s.to_owned(), None))
+                     .map(|s| Line::from_string(s.clone(), None))
                      .collect());
 
         window.set_lines(lines);

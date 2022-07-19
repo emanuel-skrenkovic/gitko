@@ -6,7 +6,7 @@ use crate::gitko::commit_diff_window::CommitDiffWindow;
 use crate::searchable::{SearchableComponent, register_search_handlers};
 use gitko_render::{Component, KeyHandlers, Line,Renderer, ScreenSize, Window, Position, Part};
 
-use gitko_common::ascii_table::*;
+use gitko_common::ascii_table::{KEY_LF, KEY_N_LOWER, KEY_N_UPPER, KEY_R_UPPER};
 
 pub struct LogWindow {
     term: String,
@@ -78,10 +78,10 @@ fn map_line(line: &str) -> Line {
                 )
             );
 
-            parts.push(Part::plain(&line[hash_start + hash_length..]))
+            parts.push(Part::plain(&line[hash_start + hash_length..]));
         }
     } else {
-        parts.push(Part::plain(line))
+        parts.push(Part::plain(line));
     }
 
     Line::new(parts)
@@ -148,7 +148,7 @@ impl Component<ResetOptionsWindow> for ResetOptionsWindow {
         window.set_lines(
             vec!["Git reset modes:", "--soft", "--mixed", "--hard", "--merge", "--keep"]
                 .iter()
-                .map(|s| Line::from_string(s.to_string(), None))
+                .map(|s| Line::from_string((*s).to_string(), None))
                 .collect()
         );
     }
