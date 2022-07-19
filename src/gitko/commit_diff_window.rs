@@ -44,11 +44,11 @@ impl CommitDiffWindow {
     }
 }
 
-fn map_line(line: String) -> Line {
+fn map_line(line: &str) -> Line {
     if line.starts_with('+') {
         Line::new(vec![
             Part::painted(
-                &line,
+                line,
                 (0, 255, 0),
                 (0, 0, 0)
             )
@@ -56,7 +56,7 @@ fn map_line(line: String) -> Line {
     } else if line.starts_with('-') {
         Line::new(vec![
             Part::painted(
-                &line,
+                line,
                 (255, 0, 0),
                 (0, 0, 0)
             )
@@ -64,13 +64,13 @@ fn map_line(line: String) -> Line {
     } else if line.starts_with("@@") {
         Line::new(vec![
             Part::painted(
-                &line,
+                line,
                 (0, 255, 255),
                 (0, 0, 0)
             )
         ])
     } else {
-        Line::from_string(line, None)
+        Line::plain(line)
     }
 }
 
@@ -81,7 +81,7 @@ impl Component<CommitDiffWindow> for CommitDiffWindow {
         window.set_lines(
             git::diff_commit(&self.commit_hash)
                 .iter()
-                .map(|l| map_line(l.clone()))
+                .map(|l| map_line(l))
                 .collect()
         );
     }

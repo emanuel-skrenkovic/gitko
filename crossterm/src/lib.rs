@@ -83,7 +83,7 @@ impl CrosstermWindow {
 impl DrawScreen for CrosstermWindow {
     fn set_data(&mut self, lines: Vec<Line>) {
         if lines.len() == 0 {
-            self.lines = vec![Line::from_string("".to_owned(), None)]
+            self.lines = vec![Line::plain("")]
         } else {
             self.lines = lines;
         }
@@ -318,37 +318,28 @@ impl DrawScreen for CrosstermWindow {
                             let index = self.cursor_position.x as usize;
 
                             line.insert(index, c);
-                            self.lines[0] = Line::from_string(line.clone(), None);
+                            self.lines[0] = Line::plain(&line);
 
-                            self.cursor_position = Position {
-                                x: self.cursor_position.x + 1,
-                                y: self.cursor_position.y
-                            };
+                            self.cursor_position.move_right(1);
+                            let (x, y) = self.cursor_position();
 
                             execute!(
                                 self.stdout,
                                 terminal::Clear(terminal::ClearType::CurrentLine),
                                 cursor::MoveLeft(line.len() as u16 - 1),
                                 Print(line),
-                                cursor::MoveTo(
-                                    (self.screen_start.x + self.cursor_position.x).try_into().unwrap(),
-                                    (self.screen_start.y + self.cursor_position.y).try_into().unwrap()
-                                )
+                                cursor::MoveTo(x, y)
                             ).unwrap();
                         },
                         KeyCode::Backspace =>  {
                             let mut line = self.get_cursor_line();
                             if line.is_empty() { continue }
 
-                            self.cursor_position = Position {
-                                x: self.cursor_position.x - 1,
-                                y: self.cursor_position.y
-                            };
-
+                            self.cursor_position.move_left(1);
                             let index = self.cursor_position.x as usize;
 
                             line.remove(index);
-                            self.lines[0] = Line::from_string(line.clone(), None);
+                            self.lines[0] = Line::plain(&line);
 
                             let (x, y) = self.cursor_position();
                             execute!(
@@ -367,7 +358,7 @@ impl DrawScreen for CrosstermWindow {
                             if index >= line.len() { continue }
 
                             line.remove(index);
-                            self.lines[0] = Line::from_string(line.clone(), None);
+                            self.lines[0] = Line::plain(&line);
 
                             let (x, y) = self.cursor_position();
                             execute!(
@@ -380,13 +371,8 @@ impl DrawScreen for CrosstermWindow {
                         },
                         KeyCode::Left  => {
                             let next = self.cursor_position.x;
-
                             if next > 0 {
-                                self.cursor_position = Position {
-                                    x: self.cursor_position.x - 1,
-                                    y: self.cursor_position.y
-                                };
-
+                                self.cursor_position.move_left(1);
                                 execute!(self.stdout, cursor::MoveLeft(1)).unwrap();
                             }
                         }
@@ -395,10 +381,7 @@ impl DrawScreen for CrosstermWindow {
 
                             let next = self.cursor_position.x + 1;
                             if next <= line.len() as i32 {
-                                self.cursor_position = Position {
-                                    x: self.cursor_position.x + 1,
-                                    y: self.cursor_position.y
-                                };
+                                self.cursor_position.move_right(1);
                                 execute!(self.stdout, cursor::MoveRight(1)).unwrap();
                             }
                         }

@@ -10,7 +10,7 @@ impl <'text> Component<TextWindow<'text>> for TextWindow<'text> {
         window.set_lines(
             self.lines
                 .iter()
-                .map(|s| Line::from_string((*s).to_string(), None))
+                .map(|s| Line::plain(s))
                 .collect()
         );
     }

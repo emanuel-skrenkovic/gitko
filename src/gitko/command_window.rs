@@ -25,16 +25,12 @@ impl Component<CommandWindow> for CommandWindow {
             output.stderr
         };
 
-        let mut lines = window.lines();
-
-        lines.push(
-            Line::from_string(
-                String::from_utf8(raw_output)
-                         .expect("invalid string encoding"),
-                None
-            )
+        let line = Line::plain(
+            &String::from_utf8(raw_output).expect("invalid string encoding")
         );
 
+        let mut lines = window.lines();
+        lines.push(line);
         window.set_lines(lines);
 
         true

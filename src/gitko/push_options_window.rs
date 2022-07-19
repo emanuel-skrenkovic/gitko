@@ -40,7 +40,7 @@ impl Component<PushOptionsWindow> for PushOptionsWindow {
         window.set_lines(
             vec!["", "--force-with-lease"]
                 .iter()
-                .map(|s| Line::from_string((*s).to_string(), None))
+                .map(|s| Line::plain(s))
                 .collect()
         );
     }

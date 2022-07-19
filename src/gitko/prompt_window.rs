@@ -31,7 +31,7 @@ impl<TYes: Fn(), TNo: Fn()> PromptWindow<TYes, TNo> {
 impl<TYes: Fn(), TNo: Fn()> Component<PromptWindow<TYes, TNo>> for PromptWindow<TYes, TNo> {
     fn on_start(&mut self, window: &mut Window) {
         window.set_lines(
-            vec![Line::from_string(self.message.clone(), None)]
+            vec![Line::plain(&self.message)]
         );
     }
 

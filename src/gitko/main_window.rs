@@ -239,10 +239,7 @@ impl Component<MainWindow> for MainWindow {
 
                     if let Ok(paths) = paths_result {
                         for path in paths.flatten() {
-                            let line = Line::from_string(
-                                format!("?? {}", path.path().display()),
-                                None
-                            );
+                            let line = Line::plain(&format!("?? {}", path.path().display()));
 
                             if modified {
                                 added_modified.push(line);
@@ -252,7 +249,7 @@ impl Component<MainWindow> for MainWindow {
                         }
                     }
                 } else if metadata.is_file() {
-                    let line = Line::from_string(u.clone(), None);
+                    let line = Line::plain(u);
 
                     if modified {
                         added_modified.push(line);
@@ -266,19 +263,19 @@ impl Component<MainWindow> for MainWindow {
         let mut deleted: Vec<Line> = git_status
             .iter()
             .filter(|c| c.starts_with(" D"))
-            .map(|c| Line::from_string(c.clone(), None))
+            .map(|c| Line::plain(c))
             .collect();
 
         let mut unstaged: Vec<Line> = git_status
             .iter()
             .filter(|c| c.starts_with(" M") || c.starts_with("MM"))
-            .map(|c| Line::from_string(c.clone(), None))
+            .map(|c| Line::plain(c))
             .collect();
 
         let mut staged: Vec<Line> = git_status
             .iter()
             .filter(|c| c.starts_with('M') || c.starts_with('A') || c.starts_with('D'))
-            .map(|c| Line::from_string(c.clone(), None))
+            .map(|c| Line::plain(c))
             .collect();
 
         let mut status: Vec<Line> = vec![
@@ -344,26 +341,24 @@ impl Component<MainWindow> for MainWindow {
         }
 
         if !deleted.is_empty() {
-            status.push(Line::from_string(
-                "Deleted files:".to_owned(),
+            status.push(Line::from_str(
+                "Deleted files:",
                 Some(vec![Style::Bold, Style::Underlined]))
             );
             status.append(&mut deleted);
-            status.push(Line::from_string("".to_owned(), None));
+            status.push(Line::empty());
         }
 
         status.push(
-            Line::new(vec![
-                Part::new(
-                    &format!("Modified files: ({})", unstaged.len()),
-                    Some(vec![Style::Bold, Style::Underlined])
-                )
-            ])
+            Line::from_str(
+                &format!("Modified files: ({})", unstaged.len()),
+                Some(vec![Style::Bold, Style::Underlined])
+            )
         );
         if !unstaged.is_empty() {
             status.append(&mut unstaged);
 
-            status.push(Line::from_string("".to_owned(), None));
+            status.push(Line::empty());
         }
 
         status.push(Line::empty());
@@ -381,7 +376,7 @@ impl Component<MainWindow> for MainWindow {
         }
 
         if status.is_empty() {
-            status.push(Line::from_string("No changes found.".to_owned(), None));
+            status.push(Line::plain("No changes found."));
         }
 
         window.set_lines(status);

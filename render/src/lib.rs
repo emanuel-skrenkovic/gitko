@@ -11,6 +11,53 @@ pub struct Position {
     pub y: i32
 }
 
+impl Position {
+    pub fn move_left(&mut self, by: i32) {
+        self.x -= by;
+    }
+
+    pub fn move_right(&mut self, by: i32) {
+        self.x += by;
+    }
+
+    pub fn move_up(&mut self, by: i32) {
+        self.y += by;
+    }
+
+    pub fn move_down(&mut self, by: i32) {
+        self.y -= by;
+    }
+
+
+    pub fn left(&self, by: i32) -> Position {
+        Position {
+            x: self.x - by,
+            y: self.y
+        }
+    }
+
+    pub fn right(&self, by: i32) -> Position {
+        Position {
+            x: self.x + by,
+            y: self.y
+        }
+    }
+
+    pub fn up(&self, by: i32) -> Position {
+        Position {
+            x: self.x,
+            y: self.y + by
+        }
+    }
+
+    pub fn down(&self, by: i32) -> Position {
+        Position {
+            x: self.x,
+            y: self.y - by
+        }
+    }
+}
+
 #[derive(PartialEq)]
 pub struct ScreenSize {
     pub lines: i32,
@@ -396,24 +443,26 @@ impl Line {
         Line { parts }
     }
 
-    pub fn plain(value: String) -> Line {
-        Line::from_string(value, None)
+    pub fn plain(value: &str) -> Line {
+        Line::from_str(value, None)
     }
 
     pub fn empty() -> Line {
-        Line::from_string("".to_owned(), None)
+        Line::plain("")
     }
 
     pub fn from_string(from: String, styles: Option<Vec<Style>>) -> Line {
         if let Some(s) = styles {
-            return Line::new(
-                vec![Part { value: from, styles: s }]
-            )
+            let parts = vec![Part { value: from, styles: s }];
+            return Line::new(parts)
         }
 
-        Line::new(
-            vec![Part { value: from, styles: vec![Style::Plain] }]
-        )
+        let parts = vec![Part { value: from, styles: vec![Style::Plain] }];
+        Line::new(parts)
+    }
+
+    pub fn from_str(from: &str, styles: Option<Vec<Style>>) -> Line {
+        Line::from_string(from.to_owned(), styles)
     }
 
     pub fn value(&self) -> String {

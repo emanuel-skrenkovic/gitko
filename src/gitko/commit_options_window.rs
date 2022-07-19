@@ -39,7 +39,7 @@ impl Component<CommitOptionsWindow> for CommitOptionsWindow {
         window.set_lines(
             vec!["", "--amend"]
                 .iter()
-                .map(|s| Line::from_string((*s).to_string(), None))
+                .map(|s| Line::plain(s))
                 .collect()
             );
     }

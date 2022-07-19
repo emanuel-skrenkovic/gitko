@@ -78,7 +78,7 @@ impl Component<BranchWindow> for BranchWindow {
         window.set_lines(
             git::branch()
                 .iter()
-                .map(|l| Line::from_string(l.clone(), None))
+                .map(|l| Line::plain(l))
                 .collect()
         );
     }

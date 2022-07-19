@@ -49,11 +49,11 @@ impl DiffWindow {
     }
 }
 
-fn map_line(line: String) -> Line {
+fn map_line(line: &str) -> Line {
     if line.starts_with('+') {
         Line::new(vec![
             Part::painted(
-                &line,
+                line,
                 (0, 255, 0),
                 (0, 0, 0)
             )
@@ -61,7 +61,7 @@ fn map_line(line: String) -> Line {
     } else if line.starts_with('-') {
         Line::new(vec![
             Part::painted(
-                &line,
+                line,
                 (255, 0, 0),
                 (0, 0, 0)
             )
@@ -69,13 +69,13 @@ fn map_line(line: String) -> Line {
     } else if line.starts_with("@@") {
         Line::new(vec![
             Part::painted(
-                &line,
+                line,
                 (0, 255, 255),
                 (0, 0, 0)
             )
         ])
     } else {
-        Line::from_string(line, None)
+        Line::plain(line)
     }
 }
 
@@ -96,7 +96,7 @@ impl Component<DiffWindow> for DiffWindow {
                 window.set_lines(
                     lines
                         .iter()
-                        .map(|l| map_line(l.clone()))
+                        .map(|l| map_line(l))
                         .collect()
                 );
             },
@@ -104,7 +104,7 @@ impl Component<DiffWindow> for DiffWindow {
                 window.set_lines(
                     git::diff_file(&self.path)
                         .iter()
-                        .map(|l| map_line(l.clone()))
+                        .map(|l| map_line(l))
                         .collect()
                 );
             }

@@ -148,7 +148,7 @@ impl Component<ResetOptionsWindow> for ResetOptionsWindow {
         window.set_lines(
             vec!["Git reset modes:", "--soft", "--mixed", "--hard", "--merge", "--keep"]
                 .iter()
-                .map(|s| Line::from_string((*s).to_string(), None))
+                .map(|s| Line::plain(s))
                 .collect()
         );
     }

@@ -1,4 +1,4 @@
-use gitko_render::{Component, KeyHandlers, Line, Window, Part, Style};
+use gitko_render::{Component, KeyHandlers, Line, Window, Style};
 
 use gitko_common::ascii_table::{KEY_ETB, KEY_LF};
 
@@ -19,14 +19,15 @@ impl Component<OutputWindow> for OutputWindow {
         window.show_cursor(false);
 
         let mut lines: Vec<Line> = vec![
-            Line::new(vec![
-                Part::new("Command output:", Some(vec![Style::Bold, Style::Underlined]))
-            ])
+            Line::from_str(
+                "Command output:",
+                Some(vec![Style::Bold, Style::Underlined])
+            )
         ];
 
         lines.append(&mut self.output
                      .iter()
-                     .map(|s| Line::from_string(s.clone(), None))
+                     .map(|s| Line::plain(s))
                      .collect());
 
         window.set_lines(lines);
