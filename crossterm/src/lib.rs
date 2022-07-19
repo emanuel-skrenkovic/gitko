@@ -258,16 +258,13 @@ impl DrawScreen for CrosstermWindow {
 
         let cursor_movement = position.y - self.cursor_position.y;
         let move_by = cursor_movement.abs().try_into().unwrap();
+
         if cursor_movement > 0 {
-            queue!(
-                self.stdout,
-                cursor::MoveToNextLine(move_by)
-            ).unwrap();
+            queue!(self.stdout, cursor::MoveToNextLine(move_by))
+                .unwrap();
         } else {
-            queue!(
-                self.stdout,
-                cursor::MoveToPreviousLine(move_by)
-            ).unwrap();
+            queue!(self.stdout, cursor::MoveToPreviousLine(move_by))
+                .unwrap();
         }
 
         self.cursor_position = Position { x: x.into(), y: y.into() };
