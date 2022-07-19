@@ -1,5 +1,6 @@
-use crate::ascii_table::*;
-use crate::render::{Bold, Underlined, Component, KeyHandlers, Line, Window};
+use gitko_render::{Component, KeyHandlers, Line, Window, Part, Style};
+
+use gitko_common::ascii_table::*;
 
 pub struct OutputWindow {
     pub output: Vec<String>
@@ -13,24 +14,22 @@ impl OutputWindow {
 
 impl Component<OutputWindow> for OutputWindow {
     fn on_start(&mut self, window: &mut Window) {
-        // TODO: should not see ncurses here
+        // TODO: should not see ncurses her
         // ncurses::curs_set(ncurses::CURSOR_VISIBILITY::CURSOR_INVISIBLE);
         window.show_cursor(false);
 
         let mut lines: Vec<Line> = vec![
             Line::new(vec![
-                Box::new(
-                    Bold::new(Underlined::new("Command output:"))
-                )
-           ])
+                Part::new("Command output:", Some(vec![Style::Bold, Style::Underlined]))
+            ])
         ];
 
         lines.append(&mut self.output
                      .iter()
-                     .map(|s| Line::from_string(s.to_owned()))
+                     .map(|s| Line::from_string(s.to_owned(), None))
                      .collect());
 
-        window.lines = lines;
+        window.set_lines(lines);
     }
 
     fn on_exit(&mut self, window: &mut Window) {

@@ -1,4 +1,4 @@
-use crate::render::{Component, Window, WriteableWindow};
+use gitko_render::{Component, Window};
 
 pub struct InputWindow {
     pub text: String
@@ -12,7 +12,7 @@ impl InputWindow {
 
 impl Component<InputWindow> for InputWindow {
     fn on_render(&mut self, window: &mut Window) -> bool {
-        window.as_writeable_mut().listen();
+        window.listen();
 
         self.text = window.get_cursor_line().trim().to_owned();
 

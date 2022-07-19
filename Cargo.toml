@@ -7,4 +7,7 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-ncurses = "5.101.0"
+gitko_common = { path = "./common" }
+gitko_render = { path = "./render" }
+gitko_crossterm = { path = "./crossterm" }
+gitko_ncurses_render = { path = "./ncurses_render" }

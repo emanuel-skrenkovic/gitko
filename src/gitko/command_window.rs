@@ -1,12 +1,11 @@
-use crate::ascii_table::*;
-use crate::render::{Component, KeyHandlers, Line, Window, WriteableWindow};
+use gitko_render::{Component, KeyHandlers, Line, Window};
+use gitko_common::ascii_table::*;
 
 pub struct CommandWindow {}
 
 impl Component<CommandWindow> for CommandWindow {
     fn on_render(&mut self, window: &mut Window) -> bool {
-        window.as_writeable_mut()
-              .listen();
+        window.listen();
 
         let line = window.get_cursor_line()
                          .trim()
@@ -26,12 +25,17 @@ impl Component<CommandWindow> for CommandWindow {
             output.stderr
         };
 
-        window.lines.push(
+        let mut lines = window.lines();
+
+        lines.push(
             Line::from_string(
                 String::from_utf8(raw_output)
-                         .expect("invalid string encoding")
+                         .expect("invalid string encoding"),
+                None
             )
         );
+
+        window.set_lines(lines);
 
         true
     }

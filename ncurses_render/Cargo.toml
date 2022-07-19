@@ -1,0 +1,11 @@
+[package]
+name = "gitko_ncurses_render"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+gitko_render = { path = "../render" }
+gitko_common = { path = "../common" }
+ncurses = "5.101.0"
