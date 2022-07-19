@@ -1,6 +1,7 @@
 use crate::git;
+use crate::gitko::diff_display::color_diff_line;
 use crate::searchable::{SearchableComponent, register_search_handlers};
-use gitko_render::{Component, KeyHandlers, Line, Window, Part};
+use gitko_render::{Component, KeyHandlers, Window};
 
 use gitko_common::ascii_table::{KEY_J_LOWER, KEY_K_LOWER};
 
@@ -44,36 +45,6 @@ impl CommitDiffWindow {
     }
 }
 
-fn map_line(line: &str) -> Line {
-    if line.starts_with('+') {
-        Line::new(vec![
-            Part::painted(
-                line,
-                (0, 255, 0),
-                (0, 0, 0)
-            )
-        ])
-    } else if line.starts_with('-') {
-        Line::new(vec![
-            Part::painted(
-                line,
-                (255, 0, 0),
-                (0, 0, 0)
-            )
-        ])
-    } else if line.starts_with("@@") {
-        Line::new(vec![
-            Part::painted(
-                line,
-                (0, 255, 255),
-                (0, 0, 0)
-            )
-        ])
-    } else {
-        Line::plain(line)
-    }
-}
-
 impl Component<CommitDiffWindow> for CommitDiffWindow {
     fn on_start(&mut self, window: &mut Window) {
         window.show_cursor(false);
@@ -81,7 +52,7 @@ impl Component<CommitDiffWindow> for CommitDiffWindow {
         window.set_lines(
             git::diff_commit(&self.commit_hash)
                 .iter()
-                .map(|l| map_line(l))
+                .map(|l| color_diff_line(l))
                 .collect()
         );
     }
