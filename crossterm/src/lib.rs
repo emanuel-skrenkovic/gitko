@@ -33,8 +33,11 @@ pub fn init() {
 
 pub fn exit() {
     terminal::disable_raw_mode().unwrap();
-    execute!(stdout(), terminal::Clear(ClearType::All))
-        .unwrap();
+    execute!(
+        stdout(),
+        cursor::MoveTo(0, 0),
+        terminal::Clear(ClearType::All)
+    ).unwrap();
 }
 
 pub struct CrosstermWindow {
