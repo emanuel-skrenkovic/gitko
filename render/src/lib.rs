@@ -136,6 +136,7 @@ impl Window {
         let start = self.screen_start;
         let end   = height + self.screen_start;
         let end   = if end < lines { end } else { lines };
+
         let data  = self.lines[start..end].to_vec();
 
         self.screen.set_data(data);

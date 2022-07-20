@@ -3,7 +3,7 @@ use crossterm::{
     queue,
     execute,
     event::{KeyEvent, KeyModifiers, KeyCode, Event, read},
-    style::{SetAttribute, Attribute, Print, Color, Color::Rgb, ResetColor, Stylize},
+    style::{Print, Color, Color::Rgb, Stylize, StyledContent},
     cursor,
     terminal::{self, enable_raw_mode, ClearType}
 };
@@ -83,6 +83,85 @@ impl CrosstermWindow {
         let y = (self.screen_start.y + self.cursor_position.y).try_into().unwrap();
         (x, y)
     }
+
+    fn create_screen_data(&self) -> Vec<Vec<StyledContent<String>>> {
+        let mut lines: Vec<Vec<StyledContent<String>>> = vec![];
+        let mut split_part: Option<StyledContent<String>> = None;
+
+        for line in &self.lines {
+            let mut styled_line: Vec<StyledContent<String>> = vec![];
+
+            if let Some(split) = split_part {
+                styled_line.push(split);
+                split_part = None;
+            }
+
+            'parts:
+            for (j, part) in line.parts.iter().enumerate() {
+                let mut output_str = part.value.clone().stylize();
+
+                for style in &part.styles {
+                    match style {
+                        Style::Underlined => {
+                            output_str = output_str.underlined();
+                        },
+                        Style::Bold => {
+                            output_str = output_str.bold();
+                        },
+                        Style::Painted (foreground, background) => {
+                            let foreground_color = Rgb {
+                                r: foreground.0,
+                                g: foreground.1,
+                                b: foreground.2
+                            };
+
+                            let background_color = Rgb {
+                                r: background.0,
+                                g: background.1,
+                                b: background.2
+                            };
+
+                            output_str = output_str
+                                .with(foreground_color)
+                                .on(background_color);
+                        },
+                        _ => { }
+                    }
+                }
+
+                let output = part.value.clone();
+                let current_len = output.len();
+                let previous_length: usize = line
+                    .parts[..j]
+                    .iter()
+                    .map(|p| p.value.len())
+                    .sum();
+
+                // Checks if the current part is over the screen width.
+                let over_width = previous_length + current_len > self.width as usize;
+
+                // If the current part is over the screen width, split it apart
+                // and render the second part into the next line.
+                if over_width {
+                    let idx = current_len - ((previous_length + current_len) - self.width as usize);
+
+                    let first  = &output[..idx];
+                    let second = &output[idx..];
+
+                    let style  = output_str.style().clone();
+                    styled_line.push(StyledContent::new(style, first.to_string()));
+                    split_part = Some(StyledContent::new(style, second.to_string()));
+                    break 'parts
+                } else {
+                    styled_line.push(output_str);
+                }
+            }
+
+            lines.push(styled_line);
+        }
+
+        lines
+    }
 }
 
 impl DrawScreen for CrosstermWindow {
@@ -140,105 +219,66 @@ impl DrawScreen for CrosstermWindow {
             terminal::Clear(ClearType::FromCursorDown)
         ).unwrap();
 
-        for (i, line) in self.lines.iter().enumerate() {
-            let cursor_line = i == self.cursor_position.y as usize;
+        let screen_data = self.create_screen_data();
+        for (line_number, styled_line) in screen_data.iter().enumerate() {
+            let cursor_line = line_number as i32 == self.cursor_position.y && self.cursor_shown;
 
-            for (j, part) in line.parts.iter().enumerate() {
-                let mut output_str = part.value.clone().stylize();
-
-                for style in &part.styles {
-                    match style {
-                        Style::Underlined => {
-                            output_str = output_str.underlined();
-                        },
-                        Style::Bold => {
-                            output_str = output_str.bold();
-                        },
-                        Style::Painted (foreground, background) => {
-                            let foreground_color = Rgb {
-                                r: foreground.0,
-                                g: foreground.1,
-                                b: foreground.2
-                            };
-
-                            let background_color = if self.cursor_shown && cursor_line {
-                                HIGHLIGHT_COLOR
-                            } else {
-                                Rgb { r: background.0, g: background.1, b: background.2 }
-                            };
-
-                            output_str = output_str.with(foreground_color).on(background_color);
-                        },
-                        _ => { }
-                    }
+            for (part_idx, part) in styled_line.iter().enumerate() {
+                if cursor_line {
+                    queue!(self.stdout, Print(part.clone().on(HIGHLIGHT_COLOR)))
+                        .unwrap();
+                } else {
+                    queue!(self.stdout, Print(part))
+                        .unwrap();
                 }
-
-                // Set background color to the highlight color if the cursor is
-                // on the line and shown.
-                if self.cursor_shown && cursor_line {
-                    output_str = output_str.on(HIGHLIGHT_COLOR);
-                }
-
-                queue!(self.stdout, Print(output_str)).unwrap();
 
                 // output_str contains only the text context, so it is
                 // required to highlight the rest of the line as well.
-                let last = j == line.parts.len() - 1;
-                if self.cursor_shown && cursor_line && last {
-                    let previous_length = line
-                        .parts
+                let last_part = part_idx == styled_line.len() - 1;
+                if cursor_line && last_part {
+                    let line_length: usize = styled_line
                         .iter()
-                        .map(|p| p.value.len())
-                        .fold(0, |agg, l| agg + l);
+                        .map(|p| p.content().len())
+                        .sum();
 
-                    let desired_width = self.width - previous_length as i32;
-                    let desired_width = if desired_width < 0 { self.width } else { desired_width };
-
-                    let content = format!(
-                        "{text:<width$}",
-                        text = "",
-                        width = desired_width as usize
-                    );
-                    queue!(self.stdout, Print(content.on(HIGHLIGHT_COLOR))).unwrap();
-                }
-
-                for style in &part.styles {
-                    match style {
-                        Style::Underlined => {
-                            queue!(self.stdout, SetAttribute(Attribute::Reset)).unwrap();
-                        },
-                        Style::Bold => {
-                            queue!(self.stdout, SetAttribute(Attribute::Reset)).unwrap();
-                        },
-                        Style::Painted (_, _) => {
-                            queue!(self.stdout, ResetColor).unwrap();
-                        },
-                        _ => {}
+                    if line_length >= self.width  as usize {
+                        continue
                     }
+
+                    let filler = format!(
+                        "{text:<width$}",
+                        text  = "",
+                        width = self.width as usize - line_length
+                    );
+
+                    queue!(self.stdout, Print(filler.on(HIGHLIGHT_COLOR)))
+                        .unwrap();
                 }
             }
 
-            queue!(self.stdout, cursor::MoveToNextLine(1)).unwrap();
+            queue!(self.stdout, cursor::MoveToNextLine(1))
+                .unwrap();
         }
 
         // We highlight the cursor line while looping through the lines,
         // but if the cursor is beyond the lines, we still need to do it.
         if self.cursor_shown && self.cursor_position.y as usize >= self.lines.len() {
-            let content = format!(
+            let filler = format!(
                 "{text:<width$}",
-                text = "",
+                text  = "",
                 width = self.width as usize
             );
 
             queue!(
                 self.stdout,
                 cursor::MoveTo(cursor_x, cursor_y),
-                Print(content.on(HIGHLIGHT_COLOR)),
+                Print(filler.on(HIGHLIGHT_COLOR)),
                 cursor::MoveTo(start_x, start_y),
             ).unwrap();
         }
 
-        queue!(self.stdout, cursor::MoveTo(cursor_x, cursor_y)).unwrap();
+        queue!(self.stdout, cursor::MoveTo(cursor_x, cursor_y))
+            .unwrap();
     }
 
     fn refresh(&mut self) {
@@ -246,7 +286,8 @@ impl DrawScreen for CrosstermWindow {
     }
 
     fn clear(&mut self) {
-        execute!(self.stdout, terminal::Clear(ClearType::FromCursorDown)).unwrap();
+        execute!(self.stdout, terminal::Clear(ClearType::FromCursorDown))
+            .unwrap();
     }
 
     // Returns the delta between the attempted cursor
