@@ -1,5 +1,5 @@
 use std::convert::TryInto;
-use gitko_render::{Line, DrawScreen, ScreenSize, Position, Style, ScreenFactory};
+use gitko_render::{Line, DrawScreen, ScreenSize, Position, Style};
 use gitko_common::{num, ascii_table::*};
 
 pub static mut MAX_WIDTH: i32   = 0;
@@ -27,7 +27,11 @@ pub fn init() {
     ncurses::init_pair(HIGHLIGHT_COLOR, ncurses::COLOR_WHITE, HIGHLIGHT_COLOR);
 }
 
-pub fn exit () {  }
+pub fn exit () { }
+
+pub fn screen_factory(size: ScreenSize, position: Position) -> Box<dyn DrawScreen> {
+    Box::new(CursesWindow::new(size, position))
+}
 
 // TODO: think about removing and adding functionality to Component trait
 pub struct CursesWindow {
@@ -269,21 +273,5 @@ impl Drop for CursesWindow {
     fn drop(&mut self) {
         ncurses::curs_set(ncurses::CURSOR_VISIBILITY::CURSOR_VISIBLE);
         ncurses::endwin();
-    }
-}
-
-#[derive(Clone)]
-pub struct CursesScreenFactory {
-}
-
-impl CursesScreenFactory {
-    pub fn new() -> CursesScreenFactory{
-        CursesScreenFactory { }
-    }
-}
-
-impl ScreenFactory for CursesScreenFactory {
-    fn create(&self, size: ScreenSize, position: Position) -> Box<dyn DrawScreen> {
-        Box::new(CursesWindow::new(size, position))
     }
 }

@@ -10,13 +10,17 @@ use crossterm::{
 
 extern crate term_size;
 
-use gitko_render::{DrawScreen, Line, ScreenSize, Position, ScreenFactory, Style};
+use gitko_render::{DrawScreen, Line, ScreenSize, Position, Style};
 use gitko_common::num;
 
 pub static mut MAX_WIDTH: i32   = 0;
 pub static mut MAX_HEIGHT: i32  = 0;
 
 static HIGHLIGHT_COLOR: Color = Rgb { r: 50, g: 50, b: 50 };
+
+pub fn screen_factory(size: ScreenSize, position: Position) -> Box<dyn DrawScreen> {
+    Box::new(CrosstermWindow::new(size, position))
+}
 
 pub fn init() {
     enable_raw_mode().unwrap();
@@ -395,21 +399,5 @@ impl DrawScreen for CrosstermWindow {
 impl Drop for CrosstermWindow {
     fn drop(&mut self) {
         execute!(self.stdout, cursor::Show).unwrap();
-    }
-}
-
-#[derive(Clone)]
-pub struct CrosstermScreenFactory {
-}
-
-impl CrosstermScreenFactory {
-    pub fn new() -> CrosstermScreenFactory{
-        CrosstermScreenFactory { }
-    }
-}
-
-impl ScreenFactory for CrosstermScreenFactory {
-    fn create(&self, size: ScreenSize, position: Position) -> Box<dyn DrawScreen> {
-        Box::new(CrosstermWindow::new(size, position))
     }
 }

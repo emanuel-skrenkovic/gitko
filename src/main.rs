@@ -1,4 +1,4 @@
-use gitko_crossterm::{init, exit, CrosstermScreenFactory as DrawScreenFactory, MAX_HEIGHT, MAX_WIDTH};
+use gitko_crossterm::{init, exit, screen_factory, MAX_HEIGHT, MAX_WIDTH};
 use gitko_render::{Renderer, ScreenSize, Position, ScreenFactory};
 
 use crate::gitko::main_window::MainWindow;
@@ -17,8 +17,8 @@ fn max_height() -> i32 {
     unsafe { MAX_HEIGHT }
 }
 
-fn screen() -> Box<dyn ScreenFactory> {
-    Box::new(DrawScreenFactory::new())
+fn screen() -> ScreenFactory {
+    screen_factory
 }
 
 fn main() {

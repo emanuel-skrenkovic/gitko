@@ -5,72 +5,8 @@ use std::collections::HashMap;
 
 use gitko_common::ascii_table::*;
 
-#[derive(Clone, Copy, Default, PartialEq)]
-pub struct Position {
-    pub x: i32,
-    pub y: i32
-}
-
-impl Position {
-    pub fn move_left(&mut self, by: i32) {
-        self.x -= by;
-    }
-
-    pub fn move_right(&mut self, by: i32) {
-        self.x += by;
-    }
-
-    pub fn move_up(&mut self, by: i32) {
-        self.y += by;
-    }
-
-    pub fn move_down(&mut self, by: i32) {
-        self.y -= by;
-    }
-
-
-    pub fn left(&self, by: i32) -> Position {
-        Position {
-            x: self.x - by,
-            y: self.y
-        }
-    }
-
-    pub fn right(&self, by: i32) -> Position {
-        Position {
-            x: self.x + by,
-            y: self.y
-        }
-    }
-
-    pub fn up(&self, by: i32) -> Position {
-        Position {
-            x: self.x,
-            y: self.y + by
-        }
-    }
-
-    pub fn down(&self, by: i32) -> Position {
-        Position {
-            x: self.x,
-            y: self.y - by
-        }
-    }
-}
-
-#[derive(PartialEq)]
-pub struct ScreenSize {
-    pub lines: i32,
-    pub cols: i32
-}
-
-impl ScreenSize {
-    pub fn max() -> ScreenSize {
-        ScreenSize { lines: 0, cols: 0 }
-    }
-}
-
 pub type KeyHandlers<T> = HashMap<i32, fn(&mut T, &mut Window) -> bool>;
+pub type ScreenFactory = fn(ScreenSize, Position) -> Box<dyn DrawScreen>;
 
 pub struct Renderer<'a, T: Component<T>>  {
     key_handlers: KeyHandlers<T>,
@@ -83,7 +19,7 @@ impl<'a, T: Component<T>> Renderer<'a, T> {
         component: &'a mut T,
         size: ScreenSize,
         position: Position,
-        screen_factory: Box<dyn ScreenFactory>) -> Renderer<'a, T> {
+        screen_factory: ScreenFactory) -> Renderer<'a, T> {
         Renderer {
             key_handlers: KeyHandlers::new(),
             window: Window::new(size, position, screen_factory),
@@ -169,7 +105,7 @@ pub struct Window {
 }
 
 impl Window {
-    pub fn new(size: ScreenSize, position: Position, screen_factory: Box<dyn ScreenFactory>) -> Window {
+    pub fn new(size: ScreenSize, position: Position, screen_factory: ScreenFactory) -> Window {
         Window {
             lines: vec![],
             screen_start: 0,
@@ -177,7 +113,7 @@ impl Window {
             position: Position::default(),
             cursor_position: Position::default(),
             cursor_hidden: false,
-            screen: screen_factory.create(size, position)
+            screen: screen_factory(size, position)
         }
     }
 
@@ -473,6 +409,67 @@ impl Line {
     }
 }
 
-pub trait ScreenFactory {
-    fn create(&self, size: ScreenSize, position: Position) -> Box<dyn DrawScreen>;
+#[derive(Clone, Copy, Default, PartialEq)]
+pub struct Position {
+    pub x: i32,
+    pub y: i32
+}
+
+impl Position {
+    pub fn move_left(&mut self, by: i32) {
+        self.x -= by;
+    }
+
+    pub fn move_right(&mut self, by: i32) {
+        self.x += by;
+    }
+
+    pub fn move_up(&mut self, by: i32) {
+        self.y += by;
+    }
+
+    pub fn move_down(&mut self, by: i32) {
+        self.y -= by;
+    }
+
+
+    pub fn left(&self, by: i32) -> Position {
+        Position {
+            x: self.x - by,
+            y: self.y
+        }
+    }
+
+    pub fn right(&self, by: i32) -> Position {
+        Position {
+            x: self.x + by,
+            y: self.y
+        }
+    }
+
+    pub fn up(&self, by: i32) -> Position {
+        Position {
+            x: self.x,
+            y: self.y + by
+        }
+    }
+
+    pub fn down(&self, by: i32) -> Position {
+        Position {
+            x: self.x,
+            y: self.y - by
+        }
+    }
+}
+
+#[derive(PartialEq)]
+pub struct ScreenSize {
+    pub lines: i32,
+    pub cols: i32
+}
+
+impl ScreenSize {
+    pub fn max() -> ScreenSize {
+        ScreenSize { lines: 0, cols: 0 }
+    }
 }
