@@ -30,9 +30,8 @@ impl<TYes: Fn(), TNo: Fn()> PromptWindow<TYes, TNo> {
 
 impl<TYes: Fn(), TNo: Fn()> Component<PromptWindow<TYes, TNo>> for PromptWindow<TYes, TNo> {
     fn on_start(&mut self, window: &mut Window) {
-        window.set_lines(
-            vec![Line::plain(&self.message)]
-        );
+        let lines = vec![Line::plain(&self.message)];
+        window.set_lines(lines);
     }
 
     fn register_handlers(&self, handlers: &mut KeyHandlers<PromptWindow<TYes, TNo>>) {

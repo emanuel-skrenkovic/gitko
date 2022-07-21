@@ -64,7 +64,7 @@ impl CrosstermWindow {
             stdout: stdout()
         };
 
-        if size != ScreenSize::max() {
+        if size.lines != 0 && size.cols != 0 {
             crossterm_window.resize(size);
         }
 
@@ -289,8 +289,12 @@ impl DrawScreen for CrosstermWindow {
     }
 
     fn clear(&mut self) {
-        execute!(self.stdout, terminal::Clear(ClearType::FromCursorDown))
-            .unwrap();
+        let (x, y) = self.cursor_position();
+        execute!(
+            self.stdout,
+            cursor::MoveTo(x, y + 1),
+            terminal::Clear(ClearType::FromCursorDown)
+        ).unwrap();
     }
 
     // Returns the delta between the attempted cursor
