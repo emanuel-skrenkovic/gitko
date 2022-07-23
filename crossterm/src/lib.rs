@@ -1,3 +1,4 @@
+use std::collections::VecDeque;
 use std::io::{Write, Stdout, stdout};
 use crossterm::{
     queue,
@@ -42,6 +43,7 @@ pub fn exit() {
 
 pub struct CrosstermWindow {
     lines: Vec<Line>,
+    data: Vec<String>,
     height: i32,
     width: i32,
     screen_start: Position,
@@ -56,6 +58,7 @@ impl CrosstermWindow {
 
         let mut crossterm_window = CrosstermWindow {
             lines: vec![],
+            data: vec![],
             height: rows as i32,
             width: cols as i32,
             screen_start: Position::default(),
@@ -87,83 +90,86 @@ impl CrosstermWindow {
         (x, y)
     }
 
-    fn create_screen_data(&self) -> Vec<Vec<StyledContent<String>>> {
-        let mut lines: Vec<Vec<StyledContent<String>>> = vec![];
-        let mut split_part: Option<StyledContent<String>> = None;
+    fn split_part(&self, part: String) -> Vec<String> {
+        todo!()
+    }
 
-        for line in &self.lines {
-            let mut styled_line: Vec<StyledContent<String>> = vec![];
+    fn parse_line(&self, line: &Line) -> Vec<Vec<StyledContent<String>>> {
+        let mut lines: VecDeque<Vec<StyledContent<String>>> = VecDeque::new();
+        let mut styled_line: Vec<StyledContent<String>> = vec![];
 
-            if let Some(split) = split_part {
-                styled_line.push(split);
-                split_part = None;
-            }
+        for (i, part) in line.parts.iter().enumerate() {
+            let mut output_str = part.value.clone().stylize();
 
-            'parts:
-            for (j, part) in line.parts.iter().enumerate() {
-                let mut output_str = part.value.clone().stylize();
+            for style in &part.styles {
+                match style {
+                    Style::Underlined => {
+                        output_str = output_str.underlined();
+                    },
+                    Style::Bold => {
+                        output_str = output_str.bold();
+                    },
+                    Style::Painted (foreground, background) => {
+                        let foreground_color = Rgb {
+                            r: foreground.0,
+                            g: foreground.1,
+                            b: foreground.2
+                        };
 
-                for style in &part.styles {
-                    match style {
-                        Style::Underlined => {
-                            output_str = output_str.underlined();
-                        },
-                        Style::Bold => {
-                            output_str = output_str.bold();
-                        },
-                        Style::Painted (foreground, background) => {
-                            let foreground_color = Rgb {
-                                r: foreground.0,
-                                g: foreground.1,
-                                b: foreground.2
-                            };
+                        let background_color = Rgb {
+                            r: background.0,
+                            g: background.1,
+                            b: background.2
+                        };
 
-                            let background_color = Rgb {
-                                r: background.0,
-                                g: background.1,
-                                b: background.2
-                            };
-
-                            output_str = output_str
-                                .with(foreground_color)
-                                .on(background_color);
-                        },
-                        _ => { }
-                    }
-                }
-
-                let output = part.value.clone();
-                let current_len = output.len();
-                let previous_length: usize = line
-                    .parts[..j]
-                    .iter()
-                    .map(|p| p.value.len())
-                    .sum();
-
-                // Checks if the current part is over the screen width.
-                let over_width = previous_length + current_len > self.width as usize;
-
-                // If the current part is over the screen width, split it apart
-                // and render the second part into the next line.
-                if over_width {
-                    let idx = current_len - ((previous_length + current_len) - self.width as usize);
-
-                    let first  = &output[..idx];
-                    let second = &output[idx..];
-
-                    let style  = output_str.style().clone();
-                    styled_line.push(StyledContent::new(style, first.to_string()));
-                    split_part = Some(StyledContent::new(style, second.to_string()));
-                    break 'parts
-                } else {
-                    styled_line.push(output_str);
+                        output_str = output_str
+                            .with(foreground_color)
+                            .on(background_color);
+                    },
+                    _ => { }
                 }
             }
 
-            lines.push(styled_line);
+            let output = part.value.clone();
+            let current_len = output.len();
+            let previous_length: usize = line
+                .parts[..i]
+                .iter()
+                .map(|p| p.value.len())
+                .sum();
+
+            // Checks if the current part is over the screen width.
+            let over_width = previous_length + current_len > self.width as usize;
+
+            // If the current part is over the screen width, split it apart
+            // and render the second part into the next line.
+            if over_width {
+                let idx = current_len - ((previous_length + current_len) - self.width as usize);
+
+                let first  = &output[..idx];
+                let second = &output[idx..];
+
+                let style  = output_str.style().clone();
+                styled_line.push(StyledContent::new(style, first.to_string()));
+
+                let mut styled_line2: Vec<StyledContent<String>> = vec![];
+                styled_line2.push(StyledContent::new(style, second.to_string()));
+                lines.push_back(styled_line2);
+                break
+            } else {
+                styled_line.push(output_str);
+            }
         }
 
-        lines
+        lines.push_front(styled_line);
+        lines.into()
+    }
+
+    fn create_screen_data(&self) -> Vec<Vec<StyledContent<String>>> {
+        self.lines
+            .iter()
+            .map(|l| self.parse_line(l))
+            .fold(vec![], |agg, parsed| [agg.as_slice(), parsed.as_slice()].concat())
     }
 }
 
@@ -209,7 +215,7 @@ impl DrawScreen for CrosstermWindow {
             return "".to_owned()
         }
 
-        self.lines[index].value()
+        self.data[index].clone()
     }
 
     fn queue_update(&mut self) {
@@ -258,6 +264,14 @@ impl DrawScreen for CrosstermWindow {
                         .unwrap();
                 }
             }
+
+            // TODO: inefficient
+            let string_data: String = styled_line
+                .iter()
+                .map(|p| p.content().clone())
+                .fold(String::new(), |agg, p| agg + &p);
+
+            self.data.push(string_data);
 
             queue!(self.stdout, cursor::MoveToNextLine(1))
                 .unwrap();
