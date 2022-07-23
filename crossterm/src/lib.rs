@@ -252,6 +252,8 @@ impl DrawScreen for CrosstermWindow {
         let (start_x, start_y)   = self.screen_start();
         let (cursor_x, cursor_y) = self.cursor_position();
 
+        self.data.clear();
+
         queue!(
             self.stdout,
             cursor::MoveTo(start_x, start_y),
@@ -298,8 +300,8 @@ impl DrawScreen for CrosstermWindow {
             // TODO: inefficient
             let string_data: String = styled_line
                 .iter()
-                .map(|p| p.content().clone())
-                .fold(String::new(), |agg, p| agg + &p);
+                .map(|p| p.content())
+                .fold(String::new(), |agg, p| agg + p);
 
             self.data.push(string_data);
 
