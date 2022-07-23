@@ -118,6 +118,8 @@ impl MainWindow {
 
     fn delete_untracked_file(&mut self, window: &mut Window) -> bool {
         let line = window.get_cursor_line();
+        if line.is_empty() { return true }
+
         let file_state = parse_file_state(&line);
 
         if matches!(file_state, FileState::Untracked) {
@@ -139,6 +141,8 @@ impl MainWindow {
 
     fn git_checkout_file(&mut self, window: &mut Window) -> bool {
         let line = window.get_cursor_line();
+        if line.is_empty() { return true }
+
         let file_state = parse_file_state(&line);
 
         if matches!(file_state, FileState::Modified) {
@@ -162,6 +166,7 @@ impl MainWindow {
         // TODO: add parse git status that returns file state
         // and file path?
         let line = window.get_cursor_line();
+        if line.is_empty() { return true }
 
         if git::is_file_modified(&line) {
             git::add_file(line[3..].trim());
@@ -174,6 +179,7 @@ impl MainWindow {
 
     fn git_unstage_file(&mut self, window: &mut Window) -> bool {
         let line = window.get_cursor_line();
+        if line.is_empty() { return true }
 
         if git::is_in_worktree(&line) {
             git::unstage_file(line[3..].trim());
