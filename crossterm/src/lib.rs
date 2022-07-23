@@ -90,8 +90,30 @@ impl CrosstermWindow {
         (x, y)
     }
 
-    fn split_part(&self, part: String) -> Vec<String> {
-        todo!()
+    fn fit_line(&self, part: &str, max_width: usize) -> Vec<String> {
+        if part.len() < max_width {
+            return vec![part.to_owned()]
+        }
+
+        let mut lines: Vec<String> = vec![];
+
+        let first = &part[..max_width];
+        let mut rest = &part[max_width..];
+
+        lines.push(first.to_owned());
+
+        while rest.len() >= max_width {
+            let first = &rest[..max_width];
+            lines.push(first.to_owned());
+
+            rest = &rest[max_width..];
+        }
+
+        if !rest.is_empty() {
+            lines.push(rest.to_owned());
+        }
+
+        lines
     }
 
     fn parse_line(&self, line: &Line) -> Vec<Vec<StyledContent<String>>> {
@@ -145,17 +167,25 @@ impl CrosstermWindow {
             // and render the second part into the next line.
             if over_width {
                 let idx = current_len - ((previous_length + current_len) - self.width as usize);
+                let style  = output_str.style().clone();
 
                 let first  = &output[..idx];
                 let second = &output[idx..];
-
-                let style  = output_str.style().clone();
                 styled_line.push(StyledContent::new(style, first.to_string()));
 
-                let mut styled_line2: Vec<StyledContent<String>> = vec![];
-                styled_line2.push(StyledContent::new(style, second.to_string()));
-                lines.push_back(styled_line2);
-                break
+                // The current part might be over a line wide, so we need to keep
+                // splitting it until it fits.
+                let split_lines = self.fit_line(second, self.width as usize);
+
+                let content: Vec<StyledContent<String>> = split_lines
+                    .iter()
+                    .map(|l| StyledContent::new(style, l.to_string()))
+                    .collect();
+
+                // Write each split part as a line.
+                content
+                    .iter()
+                    .for_each(|l| lines.push_back(vec![l.clone()]));
             } else {
                 styled_line.push(output_str);
             }
