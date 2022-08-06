@@ -61,6 +61,7 @@ impl Component<DiffWindow> for DiffWindow {
                 let file = File::open(&self.path).expect("Could not find file");
                 let lines: Vec<String> = BufReader::new(file)
                     .lines()
+                    .filter(|l| l.is_ok())
                     .map(|l| l.expect("Could not parse line"))
                     .collect();
 
