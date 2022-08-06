@@ -1,6 +1,6 @@
-use std::fs::{metadata,read_dir,remove_file};
-use std::path::{Path, PathBuf};
 use std::process::Command;
+use std::path::{Path, PathBuf};
+use std::fs::{read_dir, remove_file};
 
 use crate::git;
 use crate::screen;
@@ -220,6 +220,43 @@ impl MainWindow {
     }
 }
 
+fn get_dir_file_paths(path: &Path) -> Vec<String> {
+    let mut paths = vec![];
+
+    if let Ok(metadata) = path.metadata() {
+        if metadata.is_dir() {
+            if let Ok(dir_paths) = read_dir(path) {
+                for path in dir_paths.flatten() {
+                    if let Ok(meta) = path.metadata() {
+                        if meta.is_dir() {
+                            paths.append(
+                                &mut get_dir_file_paths(&path.path().as_path())
+                            );
+                        } else {
+                            paths.push(
+                                path
+                                    .path()
+                                    .to_str()
+                                    .unwrap()
+                                    .to_string()
+                            );
+                        }
+                    }
+                }
+            }
+        } else if metadata.is_file() {
+            paths.push(
+                path
+                    .to_str()
+                    .unwrap()
+                    .to_string()
+            );
+        }
+    }
+
+    paths
+}
+
 impl Component<MainWindow> for MainWindow {
     fn on_start(&mut self, window: &mut Window) {
         let git_status: Vec<String> = git::status();
@@ -235,33 +272,21 @@ impl Component<MainWindow> for MainWindow {
 
         for u in &untracked {
             let untracked_path = &u[3..];
-            let path_metadata = metadata(untracked_path);
 
             let modified = u.chars().nth(1).unwrap() == 'M';
 
-            if let Ok(metadata) = path_metadata {
-                if metadata.is_dir() {
-                    let paths_result = read_dir(&untracked_path);
+            let paths = get_dir_file_paths(&Path::new(untracked_path));
+            let unignored_paths = paths
+                .iter()
+                .filter(|p| !git::is_ignored(Path::new(p)));
 
-                    if let Ok(paths) = paths_result {
-                        for path in paths.flatten() {
-                            let line = Line::plain(&format!("?? {}", path.path().display()));
+            for path in unignored_paths {
+                let line = Line::plain(&format!("?? {}", &path));
 
-                            if modified {
-                                added_modified.push(line);
-                            } else {
-                                added.push(line);
-                            }
-                        }
-                    }
-                } else if metadata.is_file() {
-                    let line = Line::plain(u);
-
-                    if modified {
-                        added_modified.push(line);
-                    } else {
-                        added.push(line);
-                    }
+                if modified {
+                    added_modified.push(line);
+                } else {
+                    added.push(line);
                 }
             }
         }

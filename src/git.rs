@@ -1,4 +1,6 @@
 #![allow(dead_code)]
+use std::path::Path;
+
 pub enum FileState {
     Unknown,
     Modified,
@@ -51,6 +53,13 @@ pub fn parse_file_state(path: &str) -> FileState {
     } else {
         FileState::Unknown
     }
+}
+
+pub fn is_ignored(path: &Path) -> bool {
+    let path_str = path.to_str().unwrap();
+    let output = run(vec!["check-ignore", path_str]);
+
+    output.len() > 0
 }
 
 pub fn current_branch() -> String {
