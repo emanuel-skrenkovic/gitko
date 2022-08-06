@@ -241,8 +241,8 @@ impl DrawScreen for CrosstermWindow {
 
     fn get_cursor_line(&self) -> String {
         let index = self.cursor_position.y as usize;
-        if index >= self.lines.len() {
-            return "".to_owned()
+        if index > self.lines.len() {
+            return "".to_owned();
         }
 
         self.data[index].clone()
@@ -410,11 +410,13 @@ impl DrawScreen for CrosstermWindow {
                         KeyCode::Esc     => break 'input_loop,
                         KeyCode::Enter   => break 'input_loop,
                         KeyCode::Char(c) => {
-                            let mut line = self.get_cursor_line();
+                            let mut line = self.lines[0].value();
                             let index = self.cursor_position.x as usize;
 
                             line.insert(index, c);
-                            self.lines[0] = Line::plain(&line);
+
+                            self.lines[0] = Line::plain(&line.clone());
+                            self.data[0] = line.clone();
 
                             self.cursor_position.move_right(1);
                             let (x, y) = self.cursor_position();
@@ -428,7 +430,7 @@ impl DrawScreen for CrosstermWindow {
                             ).unwrap();
                         },
                         KeyCode::Backspace =>  {
-                            let mut line = self.get_cursor_line();
+                            let mut line = self.lines[0].value();
                             if line.is_empty() { continue }
 
                             self.cursor_position.move_left(1);
@@ -436,6 +438,7 @@ impl DrawScreen for CrosstermWindow {
 
                             line.remove(index);
                             self.lines[0] = Line::plain(&line);
+                            self.data[0] = line.clone();
 
                             let (x, y) = self.cursor_position();
                             execute!(
@@ -447,7 +450,7 @@ impl DrawScreen for CrosstermWindow {
                             ).unwrap();
                         },
                         KeyCode::Delete => {
-                            let mut line = self.get_cursor_line();
+                            let mut line = self.lines[0].value();
                             if line.is_empty() { continue }
 
                             let index = self.cursor_position.x as usize;
@@ -455,6 +458,7 @@ impl DrawScreen for CrosstermWindow {
 
                             line.remove(index);
                             self.lines[0] = Line::plain(&line);
+                            self.data[0] = line.clone();
 
                             let (x, y) = self.cursor_position();
                             execute!(
