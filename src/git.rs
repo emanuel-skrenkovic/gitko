@@ -191,7 +191,15 @@ pub fn reset(commit_hash: &str, mode: &str) -> Vec<String> {
 }
 
 pub fn log(max_count: Option<u32>) -> Vec<String> {
-    let mut args = vec!["--no-pager", "log", "--graph", "--oneline", "--decorate"];
+    let mut args = vec![
+        "--no-pager",
+        "log",
+        "--graph",
+        "--oneline",
+        "--decorate",
+        "--remotes",
+        "--branches"
+    ];
 
     let max_count_arg;
 
