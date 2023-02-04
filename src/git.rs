@@ -2,6 +2,7 @@
 use std::path::Path;
 
 pub enum FileState {
+    Invalid,
     Unknown,
     Modified,
     Deleted,
@@ -37,8 +38,22 @@ pub fn is_file_modified(path: &str) -> bool {
 
 }
 
+static ALLOWED_GIT_PATH_START: [char; 7] = [' ', 'M', 'T', 'A', 'D', 'R', 'C'];
+
 pub fn parse_file_state(path: &str) -> FileState {
     // https://git-scm.com/docs/git-status
+    if path.len() < 3 {
+        return FileState::Unknown
+    }
+
+    // unwrap _should_ be safe here because the length was already
+    // checked above.
+    let first = &path.chars().nth(0).unwrap();
+    let third = &path.chars().nth(2).unwrap();
+    if !ALLOWED_GIT_PATH_START.contains(first) || third != &' ' {
+        return FileState::Unknown
+    }
+
     let state = &path[..3];
     let (first, second) = parse_status(path);
 
