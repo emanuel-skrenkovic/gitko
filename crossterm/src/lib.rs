@@ -311,7 +311,7 @@ impl DrawScreen for CrosstermWindow {
 
         // We highlight the cursor line while looping through the lines,
         // but if the cursor is beyond the lines, we still need to do it.
-        if self.cursor_shown && self.cursor_position.y as usize > self.lines.len() {
+        if self.cursor_shown && self.cursor_position.y as usize >= self.lines.len() {
             let filler = format!(
                 "{text:<width$}",
                 text  = "",
