@@ -400,7 +400,10 @@ impl Component<MainWindow> for MainWindow {
                     )
                 ])
             );
-            status.append(&mut added);
+
+            if self.expanded_sections.contains(&SECTION_UNTRACKED.to_string()) {
+                status.append(&mut added);
+            }
 
             status.push(Line::empty());
         }
@@ -414,7 +417,10 @@ impl Component<MainWindow> for MainWindow {
                     )]
                 )
             );
-            status.append(&mut added_modified);
+
+            if self.expanded_sections.contains(&SECTION_UNTRACKED_MODIFIED.to_string()) {
+                status.append(&mut added_modified);
+            }
 
             status.push(Line::empty());
         }
@@ -424,7 +430,11 @@ impl Component<MainWindow> for MainWindow {
                 "Deleted files:",
                 Some(vec![Style::Bold, Style::Underlined]))
             );
-            status.append(&mut deleted);
+
+            if self.expanded_sections.contains(&SECTION_DELETED.to_string()) {
+                status.append(&mut deleted);
+            }
+
             status.push(Line::empty());
         }
 
