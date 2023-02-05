@@ -22,9 +22,8 @@ impl LogWindow {
         let trimmed_line = line
             .trim_matches(|c| c == '|' || c == '\\' || c == '*' || c == ' ');
 
-        if trimmed_line.is_empty() {
-            return true;
-        }
+        if trimmed_line.is_empty() { return true }
+        if trimmed_line.len() <= 7 { return true }
 
         let commit_hash = &trimmed_line[0..7];
 
@@ -61,27 +60,28 @@ fn map_line(line: &str) -> Line {
 
     let mut chars = line.chars();
     let star = chars.position(|c| c == '*');
-    if let Some(star_position) = star {
-        let start = chars.position(|c| c != ' ');
+    match star {
+        Some(star_position) => {
+            let start = chars.position(|c| c != ' ');
+            if let Some(start_position) = start {
+                let hash_start = star_position + start_position + 1;
+                parts.push(Part::plain(&line[0..hash_start]));
 
-        if let Some(start_position) = start {
-            let hash_start = star_position + start_position + 1;
+                const HASH_LENGTH: usize = 7;
+                parts.push(
+                    Part::painted(
+                        &line[hash_start..hash_start + HASH_LENGTH],
+                        (255, 255, 0),
+                        (0, 0, 0)
+                    )
+                );
 
-            parts.push(Part::plain(&line[0..hash_start]));
-
-            let hash_length = 7;
-            parts.push(
-                Part::painted(
-                    &line[hash_start..hash_start + hash_length],
-                    (255, 255, 0),
-                    (0, 0, 0)
-                )
-            );
-
-            parts.push(Part::plain(&line[hash_start + hash_length..]));
+                parts.push(Part::plain(&line[hash_start + HASH_LENGTH..]));
+            }
         }
-    } else {
-        parts.push(Part::plain(line));
+        None => {
+            parts.push(Part::plain(line));
+        }
     }
 
     Line::new(parts)

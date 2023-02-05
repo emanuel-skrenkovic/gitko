@@ -24,26 +24,23 @@ pub struct MainWindow {
 
 impl MainWindow {
     pub fn new() -> MainWindow {
-        MainWindow { term: "".to_owned() }
+        MainWindow { term: String::new() }
     }
 
     fn diff_file(&mut self, window: &mut Window) -> bool {
         let line = window.get_cursor_line();
         if line.is_empty() { return true }
-        if line.len() < 3 { return true }
+        if line.len() < 3  { return true }
 
         let file_state = parse_file_state(&line);
+        if matches!(file_state, FileState::Unknown) { return true }
 
-        if !matches!(file_state, FileState::Unknown) {
-            let path = line[3..].trim();
-
-            Renderer::new(
-                &mut DiffWindow::new(path, file_state),
-                ScreenSize { lines: window.height(), cols: window.width() },
-                Position::default(),
-                screen()
-            ).render();
-        }
+        Renderer::new(
+            &mut DiffWindow::new(line[3..].trim(), file_state),
+            ScreenSize { lines: window.height(), cols: window.width() },
+            Position::default(),
+            screen()
+        ).render();
 
         true
     }
@@ -106,7 +103,7 @@ impl MainWindow {
             return true
         }
 
-        let mut path = PathBuf::from(window.get_cursor_line()[3..].trim());
+        let mut path = PathBuf::from(cursor_line[3..].trim());
         path.pop();
 
         if path.as_os_str().is_empty() {
