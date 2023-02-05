@@ -96,7 +96,12 @@ impl MainWindow {
             panic!("Platform not supported.");
         };
 
-        let path_str = window.get_cursor_line()[3..].trim().to_owned();
+        let cursor_line = window.get_cursor_line();
+        if cursor_line.len() < 3 {
+            return true
+        }
+
+        let path_str = cursor_line[3..].trim().to_owned();
         if !Path::new(&path_str).exists() {
             return true
         }
