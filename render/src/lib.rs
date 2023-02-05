@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use std::cmp::{Ordering};
+use std::cmp::Ordering;
 use std::collections::HashMap;
 
 use gitko_common::ascii_table::*;
@@ -432,7 +432,6 @@ impl Position {
     pub fn move_down(&mut self, by: i32) {
         self.y -= by;
     }
-
 
     pub fn left(&self, by: i32) -> Position {
         Position {

@@ -205,6 +205,10 @@ pub fn reset(commit_hash: &str, mode: &str) -> Vec<String> {
     run(vec!["reset", mode, commit_hash])
 }
 
+pub fn show(commit_hash: &str) -> Vec<String> {
+    run(vec!["--no-pager", "show", commit_hash])
+}
+
 pub fn log(max_count: Option<u32>) -> Vec<String> {
     let mut args = vec![
         "--no-pager",
