@@ -1,12 +1,13 @@
 use crate::git;
 use crate::screen;
-use crate::{max_height};
+use crate::max_height;
 use crate::gitko::output_window::OutputWindow;
 use crate::gitko::commit_diff_window::CommitDiffWindow;
+use crate::gitko::detailed_commit_window::DetailedCommitWindow;
 use crate::searchable::{SearchableComponent, register_search_handlers};
 use gitko_render::{Component, KeyHandlers, Line,Renderer, ScreenSize, Window, Position, Part};
 
-use gitko_common::ascii_table::{KEY_LF, KEY_N_LOWER, KEY_N_UPPER, KEY_R_UPPER};
+use gitko_common::ascii_table::{KEY_LF, KEY_N_LOWER, KEY_N_UPPER, KEY_R_UPPER, KEY_D_LOWER};
 
 pub struct LogWindow {
     term: String,
@@ -33,6 +34,20 @@ impl LogWindow {
             Position::default(),
             screen()
         ).render();
+
+        true
+    }
+
+    fn open_detailed_log_window(&mut self, window: &mut Window) -> bool {
+        let line = window.get_cursor_line().trim().to_owned();
+        if let Some(commit_hash) = parse_commit_hash(&line) {
+            Renderer::new(
+                &mut DetailedCommitWindow::new(commit_hash),
+                ScreenSize::max(),
+                Position { x: 0, y: 0 },
+                screen()
+            ).render();
+        }
 
         true
     }
@@ -100,6 +115,10 @@ impl Component<LogWindow> for LogWindow {
     fn register_handlers(&self, handlers: &mut KeyHandlers<LogWindow>) {
         handlers.insert(KEY_LF, LogWindow::get_commit_log);
         handlers.insert(KEY_N_LOWER, LogWindow::next_search_result);
+
+        // TODO
+        handlers.insert(KEY_D_LOWER, LogWindow::open_detailed_log_window);
+
         handlers.insert(KEY_N_UPPER, LogWindow::prev_search_result);
         handlers.insert(KEY_R_UPPER, LogWindow::open_reset_options);
         register_search_handlers(handlers);

@@ -1,7 +1,7 @@
 use std::{fs::File, io::{BufReader, BufRead}};
 
 use crate::git;
-use crate::git::{FileState};
+use crate::git::FileState;
 use crate::gitko::diff_display::color_diff_line;
 use crate::searchable::{SearchableComponent, register_search_handlers};
 use gitko_render::{KeyHandlers, Component, Window};
