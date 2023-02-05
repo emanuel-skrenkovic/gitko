@@ -241,7 +241,7 @@ impl DrawScreen for CrosstermWindow {
 
     fn get_cursor_line(&self) -> String {
         let index = self.cursor_position.y as usize;
-        if index >= self.lines.len() {
+        if index > self.lines.len() {
             return "".to_owned();
         }
 
@@ -311,7 +311,7 @@ impl DrawScreen for CrosstermWindow {
 
         // We highlight the cursor line while looping through the lines,
         // but if the cursor is beyond the lines, we still need to do it.
-        if self.cursor_shown && self.cursor_position.y as usize >= self.lines.len() {
+        if self.cursor_shown && self.cursor_position.y as usize > self.lines.len() {
             let filler = format!(
                 "{text:<width$}",
                 text  = "",

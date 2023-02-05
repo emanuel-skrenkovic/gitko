@@ -18,13 +18,58 @@ use gitko_render::{Line, Renderer, KeyHandlers, Component, ScreenSize, Window, P
 use gitko_common::ascii_table::{KEY_B_LOWER, KEY_COLON, KEY_C_LOWER, KEY_C_UPPER, KEY_D_LOWER, KEY_LF,
                                 KEY_L_LOWER, KEY_O_UPPER, KEY_P_UPPER, KEY_R_UPPER, KEY_T_LOWER, KEY_U_LOWER};
 
+const SECTION_UNTRACKED_MODIFIED: &str = "Untracked (modified) files";
+const SECTION_UNTRACKED: &str = "Untracked files";
+const SECTION_MODIFIED: &str = "Modified files";
+const SECTION_STAGED: &str = "Staged files";
+const SECTION_DELETED: &str = "Deleted files";
+
+const SECTION_NAMES: [&str; 5] = [
+    SECTION_UNTRACKED_MODIFIED,
+    SECTION_UNTRACKED,
+    SECTION_MODIFIED,
+    SECTION_STAGED,
+    SECTION_DELETED,
+];
+
+
 pub struct MainWindow {
-    term: String
+    term: String,
+    expanded_sections: Vec<String>
 }
 
 impl MainWindow {
     pub fn new() -> MainWindow {
-        MainWindow { term: String::new() }
+        MainWindow {
+            term: String::new(),
+            expanded_sections: vec![]
+        }
+    }
+
+    fn on_press_enter(&mut self, window: &mut Window) -> bool {
+        let line = window.get_cursor_line();
+
+        let mut selected_section = None;
+        for section in SECTION_NAMES.iter() {
+            if line.contains(section) {
+                selected_section = Some(section);
+                break;
+            }
+        }
+
+         match selected_section {
+            Some(section) => {
+                match self.expanded_sections.iter().position(|s| s == section) {
+                    Some(pos) => { self.expanded_sections.remove(pos); }
+                    None      => { self.expanded_sections.push(section.to_string()); }
+                }
+            }
+             None => { self.diff_file(window); }
+        }
+
+        self.refresh(window);
+
+        true
     }
 
     fn diff_file(&mut self, window: &mut Window) -> bool {
@@ -181,11 +226,13 @@ impl MainWindow {
 
     fn git_unstage_file(&mut self, window: &mut Window) -> bool {
         let line = window.get_cursor_line();
-        if line.is_empty() { return true }
 
-        if git::is_in_worktree(&line) {
-            git::unstage_file(line[3..].trim());
-        }
+        if line.is_empty()             { return true }
+        if line.len() < 3              { return true }
+        if !git::is_in_worktree(&line) { return true }
+
+        let path = line[3..].trim();
+        git::unstage_file(path);
 
         self.on_start(window);
 
@@ -344,7 +391,6 @@ impl Component<MainWindow> for MainWindow {
 
         status.push(Line::empty());
 
-
         if !added.is_empty() {
             status.push(
                 Line::new(vec![
@@ -388,7 +434,8 @@ impl Component<MainWindow> for MainWindow {
                 Some(vec![Style::Bold, Style::Underlined])
             )
         );
-        if !unstaged.is_empty() {
+
+        if !unstaged.is_empty() && self.expanded_sections.contains(&SECTION_MODIFIED.to_string()) {
             status.append(&mut unstaged);
 
             status.push(Line::empty());
@@ -416,7 +463,7 @@ impl Component<MainWindow> for MainWindow {
     }
 
     fn register_handlers(&self, handlers: &mut KeyHandlers<MainWindow>) {
-        handlers.insert(KEY_LF, MainWindow::diff_file);
+        handlers.insert(KEY_LF, MainWindow::on_press_enter);
         handlers.insert(KEY_B_LOWER, MainWindow::open_branch_window);
         handlers.insert(KEY_C_LOWER, MainWindow::git_checkout_file);
         handlers.insert(KEY_D_LOWER, MainWindow::delete_untracked_file);
