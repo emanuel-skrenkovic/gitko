@@ -113,12 +113,9 @@ impl Component<LogWindow> for LogWindow {
     }
 
     fn register_handlers(&self, handlers: &mut KeyHandlers<LogWindow>) {
-        handlers.insert(KEY_LF, LogWindow::get_commit_log);
+        handlers.insert(KEY_D_LOWER, LogWindow::get_commit_log);
         handlers.insert(KEY_N_LOWER, LogWindow::next_search_result);
-
-        // TODO
-        handlers.insert(KEY_D_LOWER, LogWindow::open_detailed_log_window);
-
+        handlers.insert(KEY_LF, LogWindow::open_detailed_log_window);
         handlers.insert(KEY_N_UPPER, LogWindow::prev_search_result);
         handlers.insert(KEY_R_UPPER, LogWindow::open_reset_options);
         register_search_handlers(handlers);

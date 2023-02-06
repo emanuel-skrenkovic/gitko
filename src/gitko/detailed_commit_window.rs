@@ -1,5 +1,5 @@
 use std::path::Path;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 use crate::git;
 use crate::gitko::diff_display::color_diff_line;
@@ -11,7 +11,7 @@ pub struct DetailedCommitWindow {
     commit_hash: String,
     commit_details: Vec<String>,
     file_changes: HashMap<String, Vec<String>>,
-    expanded_changes: HashSet<String>,
+    expanded_changes: HashMap<String, bool>,
 }
 
 impl DetailedCommitWindow {
@@ -20,7 +20,7 @@ impl DetailedCommitWindow {
             commit_hash: commit_hash.to_owned(),
             commit_details: vec![],
             file_changes: HashMap::new(),
-            expanded_changes: HashSet::new(),
+            expanded_changes: HashMap::new(),
         }
     }
 
@@ -33,9 +33,18 @@ impl DetailedCommitWindow {
         }
 
         if let Some(path_str) = path.to_str().to_owned() {
-            match self.expanded_changes.contains(path_str) {
-                true  => self.expanded_changes.remove(path_str),
-                false => self.expanded_changes.insert(path_str.to_owned())
+            match self.expanded_changes.get(path_str) {
+                Some(&true) => {
+                    self.expanded_changes
+                        .entry(path_str.to_string())
+                        .and_modify(|v| *v = false);
+                }
+                Some(&false) => {
+                    self.expanded_changes
+                        .entry(path_str.to_string())
+                        .and_modify(|v| *v = true);
+                }
+                None => ()
             };
 
             self.on_start(window);
@@ -45,7 +54,7 @@ impl DetailedCommitWindow {
     }
 
     fn on_press_esc(&mut self, window: &mut Window) -> bool {
-        self.expanded_changes.clear();
+        for (_, val) in self.expanded_changes.iter_mut() { *val = false; }
         self.on_start(window);
         true
     }
@@ -69,6 +78,11 @@ impl Component<DetailedCommitWindow> for DetailedCommitWindow {
                     .join("/");
 
                 self.file_changes.insert(file_path.clone(), vec![]);
+
+                if !self.expanded_changes.contains_key(&file_path) {
+                    self.expanded_changes.insert(file_path.clone(), true);
+                }
+
                 current_path = Some(file_path.clone());
             }
 
@@ -95,16 +109,18 @@ impl Component<DetailedCommitWindow> for DetailedCommitWindow {
                 vec![Part::new(key, Some(vec![Style::Bold, Style::Underlined]))]
             ));
 
-            if self.expanded_changes.contains(key) {
-                if let Some(changes) = self.file_changes.get(key) {
-                    let mut change_lines = changes
-                        .iter()
-                        .map(|l| color_diff_line(l))
-                        .collect();
-                    output.append(&mut change_lines);
-                    output.push(Line::empty());
+            if let Some(expanded) = self.expanded_changes.get(key) {
+                if *expanded {
+                    if let Some(changes) = self.file_changes.get(key) {
+                        let mut change_lines = changes
+                            .iter()
+                            .map(|l| color_diff_line(l))
+                            .collect();
+                        output.append(&mut change_lines);
+                        output.push(Line::empty());
+                    }
                 }
-            }
+                            }
         }
 
         window.set_lines(output);

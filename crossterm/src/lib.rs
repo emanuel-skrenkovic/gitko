@@ -241,7 +241,7 @@ impl DrawScreen for CrosstermWindow {
 
     fn get_cursor_line(&self) -> String {
         let index = self.cursor_position.y as usize;
-        if index > self.lines.len() {
+        if index >= self.lines.len() {
             return "".to_owned();
         }
 

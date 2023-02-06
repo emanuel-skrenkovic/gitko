@@ -447,7 +447,6 @@ impl Component<MainWindow> for MainWindow {
 
         if !unstaged.is_empty() && self.expanded_sections.contains(&SECTION_MODIFIED.to_string()) {
             status.append(&mut unstaged);
-
             status.push(Line::empty());
         }
 
