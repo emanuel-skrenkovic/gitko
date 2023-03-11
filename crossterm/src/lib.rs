@@ -309,9 +309,18 @@ impl DrawScreen for CrosstermWindow {
                 .unwrap();
         }
 
+        // This is a fix for overflowing the possition in case it is 0.
+        // When it happened, the first row was always overwritten by
+        // the highlighting.
+        let current_cursor_y_pos = if self.cursor_position.y == 0 {
+            0
+        } else {
+            self.cursor_position.y - 1
+        };
+
         // We highlight the cursor line while looping through the lines,
         // but if the cursor is beyond the lines, we still need to do it.
-        if self.cursor_shown && self.cursor_position.y as usize >= self.lines.len() {
+        if self.cursor_shown && current_cursor_y_pos as usize >= self.lines.len() {
             let filler = format!(
                 "{text:<width$}",
                 text  = "",
