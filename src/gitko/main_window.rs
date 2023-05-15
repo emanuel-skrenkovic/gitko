@@ -57,14 +57,14 @@ impl MainWindow {
             }
         }
 
-         match selected_section {
-            Some(section) => {
-                match self.expanded_sections.iter().position(|s| s == section) {
-                    Some(pos) => { self.expanded_sections.remove(pos); }
-                    None      => { self.expanded_sections.push(section.to_string()); }
-                }
-            }
-             None => { self.diff_file(window); }
+        match selected_section {
+           Some(section) => {
+               match self.expanded_sections.iter().position(|s| s == section) {
+                   Some(pos) => { self.expanded_sections.remove(pos); }
+                   None      => { self.expanded_sections.push(section.to_string()); }
+               }
+           }
+           None => { self.diff_file(window); }
         }
 
         self.refresh(window);
@@ -279,7 +279,7 @@ fn get_dir_file_paths(path: &Path) -> Vec<String> {
                     if let Ok(meta) = path.metadata() {
                         if meta.is_dir() {
                             paths.append(
-                                &mut get_dir_file_paths(&path.path().as_path())
+                                &mut get_dir_file_paths(path.path().as_path())
                             );
                         } else {
                             paths.push(
@@ -324,7 +324,7 @@ impl Component<MainWindow> for MainWindow {
 
             let modified = u.chars().nth(1).unwrap() == 'M';
 
-            let paths = get_dir_file_paths(&Path::new(untracked_path));
+            let paths = get_dir_file_paths(Path::new(untracked_path));
             let unignored_paths = paths
                 .iter()
                 .filter(|p| !git::is_ignored(Path::new(p)));

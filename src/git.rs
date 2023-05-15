@@ -38,7 +38,7 @@ pub fn is_file_modified(path: &str) -> bool {
 
 }
 
-static ALLOWED_GIT_PATH_START: [char; 7] = [' ', 'M', 'T', 'A', 'D', 'R', 'C'];
+static ALLOWED_GIT_PATH_START: [char; 8] = [' ', 'M', 'T', 'A', 'D', 'R', 'C', '?'];
 
 pub fn parse_file_state(path: &str) -> FileState {
     // https://git-scm.com/docs/git-status
@@ -48,7 +48,7 @@ pub fn parse_file_state(path: &str) -> FileState {
 
     // unwrap _should_ be safe here because the length was already
     // checked above.
-    let first = &path.chars().nth(0).unwrap();
+    let first = &path.chars().next().unwrap();
     let third = &path.chars().nth(2).unwrap();
     if !ALLOWED_GIT_PATH_START.contains(first) || third != &' ' {
         return FileState::Unknown
@@ -74,7 +74,7 @@ pub fn is_ignored(path: &Path) -> bool {
     let path_str = path.to_str().unwrap();
     let output = run(vec!["check-ignore", path_str]);
 
-    output.len() > 0
+    !output.is_empty()
 }
 
 pub fn current_branch() -> String {
