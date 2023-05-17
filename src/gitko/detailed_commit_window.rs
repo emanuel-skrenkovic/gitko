@@ -66,11 +66,17 @@ impl Component<DetailedCommitWindow> for DetailedCommitWindow {
 
         let mut current_path: Option<String> = None;
 
-        for line in details.iter() {
-            if line.starts_with("---") {
-                let git_file_path_output       = line.trim_start_matches("--- ");
-                let file_path_parts: Vec<&str> = git_file_path_output.split('/').collect();
+        for i in 0..details.len() {
+            let line = &details[i];
 
+            if line.starts_with("+++") {
+                let before = details[i - 1].trim_start_matches("--- ");
+                let after  = line.trim_start_matches("+++ ");
+
+                let path = if before == "/dev/null" { after.to_string() }
+                           else                     { before.to_string() };
+
+                let file_path_parts: Vec<&str> = path.split('/').collect();
                 let file_path: String = file_path_parts[1..]
                     .iter()
                     .map(|l| l.to_string())
@@ -83,7 +89,7 @@ impl Component<DetailedCommitWindow> for DetailedCommitWindow {
                     self.expanded_changes.insert(file_path.clone(), true);
                 }
 
-                current_path = Some(file_path.clone());
+                current_path = Some(file_path);
             }
 
             if let Some(path) = &current_path {
@@ -120,7 +126,7 @@ impl Component<DetailedCommitWindow> for DetailedCommitWindow {
                         output.push(Line::empty());
                     }
                 }
-                            }
+            }
         }
 
         window.set_lines(output);
