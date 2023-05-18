@@ -272,34 +272,33 @@ impl MainWindow {
 fn get_dir_file_paths(path: &Path) -> Vec<String> {
     let mut paths = vec![];
 
-    if let Ok(metadata) = path.metadata() {
-        if metadata.is_dir() {
-            if let Ok(dir_paths) = read_dir(path) {
-                for path in dir_paths.flatten() {
-                    if let Ok(meta) = path.metadata() {
-                        if meta.is_dir() {
-                            paths.append(
-                                &mut get_dir_file_paths(path.path().as_path())
-                            );
-                        } else {
-                            paths.push(
-                                path
-                                    .path()
-                                    .to_str()
-                                    .unwrap()
-                                    .to_string()
-                            );
-                        }
-                    }
-                }
+    let Ok(metadata) = path.metadata() else { return paths };
+
+    if metadata.is_file() {
+        paths.push(
+            path.to_str()
+                .unwrap()
+                .to_string()
+        );
+        return paths
+    }
+
+    if metadata.is_dir() {
+        let Ok(dir_paths) = read_dir(path) else  { return paths };
+
+        for path in dir_paths.flatten() {
+            let Ok(meta) = path.metadata() else { return paths };
+
+            if meta.is_dir() {
+                paths.append(&mut get_dir_file_paths(path.path().as_path()));
+            } else if meta.is_file() {
+                paths.push(
+                    path.path()
+                        .to_str()
+                        .unwrap()
+                        .to_string()
+                );
             }
-        } else if metadata.is_file() {
-            paths.push(
-                path
-                    .to_str()
-                    .unwrap()
-                    .to_string()
-            );
         }
     }
 
