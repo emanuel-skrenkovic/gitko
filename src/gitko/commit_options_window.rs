@@ -37,7 +37,7 @@ impl CommitOptionsWindow {
 impl Component<CommitOptionsWindow> for CommitOptionsWindow {
     fn on_start(&mut self, window: &mut Window) {
         window.set_lines(
-            vec!["", "--amend"]
+            ["", "--amend"]
                 .iter()
                 .map(|s| Line::plain(s))
                 .collect()

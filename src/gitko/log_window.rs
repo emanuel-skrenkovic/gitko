@@ -162,7 +162,7 @@ impl ResetOptionsWindow {
 impl Component<ResetOptionsWindow> for ResetOptionsWindow {
     fn on_start(&mut self, window: &mut Window) {
         window.set_lines(
-            vec!["Git reset modes:", "--soft", "--mixed", "--hard", "--merge", "--keep"]
+            ["Git reset modes:", "--soft", "--mixed", "--hard", "--merge", "--keep"]
                 .iter()
                 .map(|s| Line::plain(s))
                 .collect()

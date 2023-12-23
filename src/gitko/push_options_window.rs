@@ -38,7 +38,7 @@ impl PushOptionsWindow {
 impl Component<PushOptionsWindow> for PushOptionsWindow {
     fn on_start(&mut self, window: &mut Window) {
         window.set_lines(
-            vec!["", "--force-with-lease"]
+            ["", "--force-with-lease"]
                 .iter()
                 .map(|s| Line::plain(s))
                 .collect()
