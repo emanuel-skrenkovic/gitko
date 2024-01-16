@@ -241,7 +241,7 @@ impl DrawScreen for CrosstermWindow {
 
     fn get_cursor_line(&self) -> String {
         let index = self.cursor_position.y as usize;
-        if index >= self.lines.len() {
+        if index > self.lines.len() {
             return "".to_owned();
         }
 
@@ -312,11 +312,8 @@ impl DrawScreen for CrosstermWindow {
         // This is a fix for overflowing the possition in case it is 0.
         // When it happened, the first row was always overwritten by
         // the highlighting.
-        let current_cursor_y_pos = if self.cursor_position.y == 0 {
-            0
-        } else {
-            self.cursor_position.y - 1
-        };
+        let current_cursor_y_pos = if self.cursor_position.y == 0 { 0 }
+                                   else                           { self.cursor_position.y - 1 };
 
         // We highlight the cursor line while looping through the lines,
         // but if the cursor is beyond the lines, we still need to do it.

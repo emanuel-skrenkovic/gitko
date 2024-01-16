@@ -467,6 +467,8 @@ impl Component<MainWindow> for MainWindow {
             status.push(Line::plain("No changes found."));
         }
 
+        status.push(Line::empty());
+
         window.set_lines(status);
     }
 
